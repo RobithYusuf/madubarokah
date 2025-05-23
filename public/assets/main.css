@@ -1,0 +1,17 @@
+body{
+    font-family: 'Manrope';
+}
+
+.menu .navbar .container{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+@media (min-width: 768px) {
+    .navbar {
+      margin-top: 20px;
+      width: 80%;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+  }
