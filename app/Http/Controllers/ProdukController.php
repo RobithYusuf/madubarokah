@@ -13,7 +13,7 @@ class ProdukController extends Controller
     {
         $produks = Produk::with('kategori')->get();
         $kategoris = Kategori::all();
-        return view('produk.index', compact('produks', 'kategoris'));
+        return view('admin.produk.index', compact('produks', 'kategoris'));
     }
 
     public function store(Request $request)
@@ -40,7 +40,7 @@ class ProdukController extends Controller
             'deskripsi' => $request->deskripsi,
             'gambar' => $gambarPath,
         ]);
-        return redirect()->route('produk.index')->with('success', 'Produk berhasil ditambahkan.');
+        return redirect()->route('admin.produk.index')->with('success', 'Produk berhasil ditambahkan.');
     }
 
     public function update(Request $request, $id)
@@ -85,13 +85,13 @@ class ProdukController extends Controller
             'deskripsi' => $request->deskripsi,
             'gambar' => $produk->gambar, // Gunakan gambar lama jika tidak diubah
         ]);
-        return redirect()->route('produk.index')->with('success', 'Produk berhasil diperbarui.');
+        return redirect()->route('admin.produk.index')->with('success', 'Produk berhasil diperbarui.');
     }
 
     public function destroy($id)
     {
         $produk = Produk::findOrFail($id);
         $produk->delete();
-        return redirect()->route('produk.index')->with('success', 'Produk berhasil dihapus.');
+        return redirect()->route('admin.produk.index')->with('success', 'Produk berhasil dihapus.');
     }
 }

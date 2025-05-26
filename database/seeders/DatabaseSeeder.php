@@ -7,6 +7,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Carbon\Carbon;
 
 class DatabaseSeeder extends Seeder
 {
@@ -15,60 +16,84 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-            // Seeder untuk kategori
-            DB::table('kategori')->insert([
-                ['nama_kategori' => 'Madu Lebah Liar', 'deskripsi' => 'Madu alami tanpa campuran.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-                ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk kesehatan.'],
-            ]);
-    
-            // Seeder untuk produk
-            DB::table('produk')->insert([
-                ['nama_produk' => 'Madu Botol Besar', 'id_kategori' => 1, 'harga' => 120000, 'stok' => 40, 'deskripsi' => 'Madu asli dengan ukuran 460ml', 'gambar' => 'madu_besar.jpg'],
-                ['nama_produk' => 'Madu Botol Sedang', 'id_kategori' => 1, 'harga' => 85000, 'stok' => 5, 'deskripsi' => 'Madu asli dengan ukuran 256ml', 'gambar' => 'madu_sedang.jpg'],
-                ['nama_produk' => 'Madu Botol Kecil', 'id_kategori' => 1, 'harga' => 45000, 'stok' => 10, 'deskripsi' => 'Madu asli dengan ukuran 140ml', 'gambar' => 'madu_kecil.jpg']
-            ]);
-    
-            // Seeder untuk user
-            DB::table('users')->insert([
-                ['nama' => 'Admin', 'username' => 'admin', 'password' => Hash::make('admin'), 'alamat' => 'Jl. Nyai Dasimah No.1', 'no_telp' => '081234567890', 'role' => 'admin'],
-                ['nama' => 'User', 'username' => 'user', 'password' => Hash::make('user'), 'alamat' => 'Jl. Cut Nyak Dien No.2', 'no_telp' => '081234567891', 'role' => 'pembeli']
-            ]);
-    
-            // Seeder untuk transaksi
-            DB::table('transaksi')->insert([
-                ['id_user' => 1, 'total_harga' => 150000, 'status' => 'dibayar', 'metode_pembayaran' => 'Transfer Bank'],
-                ['id_user' => 2, 'total_harga' => 75000, 'status' => 'pending', 'metode_pembayaran' => 'E-Wallet']
-            ]);
+        // Seeder untuk kategori dengan warna hex
+        DB::table('kategori')->insert([
+            ['nama_kategori' => 'Madu Lebah Liar', 'deskripsi' => 'Madu alami tanpa campuran yang diambil langsung dari sarang lebah liar di hutan.', 'warna' => '#FF9800', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_kategori' => 'Madu Herbal', 'deskripsi' => 'Madu yang dicampur dengan herbal untuk meningkatkan khasiat kesehatan.', 'warna' => '#4CAF50', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_kategori' => 'Madu Hutan', 'deskripsi' => 'Madu premium yang dihasilkan dari nektar bunga-bunga hutan tropis.', 'warna' => '#8BC34A', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_kategori' => 'Madu Rasa', 'deskripsi' => 'Madu dengan tambahan rasa alami dari buah-buahan atau rempah.', 'warna' => '#E91E63', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_kategori' => 'Madu Organik', 'deskripsi' => 'Madu yang dihasilkan dari peternakan lebah organik tanpa bahan kimia.', 'warna' => '#009688', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_kategori' => 'Propolis', 'deskripsi' => 'Produk lebah yang kaya antioksidan dan memiliki sifat antimikroba.', 'warna' => '#673AB7', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+        ]);
+        $this->command->info('Seeder Kategori berhasil dijalankan!');
 
-            DB::table('carts')->insert([
-                ['id_user' => 2, 'id_produk' => 2, 'quantity' => 4],
-            ]);
-        }
+        // Seeder untuk produk yang lebih variatif
+        DB::table('produk')->insert([
+            // Produk Madu Lebah Liar
+            ['nama_produk' => 'Madu Lebah Liar Botol Besar', 'id_kategori' => 1, 'harga' => 120000, 'stok' => 40, 'deskripsi' => 'Madu asli lebah liar dengan ukuran 460ml', 'gambar' => 'madu_liar_besar.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_produk' => 'Madu Lebah Liar Botol Sedang', 'id_kategori' => 1, 'harga' => 85000, 'stok' => 25, 'deskripsi' => 'Madu asli lebah liar dengan ukuran 250ml', 'gambar' => 'madu_liar_sedang.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_produk' => 'Madu Lebah Liar Botol Kecil', 'id_kategori' => 1, 'harga' => 45000, 'stok' => 30, 'deskripsi' => 'Madu asli lebah liar dengan ukuran 140ml', 'gambar' => 'madu_liar_kecil.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+
+            // Produk Madu Herbal
+            ['nama_produk' => 'Madu Herbal Jahe', 'id_kategori' => 2, 'harga' => 95000, 'stok' => 20, 'deskripsi' => 'Madu dengan campuran ekstrak jahe untuk meningkatkan imunitas, 250ml', 'gambar' => 'madu_jahe.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_produk' => 'Madu Herbal Temulawak', 'id_kategori' => 2, 'harga' => 98000, 'stok' => 15, 'deskripsi' => 'Madu dengan campuran ekstrak temulawak untuk kesehatan pencernaan, 250ml', 'gambar' => 'madu_temulawak.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_produk' => 'Madu Herbal Kunyit', 'id_kategori' => 2, 'harga' => 92000, 'stok' => 18, 'deskripsi' => 'Madu dengan campuran ekstrak kunyit untuk anti-inflamasi, 250ml', 'gambar' => 'madu_kunyit.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+
+            // Produk Madu Hutan
+            ['nama_produk' => 'Madu Hutan Kalimantan', 'id_kategori' => 3, 'harga' => 150000, 'stok' => 12, 'deskripsi' => 'Madu premium dari hutan Kalimantan, 350ml', 'gambar' => 'madu_kalimantan.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_produk' => 'Madu Hutan Sumbawa', 'id_kategori' => 3, 'harga' => 145000, 'stok' => 10, 'deskripsi' => 'Madu premium dari hutan Sumbawa, 350ml', 'gambar' => 'madu_sumbawa.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+
+            // Produk Madu Rasa
+            ['nama_produk' => 'Madu Rasa Strawberry', 'id_kategori' => 4, 'harga' => 75000, 'stok' => 22, 'deskripsi' => 'Madu dengan ekstrak strawberry alami, 250ml', 'gambar' => 'madu_strawberry.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_produk' => 'Madu Rasa Lemon', 'id_kategori' => 4, 'harga' => 72000, 'stok' => 25, 'deskripsi' => 'Madu dengan ekstrak lemon alami, 250ml', 'gambar' => 'madu_lemon.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+
+            // Produk Madu Organik
+            ['nama_produk' => 'Madu Organik Premium', 'id_kategori' => 5, 'harga' => 135000, 'stok' => 15, 'deskripsi' => 'Madu organik bersertifikat dari peternakan lebah organik, 350ml', 'gambar' => 'madu_organik.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+
+            // Produk Propolis
+            ['nama_produk' => 'Propolis Cair', 'id_kategori' => 6, 'harga' => 110000, 'stok' => 20, 'deskripsi' => 'Propolis cair murni untuk meningkatkan sistem imun, 60ml', 'gambar' => 'propolis_cair.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_produk' => 'Propolis Spray', 'id_kategori' => 6, 'harga' => 85000, 'stok' => 18, 'deskripsi' => 'Propolis dalam bentuk spray untuk kesehatan tenggorokan, 30ml', 'gambar' => 'propolis_spray.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+        ]);
+        $this->command->info('Seeder Produk berhasil dijalankan!');
+
+        // Seeder untuk user
+        DB::table('users')->insert([
+            ['nama' => 'Admin', 'username' => 'admin', 'password' => Hash::make('admin'), 'alamat' => 'Jl. Nyai Dasimah No.1, Jakarta Selatan', 'no_telp' => '081234567890', 'role' => 'admin', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama' => 'Budi Santoso', 'username' => 'budi', 'password' => Hash::make('password'), 'alamat' => 'Jl. Cut Nyak Dien No.2, Bandung', 'no_telp' => '081234567891', 'role' => 'pembeli', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama' => 'Siti Rahayu', 'username' => 'siti', 'password' => Hash::make('password'), 'alamat' => 'Jl. Ahmad Yani No.15, Surabaya', 'no_telp' => '081234567892', 'role' => 'pembeli', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama' => 'Dian Purnama', 'username' => 'dian', 'password' => Hash::make('password'), 'alamat' => 'Jl. Diponegoro No.45, Yogyakarta', 'no_telp' => '081234567893', 'role' => 'pembeli', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama' => 'Rudi Hermawan', 'username' => 'rudi', 'password' => Hash::make('password'), 'alamat' => 'Jl. Sudirman No.123, Jakarta Pusat', 'no_telp' => '081234567894', 'role' => 'pembeli', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+        ]);
+        $this->command->info('Seeder User berhasil dijalankan!');
+
+        // Seeder untuk transaksi
+        DB::table('transaksi')->insert([
+            ['id_user' => 2, 'tanggal_transaksi' => Carbon::now()->subDays(5), 'total_harga' => 205000, 'status' => 'selesai', 'metode_pembayaran' => 'Transfer Bank', 'created_at' => Carbon::now()->subDays(5), 'updated_at' => Carbon::now()->subDays(3)],
+            ['id_user' => 3, 'tanggal_transaksi' => Carbon::now()->subDays(3), 'total_harga' => 150000, 'status' => 'dikirim', 'metode_pembayaran' => 'E-Wallet', 'created_at' => Carbon::now()->subDays(3), 'updated_at' => Carbon::now()->subDays(2)],
+            ['id_user' => 4, 'tanggal_transaksi' => Carbon::now()->subDays(2), 'total_harga' => 95000, 'status' => 'dibayar', 'metode_pembayaran' => 'Transfer Bank', 'created_at' => Carbon::now()->subDays(2), 'updated_at' => Carbon::now()->subDays(1)],
+            ['id_user' => 5, 'tanggal_transaksi' => Carbon::now()->subDay(), 'total_harga' => 135000, 'status' => 'pending', 'metode_pembayaran' => 'COD', 'created_at' => Carbon::now()->subDay(), 'updated_at' => Carbon::now()->subDay()],
+        ]);
+        $this->command->info('Seeder Transaksi berhasil dijalankan!');
+
+        // Seeder untuk detail transaksi
+        DB::table('detail_transaksi')->insert([
+            ['id_transaksi' => 1, 'id_produk' => 1, 'jumlah' => 1, 'harga_satuan' => 120000, 'subtotal' => 120000, 'created_at' => Carbon::now()->subDays(5), 'updated_at' => Carbon::now()->subDays(5)],
+            ['id_transaksi' => 1, 'id_produk' => 4, 'jumlah' => 1, 'harga_satuan' => 85000, 'subtotal' => 85000, 'created_at' => Carbon::now()->subDays(5), 'updated_at' => Carbon::now()->subDays(5)],
+            ['id_transaksi' => 2, 'id_produk' => 7, 'jumlah' => 1, 'harga_satuan' => 150000, 'subtotal' => 150000, 'created_at' => Carbon::now()->subDays(3), 'updated_at' => Carbon::now()->subDays(3)],
+            ['id_transaksi' => 3, 'id_produk' => 4, 'jumlah' => 1, 'harga_satuan' => 95000, 'subtotal' => 95000, 'created_at' => Carbon::now()->subDays(2), 'updated_at' => Carbon::now()->subDays(2)],
+            ['id_transaksi' => 4, 'id_produk' => 11, 'jumlah' => 1, 'harga_satuan' => 135000, 'subtotal' => 135000, 'created_at' => Carbon::now()->subDay(), 'updated_at' => Carbon::now()->subDay()],
+        ]);
+        $this->command->info('Seeder Detail Transaksi berhasil dijalankan!');
+
+        // Seeder untuk cart
+        DB::table('carts')->insert([
+            ['id_user' => 2, 'id_produk' => 2, 'quantity' => 2, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['id_user' => 3, 'id_produk' => 5, 'quantity' => 1, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['id_user' => 4, 'id_produk' => 9, 'quantity' => 1, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['id_user' => 5, 'id_produk' => 12, 'quantity' => 2, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+        ]);
+        $this->command->info('Seeder Cart berhasil dijalankan!');
+
+        $this->command->info('Semua seeder berhasil dijalankan!');
     }
+}

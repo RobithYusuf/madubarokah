@@ -16,11 +16,26 @@ class RoleMiddleware
      */
     public function handle(Request $request, Closure $next, $role): Response
     {
-        if (Auth::check() && Auth::user()->role === $role) {
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'Anda harus login terlebih dahulu.');
+        }
+
+        $user = Auth::user();
+        $userRole = strtolower($user->role ?? $user->level ?? '');
+        $requiredRole = strtolower($role);
+
+        if ($userRole === $requiredRole) {
             return $next($request);
         }
 
-        // Redirect ke halaman utama dengan pesan error jika level tidak sesuai
-        return redirect('/')->with('error', 'Anda tidak memiliki akses ke halaman ini.');
+        // Redirect berdasarkan role user yang sebenarnya
+        switch ($userRole) {
+            case 'admin':
+                return redirect()->route('admin.dashboard')->with('error', 'Anda tidak memiliki akses ke halaman tersebut.');
+            case 'pembeli':
+                return redirect()->route('Landingpage.index')->with('error', 'Anda tidak memiliki akses ke halaman tersebut.');
+            default:
+                return redirect('/')->with('error', 'Anda tidak memiliki akses ke halaman ini.');
+        }
     }
 }

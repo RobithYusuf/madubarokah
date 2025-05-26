@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('nama_kategori');
             $table->text('deskripsi')->nullable();
+            $table->string('warna', 7)->default('#6C757D'); // Hex color format
             $table->timestamps();
         });
     }

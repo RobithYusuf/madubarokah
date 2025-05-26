@@ -227,8 +227,15 @@
             // Proses Login
             $('#loginForm').on('submit', function(e) {
                 e.preventDefault();
+                
+                // Disable submit button dan ubah text
+                const $submitBtn = $('#submitBtn');
+                const $submitBtnText = $('#submitBtnText');
+                $submitBtn.prop('disabled', true);
+                $submitBtnText.text('Memproses...');
+                
                 $.ajax({
-                    url: '/login', // Sesuaikan dengan URL login Anda
+                    url: '{{ route("login") }}',
                     method: 'POST',
                     data: $(this).serialize(),
                     dataType: 'json',
@@ -241,18 +248,12 @@
                                 showConfirmButton: false,
                                 timer: 1500
                             }).then(function() {
-                                // console.log(response);
-                                // Redirect ke halaman landing setelah login berhasil
-                                if (response.role === "admin") {;
-                                    window.location.href = '/dashboard';
-                                } else if (response.role === "pembeli") {
-                                    window.location.href ='/'; // Halaman landing untuk pembeli
+                                // Redirect menggunakan URL dari server
+                                if (response.redirect_url) {
+                                    window.location.href = response.redirect_url;
                                 } else {
-                                    Swal.fire({
-                                        icon: 'error',
-                                        title: 'Error!',
-                                        text: 'Level pengguna tidak dikenali.'
-                                    });
+                                    // Fallback redirect jika tidak ada redirect_url
+                                    window.location.href = '/';
                                 }
                             });
                         } else {
@@ -264,12 +265,28 @@
                         }
                     },
                     error: function(xhr) {
-                        var response = xhr.responseJSON;
+                        let errorMessage = 'Terjadi kesalahan saat login.';
+                        
+                        if (xhr.responseJSON) {
+                            if (xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            } else if (xhr.responseJSON.errors) {
+                                // Handle validation errors
+                                const errors = Object.values(xhr.responseJSON.errors).flat();
+                                errorMessage = errors.join(', ');
+                            }
+                        }
+                        
                         Swal.fire({
                             icon: 'error',
                             title: 'Error!',
-                            text: response.message || 'Terjadi kesalahan saat login.'
+                            text: errorMessage
                         });
+                    },
+                    complete: function() {
+                        // Re-enable submit button
+                        $submitBtn.prop('disabled', false);
+                        $submitBtnText.text('Masuk');
                     }
                 });
             });

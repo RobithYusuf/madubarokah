@@ -12,6 +12,11 @@ class AuthController extends Controller
 {
     public function showLoginForm()
     {
+        // Redirect jika sudah login
+        if (Auth::check()) {
+            return $this->redirectBasedOnRole(Auth::user());
+        }
+        
         return view('auth.login');
     }
 
@@ -19,25 +24,54 @@ class AuthController extends Controller
     {
         try {
             $credentials = $request->validate([
-                'username' => 'required',
-                'password' => 'required',
+                'username' => 'required|string',
+                'password' => 'required|string',
             ]);
 
-            if (Auth::attempt($credentials)) {
+            // Check remember me option
+            $remember = $request->boolean('remember');
+
+            if (Auth::attempt($credentials, $remember)) {
                 $request->session()->regenerate();
                 $user = Auth::user();
-                $role = $user->role;
-                return response()->json(['status' => 'success', 'message' => 'Login berhasil', 'role' => $role]);
+                
+                // Get intended URL or default redirect
+                $redirectUrl = $this->getRedirectUrl($user);
+                
+                return response()->json([
+                    'status' => 'success', 
+                    'message' => 'Login berhasil',
+                    'redirect_url' => $redirectUrl,
+                    'role' => strtolower($user->role ?? $user->level)
+                ]);
             }
 
-            return response()->json(['status' => 'error', 'message' => 'Username atau password salah'], 422);
+            return response()->json([
+                'status' => 'error', 
+                'message' => 'Username atau password salah'
+            ], 422);
+            
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Data yang dimasukkan tidak valid',
+                'errors' => $e->errors(),
+            ], 422);
         } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+            return response()->json([
+                'status' => 'error', 
+                'message' => 'Terjadi kesalahan pada server'
+            ], 500);
         }
     }
 
     public function showRegisterForm()
     {
+        // Redirect jika sudah login
+        if (Auth::check()) {
+            return $this->redirectBasedOnRole(Auth::user());
+        }
+        
         return view('auth.register');
     }
 
@@ -45,22 +79,30 @@ class AuthController extends Controller
     {
         try {
             $validatedData = $request->validate([
-                'username' => 'required|max:255',
-                'password' => 'required',
-                'nama' => 'required',
-                'nohp' => 'required|numeric',
-                'alamat' => 'required',
+                'username' => 'required|string|max:255|unique:users,username',
+                'password' => 'required|string|min:6',
+                'nama' => 'required|string|max:255',
+                'nohp' => 'required|string|max:15',
+                'alamat' => 'required|string',
             ]);
+
             $user = User::create([
                 'username' => $validatedData['username'],
                 'password' => Hash::make($validatedData['password']),
                 'nama' => $validatedData['nama'],
                 'nohp' => $validatedData['nohp'],
                 'alamat' => $validatedData['alamat'],
-                'level' => 'Pembeli',
+                'role' => 'pembeli', // atau 'level' => 'Pembeli' sesuai dengan struktur database
             ]);
+
             Auth::login($user);
-            return response()->json(['status' => 'success', 'message' => 'Registrasi berhasil']);
+            
+            return response()->json([
+                'status' => 'success', 
+                'message' => 'Registrasi berhasil',
+                'redirect_url' => '/'
+            ]);
+            
         } catch (ValidationException $e) {
             return response()->json([
                 'status' => 'error',
@@ -68,15 +110,60 @@ class AuthController extends Controller
                 'errors' => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
+            return response()->json([
+                'status' => 'error', 
+                'message' => 'Terjadi kesalahan saat registrasi'
+            ], 500);
         }
     }
+
     public function logout(Request $request)
     {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+        
         return redirect('/login')->with('status', 'Anda telah berhasil logout');
     }
+
+    /**
+     * Redirect berdasarkan role user
+     */
+    private function redirectBasedOnRole($user)
+    {
+        $role = strtolower($user->role ?? $user->level);
+        
+        switch ($role) {
+            case 'admin':
+                return redirect()->route('admin.dashboard');
+            case 'pembeli':
+                return redirect()->route('Landingpage.index');
+            default:
+                return redirect('/');
+        }
+    }
+
+    /**
+     * Get redirect URL based on intended URL or user role
+     */
+    private function getRedirectUrl($user)
+    {
+        // Check if there's an intended URL
+        $intended = session()->pull('url.intended');
+        if ($intended) {
+            return $intended;
+        }
+
+        // Default redirect based on role
+        $role = strtolower($user->role ?? $user->level);
+        
+        switch ($role) {
+            case 'admin':
+                return route('admin.dashboard');
+            case 'pembeli':
+                return route('Landingpage.index');
+            default:
+                return '/';
+        }
+    }
 }
- 
