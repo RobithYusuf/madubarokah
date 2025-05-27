@@ -23,6 +23,7 @@ class ProdukController extends Controller
             'id_kategori' => 'nullable|exists:kategori,id',
             'harga' => 'required|numeric',
             'stok' => 'required|integer',
+            'berat' => 'required|integer|min:1',
             'deskripsi' => 'nullable',
             'gambar' => 'nullable|image'
         ]);
@@ -37,6 +38,7 @@ class ProdukController extends Controller
             'id_kategori' => $request->id_kategori,
             'harga' => $request->harga,
             'stok' => $request->stok,
+            'berat' => $request->berat,
             'deskripsi' => $request->deskripsi,
             'gambar' => $gambarPath,
         ]);
@@ -45,15 +47,25 @@ class ProdukController extends Controller
 
     public function update(Request $request, $id)
     {
+        // Validasi dulu
+        $request->validate([
+            'nama_produk' => 'required',
+            'id_kategori' => 'nullable|exists:kategori,id',
+            'harga' => 'required',
+            'stok' => 'required|integer',
+            'berat' => 'required|integer|min:1',
+            'deskripsi' => 'nullable',
+            'gambar' => 'nullable|image'
+        ]);
+
         // Ambil data produk berdasarkan ID
         $produk = Produk::findOrFail($id);
 
         // Konversi harga misal 65.000 menjadi 65000
-        $request->merge([
-            'harga' => str_replace(['.', ','], '', $request->harga) // Hapus titik pemisah sebelum menyimpan
-        ]);
+        $harga = str_replace(['.', ','], '', $request->harga);
 
-        // Cek ada gambar baru atau tidak
+        // Handle gambar
+        $gambarPath = $produk->gambar; // Default gunakan gambar lama
         if ($request->hasFile('gambar')) {
             // Simpan gambar baru ke storage/public/produk
             $gambarPath = $request->file('gambar')->store('produk', 'public');
@@ -62,29 +74,19 @@ class ProdukController extends Controller
             if ($produk->gambar) {
                 Storage::disk('public')->delete($produk->gambar);
             }
-
-            // Simpan path gambar baru
-            $produk->gambar = $gambarPath;
         }
 
-
-        $request->validate([
-            'nama_produk' => 'required',
-            'id_kategori' => 'nullable|exists:kategori,id',
-            'harga' => 'required|numeric',
-            'stok' => 'required|integer',
-            'deskripsi' => 'nullable',
-            'gambar' => 'nullable|image'
-        ]);
-
+        // Update produk
         $produk->update([
             'nama_produk' => $request->nama_produk,
             'id_kategori' => $request->id_kategori,
-            'harga' => $request->harga,
+            'harga' => $harga,
             'stok' => $request->stok,
+            'berat' => $request->berat,
             'deskripsi' => $request->deskripsi,
-            'gambar' => $produk->gambar, // Gunakan gambar lama jika tidak diubah
+            'gambar' => $gambarPath,
         ]);
+
         return redirect()->route('admin.produk.index')->with('success', 'Produk berhasil diperbarui.');
     }
 

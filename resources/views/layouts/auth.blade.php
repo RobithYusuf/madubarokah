@@ -6,16 +6,17 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title') - Toko Madu Barokah</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    
+
     {{-- SB Admin CSS --}}
     <link href="{{ asset('assets/sbadmin/css/sb-admin-2.min.css') }}" rel="stylesheet">
     {{-- Font Awesome --}}
     <link href="{{ asset('assets/sbadmin/vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet">
     {{-- Font Awesome CDN sebagai fallback --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+
     <style>
-        body, html {
+        body,
+        html {
             height: 100%;
             margin: 0;
             overflow: hidden;
@@ -143,7 +144,7 @@
                 height: auto;
                 min-height: 100vh;
             }
-            
+
             .brand-name {
                 position: relative;
                 top: 0;
@@ -152,28 +153,28 @@
                 margin-bottom: 2rem;
                 font-size: 2rem;
             }
-            
+
             .background-container {
                 display: none;
             }
-            
+
             body {
                 background: linear-gradient(135deg, #FFA500, #FF8C00);
             }
         }
     </style>
-    
+
     @stack('styles')
 </head>
 
 <body>
     <div class="background-container">
         <div class="overlay"></div>
-        <div class="brand-name" onclick="window.location.href='{{ route('Landingpage.index') }}'">
+        <div class="brand-name" onclick="window.location.href='{{ route('frontend.home') }}'">
             <i class="fas fa-spa"></i> Toko Madu Barokah
         </div>
     </div>
-    
+
     <div class="auth-container">
         @yield('content')
     </div>

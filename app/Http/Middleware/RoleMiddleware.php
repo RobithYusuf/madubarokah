@@ -33,7 +33,7 @@ class RoleMiddleware
             case 'admin':
                 return redirect()->route('admin.dashboard')->with('error', 'Anda tidak memiliki akses ke halaman tersebut.');
             case 'pembeli':
-                return redirect()->route('Landingpage.index')->with('error', 'Anda tidak memiliki akses ke halaman tersebut.');
+                return redirect()->route('frontend.home')->with('error', 'Anda tidak memiliki akses ke halaman tersebut.');
             default:
                 return redirect('/')->with('error', 'Anda tidak memiliki akses ke halaman ini.');
         }

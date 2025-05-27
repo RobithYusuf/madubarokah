@@ -35,27 +35,64 @@ class PaymentController extends Controller
     /**
      * Sync payment channels from Tripay API
      */
-    public function syncChannels()
+    public function syncChannels(Request $request)
     {
         try {
             $result = $this->tripayService->syncPaymentChannels();
 
             if (is_array($result) && isset($result['success'])) {
                 if ($result['success']) {
+                    // Jika request adalah AJAX, kembalikan response JSON
+                    if ($request->ajax()) {
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Berhasil menyinkronkan ' . $result['count'] . ' payment channel dari Tripay API.',
+                            'data' => [
+                                'synced' => $result['count']
+                            ]
+                        ]);
+                    }
+
+                    // Jika bukan AJAX, gunakan redirect seperti biasa
                     return redirect()->route('admin.payment.index')
                         ->with('success', 'Berhasil menyinkronkan ' . $result['count'] . ' payment channel dari Tripay API.');
                 } else {
+                    // Jika request adalah AJAX, kembalikan response JSON
+                    if ($request->ajax()) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Gagal menyinkronkan payment channel: ' . $result['message']
+                        ], 500);
+                    }
+
+                    // Jika bukan AJAX, gunakan redirect seperti biasa
                     return redirect()->route('admin.payment.index')
                         ->with('error', 'Gagal menyinkronkan payment channel: ' . $result['message']);
                 }
             } else {
                 // Backward compatibility jika return masih berupa integer
                 $count = is_numeric($result) ? $result : 0;
+
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Berhasil menyinkronkan ' . $count . ' payment channel dari Tripay API.'
+                    ]);
+                }
+
                 return redirect()->route('admin.payment.index')
                     ->with('success', 'Berhasil menyinkronkan ' . $count . ' payment channel dari Tripay API.');
             }
         } catch (\Exception $e) {
             Log::error('Error syncing payment channels: ' . $e->getMessage());
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Terjadi kesalahan saat menyinkronkan payment channel: ' . $e->getMessage()
+                ], 500);
+            }
+
             return redirect()->route('admin.payment.index')
                 ->with('error', 'Terjadi kesalahan saat menyinkronkan payment channel: ' . $e->getMessage());
         }
@@ -128,7 +165,7 @@ class PaymentController extends Controller
         try {
             $channel = PaymentChannel::findOrFail($id);
             $channelName = $channel->name;
-            
+
             $channel->delete();
 
             return response()->json([

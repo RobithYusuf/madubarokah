@@ -46,9 +46,23 @@ class Pembayaran extends Model
         $badges = [
             'pending' => 'warning',
             'berhasil' => 'success',
-            'gagal' => 'danger'
+            'gagal' => 'danger',
+            'expired' => 'secondary',
+            'canceled' => 'secondary'
         ];
         
         return $badges[$this->status] ?? 'secondary';
+    }
+    
+    // Badge payment type untuk tampilan
+    public function getPaymentTypeBadgeAttribute()
+    {
+        $badges = [
+            'manual' => 'info',
+            'direct' => 'primary',
+            'redirect' => 'success'
+        ];
+        
+        return $badges[$this->payment_type] ?? 'secondary';
     }
 }

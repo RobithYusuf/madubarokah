@@ -25,34 +25,35 @@ class DatabaseSeeder extends Seeder
             ['nama_kategori' => 'Madu Organik', 'deskripsi' => 'Madu yang dihasilkan dari peternakan lebah organik tanpa bahan kimia.', 'warna' => '#009688', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
             ['nama_kategori' => 'Propolis', 'deskripsi' => 'Produk lebah yang kaya antioksidan dan memiliki sifat antimikroba.', 'warna' => '#673AB7', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
         ]);
+
         $this->command->info('Seeder Kategori berhasil dijalankan!');
 
         // Seeder untuk produk yang lebih variatif
         DB::table('produk')->insert([
             // Produk Madu Lebah Liar
-            ['nama_produk' => 'Madu Lebah Liar Botol Besar', 'id_kategori' => 1, 'harga' => 120000, 'stok' => 40, 'deskripsi' => 'Madu asli lebah liar dengan ukuran 460ml', 'gambar' => 'madu_liar_besar.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['nama_produk' => 'Madu Lebah Liar Botol Sedang', 'id_kategori' => 1, 'harga' => 85000, 'stok' => 25, 'deskripsi' => 'Madu asli lebah liar dengan ukuran 250ml', 'gambar' => 'madu_liar_sedang.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['nama_produk' => 'Madu Lebah Liar Botol Kecil', 'id_kategori' => 1, 'harga' => 45000, 'stok' => 30, 'deskripsi' => 'Madu asli lebah liar dengan ukuran 140ml', 'gambar' => 'madu_liar_kecil.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_produk' => 'Madu Lebah Liar Botol Besar', 'id_kategori' => 1, 'harga' => 120000, 'stok' => 40, 'berat' => 800, 'deskripsi' => 'Madu asli lebah liar dengan ukuran 460ml', 'gambar' => 'madu_barokah.png ', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_produk' => 'Madu Lebah Liar Botol Sedang', 'id_kategori' => 1, 'harga' => 85000, 'stok' => 25, 'berat' => 500, 'deskripsi' => 'Madu asli lebah liar dengan ukuran 250ml', 'gambar' => 'madu_barokah.png', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_produk' => 'Madu Lebah Liar Botol Kecil', 'id_kategori' => 1, 'harga' => 45000, 'stok' => 30, 'berat' => 300, 'deskripsi' => 'Madu asli lebah liar dengan ukuran 140ml', 'gambar' => 'madu_barokah.png', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
 
             // Produk Madu Herbal
-            ['nama_produk' => 'Madu Herbal Jahe', 'id_kategori' => 2, 'harga' => 95000, 'stok' => 20, 'deskripsi' => 'Madu dengan campuran ekstrak jahe untuk meningkatkan imunitas, 250ml', 'gambar' => 'madu_jahe.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['nama_produk' => 'Madu Herbal Temulawak', 'id_kategori' => 2, 'harga' => 98000, 'stok' => 15, 'deskripsi' => 'Madu dengan campuran ekstrak temulawak untuk kesehatan pencernaan, 250ml', 'gambar' => 'madu_temulawak.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['nama_produk' => 'Madu Herbal Kunyit', 'id_kategori' => 2, 'harga' => 92000, 'stok' => 18, 'deskripsi' => 'Madu dengan campuran ekstrak kunyit untuk anti-inflamasi, 250ml', 'gambar' => 'madu_kunyit.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_produk' => 'Madu Herbal Jahe', 'id_kategori' => 2, 'harga' => 95000, 'stok' => 20, 'berat' => 450, 'deskripsi' => 'Madu dengan campuran ekstrak jahe untuk meningkatkan imunitas, 250ml', 'gambar' => 'madu_barokah.png', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_produk' => 'Madu Herbal Temulawak', 'id_kategori' => 2, 'harga' => 98000, 'stok' => 15, 'berat' => 470, 'deskripsi' => 'Madu dengan campuran ekstrak temulawak untuk kesehatan pencernaan, 250ml', 'gambar' => 'madu_barokah.png', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_produk' => 'Madu Herbal Kunyit', 'id_kategori' => 2, 'harga' => 92000, 'stok' => 18, 'berat' => 460, 'deskripsi' => 'Madu dengan campuran ekstrak kunyit untuk anti-inflamasi, 250ml', 'gambar' => 'madu_barokah.png', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
 
             // Produk Madu Hutan
-            ['nama_produk' => 'Madu Hutan Kalimantan', 'id_kategori' => 3, 'harga' => 150000, 'stok' => 12, 'deskripsi' => 'Madu premium dari hutan Kalimantan, 350ml', 'gambar' => 'madu_kalimantan.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['nama_produk' => 'Madu Hutan Sumbawa', 'id_kategori' => 3, 'harga' => 145000, 'stok' => 10, 'deskripsi' => 'Madu premium dari hutan Sumbawa, 350ml', 'gambar' => 'madu_sumbawa.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_produk' => 'Madu Hutan Kalimantan', 'id_kategori' => 3, 'harga' => 150000, 'stok' => 12, 'berat' => 650, 'deskripsi' => 'Madu premium dari hutan Kalimantan, 350ml', 'gambar' => 'madu_barokah.png', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_produk' => 'Madu Hutan Sumbawa', 'id_kategori' => 3, 'harga' => 145000, 'stok' => 10, 'berat' => 630, 'deskripsi' => 'Madu premium dari hutan Sumbawa, 350ml', 'gambar' => 'madu_barokah.png', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
 
             // Produk Madu Rasa
-            ['nama_produk' => 'Madu Rasa Strawberry', 'id_kategori' => 4, 'harga' => 75000, 'stok' => 22, 'deskripsi' => 'Madu dengan ekstrak strawberry alami, 250ml', 'gambar' => 'madu_strawberry.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['nama_produk' => 'Madu Rasa Lemon', 'id_kategori' => 4, 'harga' => 72000, 'stok' => 25, 'deskripsi' => 'Madu dengan ekstrak lemon alami, 250ml', 'gambar' => 'madu_lemon.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_produk' => 'Madu Rasa Strawberry', 'id_kategori' => 4, 'harga' => 75000, 'stok' => 22, 'berat' => 480, 'deskripsi' => 'Madu dengan ekstrak strawberry alami, 250ml', 'gambar' => 'madu_barokah.png', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_produk' => 'Madu Rasa Lemon', 'id_kategori' => 4, 'harga' => 72000, 'stok' => 25, 'berat' => 470, 'deskripsi' => 'Madu dengan ekstrak lemon alami, 250ml', 'gambar' => 'madu_barokah.png', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
 
             // Produk Madu Organik
-            ['nama_produk' => 'Madu Organik Premium', 'id_kategori' => 5, 'harga' => 135000, 'stok' => 15, 'deskripsi' => 'Madu organik bersertifikat dari peternakan lebah organik, 350ml', 'gambar' => 'madu_organik.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_produk' => 'Madu Organik Premium', 'id_kategori' => 5, 'harga' => 135000, 'stok' => 15, 'berat' => 620, 'deskripsi' => 'Madu organik bersertifikat dari peternakan lebah organik, 350ml', 'gambar' => 'madu_barokah.png', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
 
             // Produk Propolis
-            ['nama_produk' => 'Propolis Cair', 'id_kategori' => 6, 'harga' => 110000, 'stok' => 20, 'deskripsi' => 'Propolis cair murni untuk meningkatkan sistem imun, 60ml', 'gambar' => 'propolis_cair.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['nama_produk' => 'Propolis Spray', 'id_kategori' => 6, 'harga' => 85000, 'stok' => 18, 'deskripsi' => 'Propolis dalam bentuk spray untuk kesehatan tenggorokan, 30ml', 'gambar' => 'propolis_spray.jpg', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_produk' => 'Propolis Cair', 'id_kategori' => 6, 'harga' => 110000, 'stok' => 20, 'berat' => 150, 'deskripsi' => 'Propolis cair murni untuk meningkatkan sistem imun, 60ml', 'gambar' => 'madu_barokah.png', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama_produk' => 'Propolis Spray', 'id_kategori' => 6, 'harga' => 85000, 'stok' => 18, 'berat' => 100, 'deskripsi' => 'Propolis dalam bentuk spray untuk kesehatan tenggorokan, 30ml', 'gambar' => 'madu_barokah.png', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
         ]);
         $this->command->info('Seeder Produk berhasil dijalankan!');
 

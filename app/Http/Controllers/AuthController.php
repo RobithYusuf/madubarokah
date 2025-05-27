@@ -16,7 +16,7 @@ class AuthController extends Controller
         if (Auth::check()) {
             return $this->redirectBasedOnRole(Auth::user());
         }
-        
+
         return view('auth.login');
     }
 
@@ -34,12 +34,12 @@ class AuthController extends Controller
             if (Auth::attempt($credentials, $remember)) {
                 $request->session()->regenerate();
                 $user = Auth::user();
-                
+
                 // Get intended URL or default redirect
                 $redirectUrl = $this->getRedirectUrl($user);
-                
+
                 return response()->json([
-                    'status' => 'success', 
+                    'status' => 'success',
                     'message' => 'Login berhasil',
                     'redirect_url' => $redirectUrl,
                     'role' => strtolower($user->role ?? $user->level)
@@ -47,10 +47,9 @@ class AuthController extends Controller
             }
 
             return response()->json([
-                'status' => 'error', 
+                'status' => 'error',
                 'message' => 'Username atau password salah'
             ], 422);
-            
         } catch (ValidationException $e) {
             return response()->json([
                 'status' => 'error',
@@ -59,7 +58,7 @@ class AuthController extends Controller
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
-                'status' => 'error', 
+                'status' => 'error',
                 'message' => 'Terjadi kesalahan pada server'
             ], 500);
         }
@@ -71,7 +70,7 @@ class AuthController extends Controller
         if (Auth::check()) {
             return $this->redirectBasedOnRole(Auth::user());
         }
-        
+
         return view('auth.register');
     }
 
@@ -96,13 +95,12 @@ class AuthController extends Controller
             ]);
 
             Auth::login($user);
-            
+
             return response()->json([
-                'status' => 'success', 
+                'status' => 'success',
                 'message' => 'Registrasi berhasil',
                 'redirect_url' => '/'
             ]);
-            
         } catch (ValidationException $e) {
             return response()->json([
                 'status' => 'error',
@@ -111,7 +109,7 @@ class AuthController extends Controller
             ], 422);
         } catch (\Exception $e) {
             return response()->json([
-                'status' => 'error', 
+                'status' => 'error',
                 'message' => 'Terjadi kesalahan saat registrasi'
             ], 500);
         }
@@ -122,7 +120,7 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        
+
         return redirect('/login')->with('status', 'Anda telah berhasil logout');
     }
 
@@ -132,12 +130,12 @@ class AuthController extends Controller
     private function redirectBasedOnRole($user)
     {
         $role = strtolower($user->role ?? $user->level);
-        
+
         switch ($role) {
             case 'admin':
                 return redirect()->route('admin.dashboard');
             case 'pembeli':
-                return redirect()->route('Landingpage.index');
+                return redirect()->route('frontend.home');
             default:
                 return redirect('/');
         }
@@ -156,12 +154,12 @@ class AuthController extends Controller
 
         // Default redirect based on role
         $role = strtolower($user->role ?? $user->level);
-        
+
         switch ($role) {
             case 'admin':
                 return route('admin.dashboard');
             case 'pembeli':
-                return route('Landingpage.index');
+                return route('frontend.home');
             default:
                 return '/';
         }

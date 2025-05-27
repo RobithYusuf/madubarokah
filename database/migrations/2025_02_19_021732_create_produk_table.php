@@ -18,6 +18,7 @@ return new class extends Migration
             $table->decimal('harga', 10, 2);
             $table->integer('stok');
             $table->text('deskripsi')->nullable();
+            $table->integer('berat')->default(500)->comment('Berat dalam gram');
             $table->string('gambar')->nullable();
             $table->timestamps();
         });

@@ -66,99 +66,80 @@
             @endif
 
             <!-- Tripay API Info -->
-            <div class="card border-left-info mb-4">
-                <div class="card-body">
-                    <h5 class="card-title text-info mb-3">
-                        <i class="fas fa-info-circle"></i> Informasi Layanan Tripay
-                    </h5>
-
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <h6 class="font-weight-bold">Konfigurasi API:</h6>
-                                <ul class="list-unstyled mb-0">
-                                    <li><i class="fas fa-check text-success me-2"></i>Merchant Code: <code>{{ config('tripay.merchant_code') }}</code></li>
-                                    <li><i class="fas fa-check text-success me-2"></i>API Mode: <code>{{ strpos(config('tripay.base_url'), 'sandbox') !== false ? 'Sandbox (Testing)' : 'Production' }}</code></li>
-                                </ul>
-                            </div>
-
-                            <div class="mb-3">
-                                <h6 class="font-weight-bold">Layanan Yang Didukung:</h6>
-                                <ul class="list-unstyled mb-0">
-                                    <li><i class="fas fa-check text-success me-2"></i>Virtual Account</li>
-                                    <li><i class="fas fa-check text-success me-2"></i>E-Wallet</li>
-                                    <li><i class="fas fa-check text-success me-2"></i>Convenience Store</li>
-                                    <li><i class="fas fa-check text-success me-2"></i>QRIS</li>
-                                </ul>
-                            </div>
+            <!-- Info Card -->
+            <div class="card shadow mb-4">
+                <div class="card-body py-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="card-title text-info mb-0">
+                                <i class="fas fa-info-circle"></i> Metode Pembayaran
+                            </h6>
                         </div>
-
-                        <div class="col-md-6">
-                            <h6 class="font-weight-bold">Sinkronisasi Payment Channel:</h6>
-                            <p class="mb-3">Sinkronisasi payment channel dari Tripay API untuk memastikan data payment channel selalu update.</p>
-                            <form action="{{ route('admin.payment.sync') }}" method="POST" class="d-inline">
-                                @csrf
-                                <button type="submit" class="btn btn-info" onclick="return confirm('Proses sinkronisasi akan memperbarui data payment channel. Lanjutkan?')">
-                                    <i class="fas fa-sync-alt"></i> Sinkronkan Payment Channel
-                                </button>
-                            </form>
-                        </div>
+                        <button type="button" id="syncButton" class="btn btn-info btn-sm">
+                            <i class="fas fa-sync-alt"></i> Sinkron Metode Pembayaran
+                        </button>
                     </div>
                 </div>
             </div>
 
             <!-- Payment Channel List -->
             @foreach($paymentChannels as $group => $channels)
-            <div class="card mb-4">
-                <div class="card-header py-3">
-                    <h5 class="m-0 font-weight-bold text-primary">
+            <div class="card mb-3">
+                <div class="card-header py-2">
+                    <h6 class="m-0 font-weight-bold text-primary">
                         <i class="fas fa-{{ $group == 'Virtual Account' ? 'university' : ($group == 'E-Wallet' ? 'wallet' : ($group == 'Convenience Store' ? 'store' : 'qrcode')) }}"></i>
                         {{ $group }}
-                    </h5>
+                    </h6>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-bordered" width="100%" cellspacing="0">
-                            <thead>
+                        <table class="table table-sm table-hover mb-0" width="100%" cellspacing="0">
+                            <thead class="thead-light">
                                 <tr>
-                                    <th width="5%">No</th>
-                                    <th width="15%">Kode</th>
+                                    <th width="5%" class="text-center">No</th>
+                                    <th width="10%">Kode</th>
                                     <th width="25%">Nama</th>
-                                    <th width="15%">Fee</th>
-                                    <th width="15%">Status</th>
-                                    <th width="25%">Aksi</th>
+                                    <th width="25%">Fee</th>
+                                    <th width="10%" class="text-center">Status</th>
+                                    <th width="25%" class="text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 @foreach($channels as $index => $channel)
                                 <tr>
-                                    <td>{{ $index + 1 }}</td>
+                                    <td class="text-center">{{ $index + 1 }}</td>
                                     <td><code>{{ $channel->code }}</code></td>
                                     <td>
                                         <div class="d-flex align-items-center">
                                             @if($channel->icon_url)
-                                                <img src="{{ $channel->icon_url }}" alt="{{ $channel->name }}" 
-                                                     class="me-2" style="width: 32px; height: 32px; object-fit: contain;">
+                                            <img src="{{ $channel->icon_url }}" alt="{{ $channel->name }}"
+                                                class="me-2" style="width: 24px; height: 24px; object-fit: contain;">
                                             @else
-                                                <div class="bg-secondary rounded d-flex align-items-center justify-content-center me-2" 
-                                                     style="width: 32px; height: 32px; min-width: 32px;">
-                                                    <i class="fas fa-credit-card text-white" style="font-size: 12px;"></i>
-                                                </div>
+                                            <div class="bg-secondary rounded d-flex align-items-center justify-content-center me-2"
+                                                style="width: 24px; height: 24px; min-width: 24px;">
+                                                <i class="fas fa-credit-card text-white" style="font-size: 10px;"></i>
+                                            </div>
                                             @endif
                                             <span>{{ $channel->name }}</span>
                                         </div>
                                     </td>
                                     <td>
-                                        <span class="d-block">Flat: Rp {{ number_format($channel->fee_flat, 0, ',', '.') }}</span>
-                                        <span class="d-block">Persen: {{ $channel->fee_percent }}%</span>
-                                        @if($channel->minimum_fee > 0)
-                                        <span class="d-block small text-muted">Min: Rp {{ number_format($channel->minimum_fee, 0, ',', '.') }}</span>
-                                        @endif
-                                        @if($channel->maximum_fee > 0)
-                                        <span class="d-block small text-muted">Max: Rp {{ number_format($channel->maximum_fee, 0, ',', '.') }}</span>
-                                        @endif
+                                        <div class="small">
+                                            <span class="d-inline-block me-2">Flat: Rp {{ number_format($channel->fee_flat, 0, ',', '.') }}</span>
+                                            <span class="d-inline-block">Persen: {{ $channel->fee_percent }}%</span>
+                                            @if($channel->minimum_fee > 0 || $channel->maximum_fee > 0)
+                                            <div class="text-muted">
+                                                @if($channel->minimum_fee > 0)
+                                                <span class="d-inline-block me-2">Min: Rp {{ number_format($channel->minimum_fee, 0, ',', '.') }}</span>
+                                                @endif
+                                                @if($channel->maximum_fee > 0)
+                                                <span class="d-inline-block">Max: Rp {{ number_format($channel->maximum_fee, 0, ',', '.') }}</span>
+                                                @endif
+                                            </div>
+                                            @endif
+                                        </div>
                                     </td>
-                                    <td>
+                                    <td class="text-center">
                                         <div class="custom-control custom-switch">
                                             <input type="checkbox" class="custom-control-input channel-status-toggle"
                                                 id="status_{{ $channel->id }}"
@@ -169,18 +150,18 @@
                                             </label>
                                         </div>
                                     </td>
-                                    <td>
+                                    <td class="text-center">
                                         <div class="btn-group" role="group">
-                                            <button type="button" class="btn btn-sm btn-primary edit-fee-btn"
+                                            <button type="button" class="btn btn-sm btn-primary edit-fee-btn" title="Edit Fee"
                                                 data-id="{{ $channel->id }}"
                                                 data-name="{{ $channel->name }}"
                                                 data-fee-flat="{{ $channel->fee_flat }}"
                                                 data-fee-percent="{{ $channel->fee_percent }}"
                                                 data-min-fee="{{ $channel->minimum_fee }}"
                                                 data-max-fee="{{ $channel->maximum_fee }}">
-                                                <i class="fas fa-edit"></i> Edit Fee
+                                                <i class="fas fa-edit"></i>
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-info"
+                                            <button type="button" class="btn btn-sm btn-info" title="Kalkulator Fee"
                                                 data-bs-toggle="modal"
                                                 data-bs-target="#feeCalculatorModal"
                                                 data-id="{{ $channel->id }}"
@@ -189,12 +170,12 @@
                                                 data-fee-percent="{{ $channel->fee_percent }}"
                                                 data-min-fee="{{ $channel->minimum_fee }}"
                                                 data-max-fee="{{ $channel->maximum_fee }}">
-                                                <i class="fas fa-calculator"></i> Kalkulator
+                                                <i class="fas fa-calculator"></i>
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-danger delete-channel-btn"
+                                            <button type="button" class="btn btn-sm btn-danger delete-channel-btn" title="Hapus"
                                                 data-id="{{ $channel->id }}"
                                                 data-name="{{ $channel->name }}">
-                                                <i class="fas fa-trash"></i> Hapus
+                                                <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
                                     </td>
@@ -308,6 +289,72 @@
 @push('scripts')
 <script>
     $(document).ready(function() {
+        // Sinkronisasi Payment Channel dengan SweetAlert
+        $('#syncButton').click(function() {
+            Swal.fire({
+                title: 'Sinkronisasi Metode Pembayaran?',
+                text: 'Proses sinkronisasi akan memperbarui data metode pembayaran dari Tripay API. Lanjutkan?',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Ya, Sinkronkan!',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Tampilkan loading state
+                    Swal.fire({
+                        title: 'Sedang Sinkronisasi...',
+                        html: 'Mohon tunggu, sedang mengambil data dari Tripay API',
+                        allowOutsideClick: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        }
+                    });
+
+                    // Kirim request AJAX
+                    $.ajax({
+                        url: '{{ route("admin.payment.sync") }}',
+                        type: 'POST',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Berhasil!',
+                                    text: response.message,
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Gagal!',
+                                    text: response.message
+                                });
+                            }
+                        },
+                        error: function(xhr) {
+                            let errorMessage = 'Terjadi kesalahan saat sinkronisasi';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            }
+
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error!',
+                                text: errorMessage
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
         // Toggle status payment channel
         $('.channel-status-toggle').change(function() {
             const id = $(this).data('id');

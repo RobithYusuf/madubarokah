@@ -51,7 +51,7 @@ class CourierSeeder extends Seeder
             [
                 'code' => 'jnt',
                 'name' => 'J&T Express',
-                'is_active' => true,
+                'is_active' => false,
                 'services' => json_encode([
                     'REG' => 'Reguler',
                     'YES' => 'Yakin Esok Sampai'
@@ -62,7 +62,7 @@ class CourierSeeder extends Seeder
             [
                 'code' => 'sicepat',
                 'name' => 'SiCepat Ekspres',
-                'is_active' => true,
+                'is_active' => false,
                 'services' => json_encode([
                     'REG' => 'Sigesit',
                     'BEST' => 'Sicepat Best'
@@ -73,7 +73,7 @@ class CourierSeeder extends Seeder
             [
                 'code' => 'anteraja',
                 'name' => 'AnterAja',
-                'is_active' => true,
+                'is_active' => false,
                 'services' => json_encode([
                     'REG' => 'Reguler',
                     'SAME_DAY' => 'Same Day'

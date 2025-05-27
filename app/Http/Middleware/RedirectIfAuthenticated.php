@@ -25,13 +25,13 @@ class RedirectIfAuthenticated
             if (Auth::guard($guard)->check()) {
                 $user = Auth::guard($guard)->user();
                 $role = strtolower($user->role ?? $user->level ?? '');
-                
+
                 // Redirect berdasarkan role
                 switch ($role) {
                     case 'admin':
                         return redirect()->route('admin.dashboard');
                     case 'pembeli':
-                        return redirect()->route('Landingpage.index');
+                        return redirect()->route('frontend.home');
                     default:
                         return redirect('/');
                 }

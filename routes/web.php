@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\Route;
 // ============================================================================
 // PUBLIC ROUTES
 // ============================================================================
-Route::get('/', [LandingpageController::class, 'index'])->name('Landingpage.index');
+Route::get('/', [LandingpageController::class, 'index'])->name('frontend.home');
 
 // ============================================================================
 // AUTHENTICATION ROUTES
@@ -40,9 +40,8 @@ Route::middleware('auth')->group(function () {
 // ============================================================================
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
     // Dashboard
-    Route::get('/dashboard', function () {
-        return view('admin.dashboard.index');
-    })->name('dashboard');
+    Route::get('/dashboard', [\App\Http\Controllers\Admin\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/dashboard/chart-data', [\App\Http\Controllers\Admin\DashboardController::class, 'getChartData'])->name('dashboard.chart-data');
 
     // Kategori Management
     Route::prefix('kategori')->name('kategori.')->group(function () {
@@ -100,6 +99,12 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         // Legacy route - keep for backward compatibility
         Route::post('/tripay/sync-channels', [CartController::class, 'syncTripayChannels'])->name('tripay.sync-channels');
     });
+
+    // Di dalam admin middleware group
+    Route::prefix('settings')->name('settings.')->group(function () {
+        Route::get('/shop', [\App\Http\Controllers\Admin\ShopSettingsController::class, 'index'])->name('shop');
+        Route::post('/shop', [\App\Http\Controllers\Admin\ShopSettingsController::class, 'update'])->name('shop.update');
+    });
 });
 
 
@@ -124,7 +129,17 @@ Route::middleware(['auth', 'role:pembeli'])->name('frontend.')->group(function (
     Route::prefix('checkout')->name('checkout.')->group(function () {
         Route::get('/', [CartController::class, 'checkout'])->name('index');
         Route::post('/process', [CartController::class, 'processCheckout'])->name('process');
+        Route::get('/confirmation/{transaksi}', [CartController::class, 'confirmation'])->name('confirmation');
     });
+
+    // Transaction History
+    Route::prefix('history')->name('history.')->group(function () {
+        Route::get('/', [CartController::class, 'history'])->name('index');
+        Route::get('/{transaksi}', [CartController::class, 'historyDetail'])->name('detail');
+    });
+
+    // Shipping calculation for frontend
+    Route::post('/shipping/calculate', [ShippingController::class, 'calculateCost'])->name('shipping.calculate');
 });
 
 // ============================================================================

@@ -322,14 +322,31 @@ class ShippingController extends Controller
 
     public function index()
     {
+        \Log::info('Loading shipping management page');
+        
         $provinces = ShippingArea::provinces()->get();
         $totalCities = ShippingArea::count();
         $couriers = Courier::get();
         $apiType = config('services.rajaongkir.type', 'starter');
         
+        // Check API configuration
+        $apiKey = config('services.rajaongkir.api_key');
+        $apiConfigured = !empty($apiKey);
+        
         // Check if shipping data is available
         $needsSync = $totalCities == 0;
         $isDataLimited = $totalCities < 100; // Assume full data should have more than 100 cities
+        
+        \Log::info('Shipping page data', [
+            'provinces_count' => $provinces->count(),
+            'total_cities' => $totalCities,
+            'couriers_count' => $couriers->count(),
+            'api_configured' => $apiConfigured,
+            'api_key_length' => $apiConfigured ? strlen($apiKey) : 0,
+            'api_type' => $apiType,
+            'needs_sync' => $needsSync,
+            'is_data_limited' => $isDataLimited
+        ]);
         
         return view('admin.shipping.index', compact(
             'provinces', 
@@ -337,22 +354,66 @@ class ShippingController extends Controller
             'couriers', 
             'apiType',
             'needsSync',
-            'isDataLimited'
+            'isDataLimited',
+            'apiConfigured'
         ));
     }
 
     public function syncAreas(Request $request)
     {
         try {
+            \Log::info('=== Sync Areas Request Started ===', [
+                'user_id' => auth()->id(),
+                'is_ajax' => $request->expectsJson()
+            ]);
+            
+            // Validate API configuration
+            $apiKey = config('services.rajaongkir.api_key');
+            if (empty($apiKey)) {
+                $errorMsg = 'API key RajaOngkir tidak dikonfigurasi. Periksa RAJAONGKIR_API_KEY di file .env';
+                \Log::error('Sync failed: No API key', ['message' => $errorMsg]);
+                
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $errorMsg,
+                        'debug' => [
+                            'api_key_configured' => false,
+                            'config_check' => 'RAJAONGKIR_API_KEY harus diisi di file .env'
+                        ]
+                    ], 400);
+                }
+                
+                return redirect()->route('admin.shipping.index')
+                    ->with('error', $errorMsg);
+            }
+            
+            \Log::info('Starting RajaOngkir sync process', [
+                'api_key_length' => strlen($apiKey),
+                'api_type' => config('services.rajaongkir.type', 'starter')
+            ]);
+            
             $result = $this->rajaOngkirService->syncProvinces();
             
+            \Log::info('Sync process completed', [
+                'success' => $result['success'],
+                'message' => $result['message'],
+                'synced' => $result['synced'] ?? 0,
+                'errors' => $result['errors'] ?? 0
+            ]);
+            
             if ($request->expectsJson()) {
-                // Return JSON response for AJAX requests
+                // Return detailed JSON response for AJAX requests
                 return response()->json([
                     'success' => $result['success'],
                     'message' => $result['message'] ?? 'Sync completed',
-                    'data' => $result
-                ]);
+                    'data' => [
+                        'synced' => $result['synced'] ?? 0,
+                        'errors' => $result['errors'] ?? 0,
+                        'provinces_processed' => $result['provinces_processed'] ?? 0
+                    ],
+                    'debug' => $result['debug'] ?? null
+                ], $result['success'] ? 200 : 500);
             }
             
             // Fallback for form submissions
@@ -363,18 +424,31 @@ class ShippingController extends Controller
                 return redirect()->route('admin.shipping.index')
                     ->with('error', $result['message']);
             }
+            
         } catch (\Exception $e) {
-            \Log::error('Sync areas error: ' . $e->getMessage());
+            \Log::error('Critical exception in syncAreas', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            $errorMsg = 'Terjadi kesalahan sistem: ' . $e->getMessage();
             
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Sync failed: ' . $e->getMessage()
+                    'message' => $errorMsg,
+                    'debug' => [
+                        'exception' => $e->getMessage(),
+                        'file' => $e->getFile(),
+                        'line' => $e->getLine()
+                    ]
                 ], 500);
             }
             
             return redirect()->route('admin.shipping.index')
-                ->with('error', 'Sync failed: ' . $e->getMessage());
+                ->with('error', $errorMsg);
         }
     }
 

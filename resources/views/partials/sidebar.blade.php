@@ -2,11 +2,15 @@
 <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion shadow-sm" id="accordionSidebar">
 
     <!-- Sidebar - Brand -->
-    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{{ route('Landingpage.index') }}">
+    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{{ route('frontend.home') }}">
         <div class="sidebar-brand-icon rotate-n-15">
+            @if(shop_setting('logo'))
+            <img src="{{ asset('storage/' . shop_setting('logo')) }}" alt="{{ shop_setting('name') }}" style="height: 36px; width: auto;">
+            @else
             <i class="fas fa-spa"></i>
+            @endif
         </div>
-        <div class="sidebar-brand-text mx-3">Madu<sup>Barokah</sup></div>
+        <div class="sidebar-brand-text mx-3">{{ shop_setting('name', 'Madu') }}</div>
     </a>
 
     <!-- Divider -->
@@ -43,7 +47,21 @@
             <span>Produk</span>
         </a>
     </li>
+    <!-- Nav Item - Pengiriman -->
+    <li class="nav-item {{ request()->is('admin/shipping*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('admin.shipping.index') }}">
+            <i class="fas fa-fw fa-shipping-fast"></i>
+            <span>Pengiriman</span>
+        </a>
+    </li>
 
+    <!-- Nav Item - Payment Channel -->
+    <li class="nav-item {{ request()->is('admin/payment*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('admin.payment.index') }}">
+            <i class="fas fa-fw fa-credit-card"></i>
+            <span>Payment Channel</span>
+        </a>
+    </li>
     <!-- Divider -->
     <hr class="sidebar-divider">
 
@@ -60,21 +78,7 @@
         </a>
     </li>
 
-    <!-- Nav Item - Pengiriman -->
-    <li class="nav-item {{ request()->is('admin/shipping*') ? 'active' : '' }}">
-        <a class="nav-link" href="{{ route('admin.shipping.index') }}">
-            <i class="fas fa-fw fa-shipping-fast"></i>
-            <span>Pengiriman</span>
-        </a>
-    </li>
 
-    <!-- Nav Item - Payment Channel -->
-    <li class="nav-item {{ request()->is('admin/payment*') ? 'active' : '' }}">
-        <a class="nav-link" href="{{ route('admin.payment.index') }}">
-            <i class="fas fa-fw fa-credit-card"></i>
-            <span>Payment Channel</span>
-        </a>
-    </li>
 
     <!-- Nav Item - Laporan Penjualan -->
     <li class="nav-item {{ request()->is('admin/laporan*') ? 'active' : '' }}">
@@ -111,8 +115,9 @@
     </li>
 
     <!-- Nav Item - Pengaturan Toko -->
-    <li class="nav-item {{ request()->is('admin/pengaturan*') ? 'active' : '' }}">
-        <a class="nav-link" href="#" onclick="alert('Fitur sedang dalam pengembangan')">
+    <!-- Nav Item - Pengaturan Toko -->
+    <li class="nav-item {{ request()->is('admin/settings*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('admin.settings.shop') }}">
             <i class="fas fa-fw fa-cogs"></i>
             <span>Pengaturan Toko</span>
         </a>

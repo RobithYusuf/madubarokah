@@ -4,6 +4,12 @@
 
 @section('content')
 <div id="content">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">Manajemen Produk</h1>
+            <p class="text-gray-500 mt-2 mb-0">Kelola semua produk madu dan suplemen yang dijual di toko Anda</p>
+        </div>
+    </div>
     <div class="card shadow mb-4">
         <div class="card-header py-3">
             <h4 class="m-0 font-weight-bold text-primary">Manajemen Produk</h4>
@@ -13,12 +19,30 @@
                 <button class="btn btn-success btn-sm mb-3" data-bs-toggle="modal" data-bs-target="#modalTambah"><i
                         class="fa fa-plus me-1"></i> Tambah produk</button>
                 @if (session('success'))
-                <div id="alertSuccess" class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
-                    <button type="button" class="close" data-bs-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: '{{ session('success') }}',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                    });
+                </script>
+                @endif
+                @if (session('error'))
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal!',
+                            text: '{{ session('error') }}',
+                            showConfirmButton: true
+                        });
+                    });
+                </script>
                 @endif
                 <div class="dropdown-divider"></div>
                 <table class="table table-bordered table-striped table-hover" width="100%" cellspacing="0"
@@ -32,6 +56,7 @@
                             <th>Deskripsi</th>
                             <th>Harga</th>
                             <th>Stok</th>
+                            <th>Berat (gr)</th>
                             <th>Aksi</th>
                         </tr>
                     </thead>
@@ -57,16 +82,20 @@
                             <td>{{ $produk->deskripsi }}</td>
                             <td>{{ 'Rp ' . number_format($produk->harga, 0, ',', '.') }}</td>
                             <td>{{ $produk->stok }}</td>
+                            <td>{{ $produk->berat ?? 500 }} gr</td>
                             <td>
                                 <div class="btn-group btn-group-sm" role="group">
                                     <button class="btn btn-warning" data-bs-toggle="modal"
                                             data-bs-target="#modalEdit{{ $produk->id }}" title="Edit">
                                         <i class="fa fa-edit"></i>
                                     </button>
-                                    <button class="btn btn-danger" data-bs-toggle="modal"
-                                            data-bs-target="#modalHapus{{ $produk->id }}" title="Hapus">
+                                    <button class="btn btn-danger" onclick="confirmDelete({{ $produk->id }}, '{{ $produk->nama_produk }}')" title="Hapus">
                                         <i class="fa fa-trash"></i>
                                     </button>
+                                    <form id="delete-form-{{ $produk->id }}" action="{{ route('admin.produk.destroy', $produk->id) }}" method="POST" style="display: none;">
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -127,6 +156,13 @@
                                                             required>
                                                     </div>
                                                     <div class="mb-3">
+                                                        <label for="edit_berat" class="form-label">Berat (gram)</label>
+                                                        <input type="number" class="form-control" name="berat"
+                                                            id="edit_berat" min="1"
+                                                            value="{{ old('berat', $produk->berat ?? 500) }}"
+                                                            required>
+                                                    </div>
+                                                    <div class="mb-3">
                                                         <label for="edit_harga" class="form-label">Harga</label>
                                                         <input type="text" class="form-control" name="harga"
                                                             id="edit_harga"
@@ -159,32 +195,7 @@
                             </div>
                         </div>
 
-                        <!-- Modal Hapus produk -->
-                        <div class="modal fade" id="modalHapus{{ $produk->id }}" tabindex="-1"
-                            aria-labelledby="modalHapusLabel" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title" id="modalHapusLabel">Konfirmasi Hapus</h5>
-                                        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                                            <span aria-hidden="true">&times;</span>
-                                        </button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <p>Apakah Anda yakin ingin menghapus produk " {{ $produk->nama_produk }} "
-                                            ini?</p>
-                                    </div>
-                                    <div class="modal-footer justify-content-end">
-                                        <form method="POST" action="{{ route('admin.produk.destroy', $produk->id) }}">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Batal</button>
-                                            <button type="submit" class="btn btn-danger">Hapus</button>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+
                         @endforeach
                     </tbody>
                 </table>
@@ -235,6 +246,11 @@
                                     min="0" value="0" required>
                             </div>
                             <div class="mb-3">
+                                <label for="berat" class="form-label">Berat (gram)</label>
+                                <input type="number" class="form-control" name="berat" id="berat"
+                                    min="1" value="500" required>
+                            </div>
+                            <div class="mb-3">
                                 <label for="harga" class="form-label">Harga</label>
                                 <input type="text" class="form-control" name="harga" id="harga" required
                                     onkeyup="formatRupiah(this)">
@@ -254,6 +270,8 @@
 </div>
 
 @push('scripts')
+<!-- SweetAlert2 CDN -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     $(document).ready(function() {
         $('#tabelproduk').DataTable({
@@ -296,17 +314,23 @@
         }
     }
 
-    // Alert Untuk Berhasil Simpan data
-    setTimeout(function() {
-        var alert = document.getElementById('alertSuccess');
-        alert.style.transition = "opacity 0.5s ease-out";
-        alert.style.opacity = "0"; // Fade out
-
-        setTimeout(() => {
-            var bsAlert = new bootstrap.Alert(alert);
-            bsAlert.close(); // Tutup alert setelah fade-out
-        }, 500); // Tunggu animasi selesai sebelum ditutup
-    }, 3000); // 3 detik sebelum mulai menghilang
+    // Fungsi konfirmasi hapus dengan SweetAlert
+    function confirmDelete(id, nama) {
+        Swal.fire({
+            title: 'Konfirmasi Hapus',
+            text: `Apakah Anda yakin ingin menghapus produk "${nama}"?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('delete-form-' + id).submit();
+            }
+        });
+    }
 </script>
 @endpush
 @endsection

@@ -41,15 +41,37 @@ class PaymentController extends Controller
     /**
      * Sinkronisasi payment channel dari Tripay API
      */
-    public function syncChannels()
+    public function syncChannels(Request $request)
     {
         try {
             $synced = $this->tripayService->syncPaymentChannels();
 
+            // Jika request adalah AJAX, kembalikan response JSON
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Berhasil sinkronisasi {$synced} payment channel dari Tripay",
+                    'data' => [
+                        'synced' => $synced
+                    ]
+                ]);
+            }
+
+            // Jika bukan AJAX, gunakan redirect seperti biasa
             return redirect()->route('admin.payment.index')
                 ->with('success', "Berhasil sinkronisasi {$synced} payment channel dari Tripay");
         } catch (\Exception $e) {
             Log::error('Payment Channel Sync Error: ' . $e->getMessage());
+
+            // Jika request adalah AJAX, kembalikan response JSON
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal sinkronisasi payment channels: ' . $e->getMessage()
+                ], 500);
+            }
+
+            // Jika bukan AJAX, gunakan redirect seperti biasa
             return redirect()->route('admin.payment.index')
                 ->with('error', 'Gagal sinkronisasi payment channels: ' . $e->getMessage());
         }
@@ -111,6 +133,30 @@ class PaymentController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal mengubah fee: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Hapus payment channel
+     */
+    public function destroy($id)
+    {
+        try {
+            $channel = PaymentChannel::findOrFail($id);
+            $channelName = $channel->name;
+            $channel->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => "Payment channel {$channelName} berhasil dihapus"
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Payment Channel Delete Error: ' . $e->getMessage());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menghapus payment channel: ' . $e->getMessage()
             ], 500);
         }
     }
