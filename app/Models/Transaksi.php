@@ -13,14 +13,25 @@ class Transaksi extends Model
 
     protected $fillable = [
         'id_user',
+        'merchant_ref',
         'tanggal_transaksi',
         'total_harga',
         'status',
         'metode_pembayaran',
+        'expired_time',
+        'callback_url',
+        'return_url',
+        'fee_merchant',
+        'fee_customer',
+        'callback_data',
     ];
 
     protected $casts = [
         'tanggal_transaksi' => 'datetime',
+        'expired_time' => 'datetime',
+        'callback_data' => 'array',
+        'fee_merchant' => 'decimal:2',
+        'fee_customer' => 'decimal:2',
     ];
 
     // Relasi ke Detail Transaksi

@@ -1,297 +1,135 @@
-<!DOCTYPE html>
-<html lang="id">
+@extends('layouts.auth')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Toko Madu Barokah - Login</title>
-    <link href="{{ asset('assets/sbadmin/css/sb-admin-2.min.css') }}" rel="stylesheet">
-    <link href="{{ asset('assets/sbadmin/vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet">
-    <style>
-        body,
-        html {
-            height: 100%;
-            margin: 0;
-            overflow: hidden;
-        }
+@section('title', 'Login')
 
-        .background-container {
-            background-image: url('{{ asset('assets/landingpage/images/photo-1473973266408-ed4e27abdd47.jpg') }}');
-            background-size: cover;
-            background-position: center;
-            height: 100vh;
-            width: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-
-        .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.3);
-        }
-
-        .login-container {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 400px;
-            height: 100%;
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 30px;
-            overflow-y: auto;
-            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
-        }
-
-        .card {
-            border: none;
-            background: transparent;
-        }
-
-        .card-header {
-            background-color: #FFA500;
-            color: white;
-            text-align: center;
-            border-radius: 15px 15px 0 0 !important;
-            padding: 20px;
-        }
-
-        .card-header p {
-            text-align: left;
-        }
-
-        .btn-primary {
-            background-color: #FFA500;
-            border-color: #FFA500;
-        }
-
-        .btn-primary:hover {
-            background-color: #FF8C00;
-            border-color: #FF8C00;
-        }
-
-        .btn-primary:focus {
-            background-color: #FFA500;
-            border-color: #FFA500;
-        }
-
-        .btn-primary:visited {
-            background-color: #FFA500;
-            border-color: #FFA500;
-        }
-
-        .btn-primary:active {
-            background-color: #FFA500;
-            border-color: #FFA500;
-        }
-
-        .btn-secondary {
-            background-color: #6c757d;
-            border-color: #6c757d;
-        }
-
-        .btn-secondary:hover {
-            background-color: #5a6268;
-            border-color: #545b62;
-        }
-
-        .btn-secondary:focus {
-            background-color: #6c757d;
-            border-color: #6c757d;
-        }
-
-        .btn-secondary:visited {
-            background-color: #6c757d;
-            border-color: #6c757d;
-        }
-
-        .btn-secondary:active {
-            background-color: #6c757d;
-            border-color: #6c757d;
-        }
-
-        .form-control:focus {
-            border-color: #FFA500;
-            box-shadow: 0 0 0 0.2rem rgba(255, 165, 0, 0.25);
-        }
-
-        .honey-icon {
-            font-size: 48px;
-            margin-bottom: 10px;
-        }
-
-        .brand-name {
-            position: absolute;
-            top: 30px;
-            left: 50px;
-            color: white;
-            font-size: 2.5rem;
-            font-weight: bold;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-        }
-    </style>
-</head>
-
-<body>
-    <div class="background-container">
-        <div class="overlay"></div>
-        <div class="brand-name">Toko Madu Barokah</div>
+@section('content')
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-honey-pot honey-icon"></i>
+        <h3>MASUK</h3>
+        <p>Silahkan masuk ke aplikasi menggunakan akun anda.</p>
     </div>
-    <div class="login-container">
-        <div class="card">
-            <div class="card-header">
-                <i class="fas fa-honey-pot honey-icon"></i>
-                <h3 id="formTitle">MASUK</h3>
-                <p id="formTitleP">Silahkan masuk ke aplikasi menggunakan akun anda.</p>
+    <div class="card-body">
+        <form id="loginForm" class="user">
+            @csrf
+            <div class="form-group">
+                <label for="username" class="form-label">
+                    <i class="fas fa-user"></i> Username
+                </label>
+                <input type="text"
+                    class="form-control form-control-user @error('username') is-invalid @enderror"
+                    id="username" name="username" placeholder="Masukkan username" required>
+                @error('username')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @else
+                    <div class="invalid-feedback">Username wajib diisi.</div>
+                @enderror
             </div>
-            <div class="card-body">
-                <form id="loginForm" class="user">
-                    @csrf
-                    <div class="form-group">
-                        <label for="username" class="form-label"><i class="fas fa-user"></i> Username</label>
-                        <input type="text"
-                            class="form-control form-control-user @error('username') is-invalid @enderror"
-                            id="username" name="username" placeholder="Masukkan username" required>
-                        @error('username')
-                            <div class="invalid-feedback">
-                                {{ $message }}
-                            </div>
-                        @else
-                            <div class="invalid-feedback">
-                                Username wajib diisi.
-                            </div>
-                        @enderror
+            
+            <div class="form-group">
+                <label for="password" class="form-label">
+                    <i class="fas fa-lock"></i> Password
+                </label>
+                <div class="input-group">
+                    <input type="password"
+                        class="form-control form-control-user @error('password') is-invalid @enderror"
+                        id="password" name="password" placeholder="Masukkan password" required>
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <label for="password" class="form-label"><i class="fas fa-lock"></i> Password</label>
-                        <div class="input-group">
-                            <input type="password"
-                                class="form-control form-control-user @error('password') is-invalid @enderror"
-                                id="password" name="password" placeholder="Masukkan password" required>
-                            <div class="input-group-append">
-                                <button class="btn btn-outline-secondary" type="button" id="icon_click">
-                                    <i class="fas fa-eye"></i>
-                                </button>
-                            </div>
-                            @error('password')
-                                <div class="invalid-feedback">
-                                    {{ $message }}
-                                </div>
-                            @else
-                                <div class="invalid-feedback">
-                                    Password wajib diisi.
-                                </div>
-                            @enderror
-                        </div>
-                    </div>
-                    <div class="form-group" id="rememberMeContainer">
-                        <div class="custom-control custom-checkbox small">
-                            <input type="checkbox" class="custom-control-input" id="rememberMe" name="remember">
-                            <label class="custom-control-label" for="rememberMe">Ingat saya</label>
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <button type="submit" class="btn btn-primary btn-user btn-block flex-grow-1 m-1"
-                            id="submitBtn"><span id="submitBtnText">Masuk</span></button>
-                        <a href="{{ route('register') }}" class="btn btn-secondary btn-user btn-block flex-grow-1 m-1"
-                            id="switchBtn"><span id="switchBtnText">Daftar</span></a>
-                    </div>
-                </form>
+                    @error('password')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @else
+                        <div class="invalid-feedback">Password wajib diisi.</div>
+                    @enderror
+                </div>
             </div>
-            <div class="card-footer text-center mt-3" id="forgotPassword">
-                <a href="#" class="small">Lupa password?</a>
+            
+            <div class="form-group">
+                <div class="custom-control custom-checkbox small">
+                    <input type="checkbox" class="custom-control-input" id="rememberMe" name="remember">
+                    <label class="custom-control-label" for="rememberMe">Ingat saya</label>
+                </div>
             </div>
-        </div>
+            
+            <div class="d-flex justify-content-between">
+                <button type="submit" class="btn btn-primary btn-user btn-block flex-grow-1 m-1" id="submitBtn">
+                    <span id="submitBtnText">
+                        <i class="fas fa-sign-in-alt"></i> Masuk
+                    </span>
+                </button>
+                <a href="{{ route('register') }}" class="btn btn-secondary btn-user btn-block flex-grow-1 m-1">
+                    <i class="fas fa-user-plus"></i> Daftar
+                </a>
+            </div>
+        </form>
     </div>
-    {{-- Library SBADMIN --}}
-    <script src="{{ asset('assets/sbadmin/vendor/jquery/jquery.min.js') }}"></script>
-    <script src="{{ asset('assets/sbadmin/vendor/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ asset('assets/sbadmin/js/sb-admin-2.min.js') }}"></script>
-    {{-- Sweet Alert --}}
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    {{-- Custom JS --}}
-    <script>
-        $(document).ready(function() {
-            // Show hide password
-            $("#icon_click").on('click', function() {
-                const icon = $(this).find('i');
-                icon.toggleClass("fa-eye fa-eye-slash");
-                const type = icon.hasClass("fa-eye-slash") ? "text" : "password";
-                $("#password").attr("type", type);
-            });
+    <div class="card-footer text-center mt-3">
+        <a href="#" class="small text-muted">Lupa password?</a>
+    </div>
+</div>
+@endsection
 
-            // Proses Login
-            $('#loginForm').on('submit', function(e) {
-                e.preventDefault();
+@push('scripts')
+<script>
+$(document).ready(function() {
+    // Toggle password visibility
+    togglePasswordVisibility('#togglePassword', '#password');
+    
+    // Login form submission
+    $('#loginForm').on('submit', function(e) {
+        e.preventDefault();
+        
+        const $submitBtn = $('#submitBtn');
+        const $submitBtnText = $('#submitBtnText');
+        
+        // Disable submit button
+        $submitBtn.prop('disabled', true);
+        $submitBtnText.html('<i class="fas fa-spinner fa-spin"></i> Memproses...');
+        
+        $.ajax({
+            url: '{{ route("login") }}',
+            method: 'POST',
+            data: $(this).serialize(),
+            dataType: 'json',
+            success: function(response) {
+                if (response.status === 'success') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Login Berhasil!',
+                        text: response.message,
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(function() {
+                        window.location.href = response.redirect_url || '/';
+                    });
+                } else {
+                    showNotification(response.message, 'error', 'Login Gagal');
+                }
+            },
+            error: function(xhr) {
+                let errorMessage = 'Terjadi kesalahan saat login.';
                 
-                // Disable submit button dan ubah text
-                const $submitBtn = $('#submitBtn');
-                const $submitBtnText = $('#submitBtnText');
-                $submitBtn.prop('disabled', true);
-                $submitBtnText.text('Memproses...');
-                
-                $.ajax({
-                    url: '{{ route("login") }}',
-                    method: 'POST',
-                    data: $(this).serialize(),
-                    dataType: 'json',
-                    success: function(response) {
-                        if (response.status === 'success') {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Berhasil!',
-                                text: response.message,
-                                showConfirmButton: false,
-                                timer: 1500
-                            }).then(function() {
-                                // Redirect menggunakan URL dari server
-                                if (response.redirect_url) {
-                                    window.location.href = response.redirect_url;
-                                } else {
-                                    // Fallback redirect jika tidak ada redirect_url
-                                    window.location.href = '/';
-                                }
-                            });
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Login Gagal',
-                                text: response.message
-                            });
-                        }
-                    },
-                    error: function(xhr) {
-                        let errorMessage = 'Terjadi kesalahan saat login.';
-                        
-                        if (xhr.responseJSON) {
-                            if (xhr.responseJSON.message) {
-                                errorMessage = xhr.responseJSON.message;
-                            } else if (xhr.responseJSON.errors) {
-                                // Handle validation errors
-                                const errors = Object.values(xhr.responseJSON.errors).flat();
-                                errorMessage = errors.join(', ');
-                            }
-                        }
-                        
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error!',
-                            text: errorMessage
-                        });
-                    },
-                    complete: function() {
-                        // Re-enable submit button
-                        $submitBtn.prop('disabled', false);
-                        $submitBtnText.text('Masuk');
+                if (xhr.responseJSON) {
+                    if (xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    } else if (xhr.responseJSON.errors) {
+                        const errors = Object.values(xhr.responseJSON.errors).flat();
+                        errorMessage = errors.join(', ');
                     }
-                });
-            });
+                }
+                
+                showNotification(errorMessage, 'error', 'Login Gagal');
+            },
+            complete: function() {
+                // Re-enable submit button
+                $submitBtn.prop('disabled', false);
+                $submitBtnText.html('<i class="fas fa-sign-in-alt"></i> Masuk');
+            }
         });
-    </script>
-</body>
-
-</html>
+    });
+});
+</script>
+@endpush

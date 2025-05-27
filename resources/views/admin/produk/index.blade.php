@@ -42,7 +42,7 @@
                             <td>
                                 @if ($produk->gambar)
                                 <img src="{{ asset('storage/' . $produk->gambar) }}"
-                                    alt="{{ $produk->nama_produk }}" class="img-thumbnail" width="100">
+                                    alt="{{ $produk->nama_produk }}" class="img-thumbnail" width="50">
                                 @else
                                 <span>Tidak ada gambar</span>
                                 @endif
@@ -58,17 +58,16 @@
                             <td>{{ 'Rp ' . number_format($produk->harga, 0, ',', '.') }}</td>
                             <td>{{ $produk->stok }}</td>
                             <td>
-                                <!-- Tombol Edit -->
-                                <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
-                                    data-bs-target="#modalEdit{{ $produk->id }}">
-                                    <i class="fa fa-edit me-1"></i> Edit
-                                </button>
-
-                                <!-- Tombol Hapus -->
-                                <button class="btn btn-danger btn-sm" data-bs-toggle="modal"
-                                    data-bs-target="#modalHapus{{ $produk->id }}">
-                                    <i class="fa fa-trash me-1"></i> Hapus
-                                </button>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button class="btn btn-warning" data-bs-toggle="modal"
+                                            data-bs-target="#modalEdit{{ $produk->id }}" title="Edit">
+                                        <i class="fa fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-danger" data-bs-toggle="modal"
+                                            data-bs-target="#modalHapus{{ $produk->id }}" title="Hapus">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
 

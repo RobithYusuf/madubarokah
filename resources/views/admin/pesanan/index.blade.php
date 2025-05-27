@@ -19,14 +19,18 @@
         @if (session('success'))
         <div id="alertSuccess" class="alert alert-success alert-dismissible fade show" role="alert">
             {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="close" data-bs-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
         </div>
         @endif
         
         @if (session('error'))
         <div id="alertError" class="alert alert-danger alert-dismissible fade show" role="alert">
             {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            <button type="button" class="close" data-bs-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
         </div>
         @endif
         
@@ -106,7 +110,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Detail Pesanan #{{ str_pad($pesanan->id, 5, '0', STR_PAD_LEFT) }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <div class="row">
@@ -187,7 +193,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Update Status Pesanan</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <form action="{{ route('admin.pesanan.updateStatus', $pesanan->id) }}" method="POST">
                 @csrf
@@ -219,7 +227,9 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Konfirmasi Hapus</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <p>Apakah Anda yakin ingin menghapus pesanan #{{ str_pad($pesanan->id, 5, '0', STR_PAD_LEFT) }} ini?</p>

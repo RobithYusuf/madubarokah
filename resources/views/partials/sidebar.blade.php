@@ -60,6 +60,22 @@
         </a>
     </li>
 
+    <!-- Nav Item - Pengiriman -->
+    <li class="nav-item {{ request()->is('admin/shipping*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('admin.shipping.index') }}">
+            <i class="fas fa-fw fa-shipping-fast"></i>
+            <span>Pengiriman</span>
+        </a>
+    </li>
+
+    <!-- Nav Item - Payment Channel -->
+    <li class="nav-item {{ request()->is('admin/payment*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('admin.payment.index') }}">
+            <i class="fas fa-fw fa-credit-card"></i>
+            <span>Payment Channel</span>
+        </a>
+    </li>
+
     <!-- Nav Item - Laporan Penjualan -->
     <li class="nav-item {{ request()->is('admin/laporan*') ? 'active' : '' }}">
         <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseLaporan"
@@ -67,8 +83,8 @@
             <i class="fas fa-fw fa-chart-line"></i>
             <span>Laporan</span>
         </a>
-        <div id="collapseLaporan" class="collapse {{ request()->is('admin/laporan*') ? 'show' : '' }}" 
-             aria-labelledby="headingLaporan" data-parent="#accordionSidebar">
+        <div id="collapseLaporan" class="collapse {{ request()->is('admin/laporan*') ? 'show' : '' }}"
+            aria-labelledby="headingLaporan" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
                 <h6 class="collapse-header">Laporan Penjualan:</h6>
                 <a class="collapse-item" href="#" onclick="alert('Fitur sedang dalam pengembangan')">Harian</a>
@@ -87,8 +103,8 @@
     </div>
 
     <!-- Nav Item - Pengguna -->
-    <li class="nav-item {{ request()->is('admin/pengguna*') ? 'active' : '' }}">
-        <a class="nav-link" href="#" onclick="alert('Fitur sedang dalam pengembangan')">
+    <li class="nav-item {{ request()->is('admin/user*') ? 'active' : '' }}">
+        <a class="nav-link" href="{{ route('admin.user.index') }}">
             <i class="fas fa-fw fa-users"></i>
             <span>Kelola Pengguna</span>
         </a>

@@ -18,10 +18,20 @@ class Pembayaran extends Model
         'total_bayar',
         'status',
         'waktu_bayar',
+        'payment_code',
+        'payment_url',
+        'checkout_url',
+        'expired_time',
+        'payment_instructions',
+        'callback_signature',
+        'payment_type',
     ];
 
     protected $casts = [
         'waktu_bayar' => 'datetime',
+        'expired_time' => 'datetime',
+        'payment_instructions' => 'array',
+        'total_bayar' => 'decimal:2',
     ];
 
     // Relasi ke Transaksi

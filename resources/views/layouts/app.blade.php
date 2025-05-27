@@ -66,6 +66,127 @@
             height: auto;
             min-height: 50px;
         }
+        
+        /* DataTables Custom Styling */
+        .dataTables_wrapper {
+            margin-top: 0.5rem;
+        }
+        
+        /* DataTables Header Controls */
+        .dataTables_wrapper .dataTables_length,
+        .dataTables_wrapper .dataTables_filter {
+            margin-bottom: 0.75rem;
+        }
+        
+        .dataTables_wrapper .dataTables_length select {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+            border-radius: 0.25rem;
+            border: 1px solid #d1d3e2;
+            width: auto;
+            min-width: 60px;
+        }
+        
+        .dataTables_wrapper .dataTables_filter input {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+            border-radius: 0.25rem;
+            border: 1px solid #d1d3e2;
+            margin-left: 0.5rem;
+            width: 200px;
+        }
+        
+        .dataTables_wrapper .dataTables_length label,
+        .dataTables_wrapper .dataTables_filter label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #5a5c69;
+            margin-bottom: 0;
+        }
+        
+        /* DataTables Info and Pagination */
+        .dataTables_wrapper .dataTables_info {
+            font-size: 0.8rem;
+            color: #5a5c69;
+            padding-top: 0.5rem;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate {
+            margin-top: 0.5rem;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            padding: 0.25rem 0.5rem;
+            margin: 0 2px;
+            border-radius: 0.25rem;
+            border: 1px solid #d1d3e2;
+            background: #fff;
+            color: #5a5c69;
+            font-size: 0.8rem;
+            text-decoration: none;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background: #eaecf4;
+            border-color: #d1d3e2;
+            color: #000!important;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: #4e73df;
+            border-color: #4e73df;
+            color: white!important;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+            color: #858796;
+            background: #f8f9fc;
+            border-color: #e3e6f0;
+        }
+        
+        /* Table Styling */
+        table.dataTable {
+            font-size: 0.85rem;
+        }
+        
+        table.dataTable thead th {
+            border-bottom: 2px solid #e3e6f0;
+            font-weight: 600;
+            background-color: #f8f9fc;
+            color: #5a5c69;
+            padding: 0.75rem;
+        }
+        
+        table.dataTable tbody td {
+            padding: 0.6rem 0.75rem;
+            vertical-align: middle;
+        }
+        
+        /* Responsive Table */
+        @media (max-width: 768px) {
+            .dataTables_wrapper .dataTables_filter input {
+                width: 150px;
+            }
+            
+            .dataTables_wrapper .dataTables_length,
+            .dataTables_wrapper .dataTables_filter {
+                text-align: center;
+                margin-bottom: 0.5rem;
+            }
+            
+            table.dataTable {
+                font-size: 0.75rem;
+            }
+        }
+        
+        /* DataTables Processing Indicator */
+        .dataTables_processing {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #d1d3e2;
+            border-radius: 0.25rem;
+            color: #5a5c69;
+            font-size: 0.8rem;
+        }
     </style>
 
     @stack('styles') {{-- Untuk tambahan CSS di halaman lain --}}
@@ -125,6 +246,9 @@
     
     <!-- Select2 -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+    
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <!-- Common Functions -->
     <script>

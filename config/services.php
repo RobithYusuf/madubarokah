@@ -31,4 +31,19 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'rajaongkir' => [
+        'api_key' => env('RAJAONGKIR_API_KEY'),
+        'type' => env('RAJAONGKIR_TYPE', 'starter'),
+        'use_fallback' => env('RAJAONGKIR_USE_FALLBACK', false),
+    ],
+
+    'tripay' => [
+        'api_key' => env('TRIPAY_API_KEY'),
+        'private_key' => env('TRIPAY_PRIVATE_KEY'),
+        'merchant_code' => env('TRIPAY_MERCHANT_CODE'),
+        'base_url' => env('TRIPAY_BASE_URL', 'https://tripay.co.id/api-sandbox'),
+        'callback_url' => env('TRIPAY_CALLBACK_URL'),
+        'return_url' => env('TRIPAY_RETURN_URL'),
+    ],
+
 ];

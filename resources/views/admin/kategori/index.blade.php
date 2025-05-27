@@ -52,17 +52,16 @@
                             </td>
                             <td>{{ $kategori->deskripsi }}</td>
                             <td>
-                                <!-- Tombol Edit -->
-                                <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
-                                    data-bs-target="#modalEdit{{ $kategori->id }}">
-                                    <i class="fa fa-edit me-1"></i> Edit
-                                </button>
-
-                                <!-- Tombol Hapus -->
-                                <button class="btn btn-danger btn-sm" data-bs-toggle="modal"
-                                    data-bs-target="#modalHapus{{ $kategori->id }}">
-                                    <i class="fa fa-trash me-1"></i> Hapus
-                                </button>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button class="btn btn-warning" data-bs-toggle="modal"
+                                            data-bs-target="#modalEdit{{ $kategori->id }}" title="Edit">
+                                        <i class="fa fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-danger" data-bs-toggle="modal"
+                                            data-bs-target="#modalHapus{{ $kategori->id }}" title="Hapus">
+                                        <i class="fa fa-trash"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
 

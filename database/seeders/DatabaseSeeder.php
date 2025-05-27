@@ -58,11 +58,11 @@ class DatabaseSeeder extends Seeder
 
         // Seeder untuk user
         DB::table('users')->insert([
-            ['nama' => 'Admin', 'username' => 'admin', 'password' => Hash::make('admin'), 'alamat' => 'Jl. Nyai Dasimah No.1, Jakarta Selatan', 'no_telp' => '081234567890', 'role' => 'admin', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['nama' => 'Budi Santoso', 'username' => 'budi', 'password' => Hash::make('password'), 'alamat' => 'Jl. Cut Nyak Dien No.2, Bandung', 'no_telp' => '081234567891', 'role' => 'pembeli', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['nama' => 'Siti Rahayu', 'username' => 'siti', 'password' => Hash::make('password'), 'alamat' => 'Jl. Ahmad Yani No.15, Surabaya', 'no_telp' => '081234567892', 'role' => 'pembeli', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['nama' => 'Dian Purnama', 'username' => 'dian', 'password' => Hash::make('password'), 'alamat' => 'Jl. Diponegoro No.45, Yogyakarta', 'no_telp' => '081234567893', 'role' => 'pembeli', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['nama' => 'Rudi Hermawan', 'username' => 'rudi', 'password' => Hash::make('password'), 'alamat' => 'Jl. Sudirman No.123, Jakarta Pusat', 'no_telp' => '081234567894', 'role' => 'pembeli', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama' => 'Admin', 'username' => 'admin', 'password' => Hash::make('admin'), 'alamat' => 'Jl. Nyai Dasimah No.1, Jakarta Selatan', 'nohp' => '081234567890', 'role' => 'admin', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama' => 'Budi Santoso', 'username' => 'budi', 'password' => Hash::make('password'), 'alamat' => 'Jl. Cut Nyak Dien No.2, Bandung', 'nohp' => '081234567891', 'role' => 'pembeli', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama' => 'Siti Rahayu', 'username' => 'siti', 'password' => Hash::make('password'), 'alamat' => 'Jl. Ahmad Yani No.15, Surabaya', 'nohp' => '081234567892', 'role' => 'pembeli', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama' => 'Dian Purnama', 'username' => 'dian', 'password' => Hash::make('password'), 'alamat' => 'Jl. Diponegoro No.45, Yogyakarta', 'nohp' => '081234567893', 'role' => 'pembeli', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+            ['nama' => 'Rudi Hermawan', 'username' => 'rudi', 'password' => Hash::make('password'), 'alamat' => 'Jl. Sudirman No.123, Jakarta Pusat', 'nohp' => '081234567894', 'role' => 'pembeli', 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
         ]);
         $this->command->info('Seeder User berhasil dijalankan!');
 
@@ -93,6 +93,12 @@ class DatabaseSeeder extends Seeder
             ['id_user' => 5, 'id_produk' => 12, 'quantity' => 2, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
         ]);
         $this->command->info('Seeder Cart berhasil dijalankan!');
+
+        // Call additional seeders for Tripay & Raja Ongkir
+        $this->call([
+            PaymentChannelSeeder::class,
+            CourierSeeder::class,
+        ]);
 
         $this->command->info('Semua seeder berhasil dijalankan!');
     }

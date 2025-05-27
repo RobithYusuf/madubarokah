@@ -6,8 +6,8 @@ use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\LandingpageController;
 use App\Http\Controllers\PesananController;
 use App\Http\Controllers\ProdukController;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\ShippingController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -16,10 +16,14 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-// Landingpage
+// ============================================================================
+// PUBLIC ROUTES
+// ============================================================================
 Route::get('/', [LandingpageController::class, 'index'])->name('Landingpage.index');
 
-// Auth Routes - Only for guests
+// ============================================================================
+// AUTHENTICATION ROUTES
+// ============================================================================
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
@@ -27,44 +31,134 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
 });
 
-// Logout - Only for authenticated users
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });
 
-// Role Admin
+// ============================================================================
+// ADMIN ROUTES
+// ============================================================================
 Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->group(function () {
+    // Dashboard
     Route::get('/dashboard', function () {
         return view('admin.dashboard.index');
     })->name('dashboard');
-    // Kategori
-    Route::get('/kategori', [KategoriController::class, 'index'])->name('kategori.index');
-    Route::post('/kategori/tambah', [KategoriController::class, 'store'])->name('kategori.store');
-    Route::put('/kategori/edit/{id}', [KategoriController::class, 'update'])->name('kategori.update');
-    Route::delete('/kategori/hapus/{id}', [KategoriController::class, 'destroy'])->name('kategori.destroy');
-    // Produk
-    Route::get('/produk', [ProdukController::class, 'index'])->name('produk.index');
-    Route::post('/produk/tambah', [ProdukController::class, 'store'])->name('produk.store');
-    Route::put('/produk/edit/{id}', [ProdukController::class, 'update'])->name('produk.update');
-    Route::delete('/produk/hapus/{id}', [ProdukController::class, 'destroy'])->name('produk.destroy');
-    // Pesanan
-    Route::get('/pesanan', [PesananController::class, 'index'])->name('pesanan.index');
-    Route::get('/pesanan/create-test', [PesananController::class, 'createTestData'])->name('pesanan.create-test');
-    Route::get('/pesanan/{id}', [PesananController::class, 'show'])->name('pesanan.show');
-    Route::put('/pesanan/{id}/status', [PesananController::class, 'updateStatus'])->name('pesanan.updateStatus');
-    Route::delete('/pesanan/{id}', [PesananController::class, 'destroy'])->name('pesanan.destroy');
+
+    // Kategori Management
+    Route::prefix('kategori')->name('kategori.')->group(function () {
+        Route::get('/', [KategoriController::class, 'index'])->name('index');
+        Route::post('/tambah', [KategoriController::class, 'store'])->name('store');
+        Route::put('/edit/{id}', [KategoriController::class, 'update'])->name('update');
+        Route::delete('/hapus/{id}', [KategoriController::class, 'destroy'])->name('destroy');
+    });
+
+    // Produk Management
+    Route::prefix('produk')->name('produk.')->group(function () {
+        Route::get('/', [ProdukController::class, 'index'])->name('index');
+        Route::post('/tambah', [ProdukController::class, 'store'])->name('store');
+        Route::put('/edit/{id}', [ProdukController::class, 'update'])->name('update');
+        Route::delete('/hapus/{id}', [ProdukController::class, 'destroy'])->name('destroy');
+    });
+
+    // Pesanan Management
+    Route::prefix('pesanan')->name('pesanan.')->group(function () {
+        Route::get('/', [PesananController::class, 'index'])->name('index');
+        Route::get('/create-test', [PesananController::class, 'createTestData'])->name('create-test');
+        Route::get('/{id}', [PesananController::class, 'show'])->name('show');
+        Route::put('/{id}/status', [PesananController::class, 'updateStatus'])->name('updateStatus');
+        Route::delete('/{id}', [PesananController::class, 'destroy'])->name('destroy');
+    });
+
+    // User Management
+    Route::prefix('user')->name('user.')->group(function () {
+        Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::post('/tambah', [UserController::class, 'store'])->name('store');
+        Route::put('/edit/{id}', [UserController::class, 'update'])->name('update');
+        Route::delete('/hapus/{id}', [UserController::class, 'destroy'])->name('destroy');
+    });
+
+    // Shipping Management (Admin)
+    Route::prefix('shipping')->name('shipping.')->group(function () {
+        Route::get('/', [ShippingController::class, 'index'])->name('index');
+        Route::post('/sync', [ShippingController::class, 'syncAreas'])->name('sync');
+        Route::get('/cities/{province}', [ShippingController::class, 'getCitiesByProvince'])->name('cities');
+        Route::post('/calculate', [ShippingController::class, 'calculateCost'])->name('calculate');
+        Route::post('/multiple-costs', [ShippingController::class, 'getMultipleCosts'])->name('multiple-costs');
+        Route::post('/courier/{id}/status', [ShippingController::class, 'updateCourierStatus'])->name('courier.status');
+        Route::delete('/courier/{id}', [ShippingController::class, 'destroyCourier'])->name('courier.destroy');
+        Route::get('/provinces', [ShippingController::class, 'getProvinces'])->name('provinces');
+    });
+
+    // Payment Management (Admin)
+    Route::prefix('payment')->name('payment.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\PaymentController::class, 'index'])->name('index');
+        Route::post('/sync', [\App\Http\Controllers\Admin\PaymentController::class, 'syncChannels'])->name('sync');
+        Route::post('/channel/{id}/status', [\App\Http\Controllers\Admin\PaymentController::class, 'updateStatus'])->name('channel.status');
+        Route::post('/channel/{id}/fee', [\App\Http\Controllers\Admin\PaymentController::class, 'updateFee'])->name('channel.fee');
+        Route::delete('/channel/{id}', [\App\Http\Controllers\Admin\PaymentController::class, 'destroy'])->name('channel.destroy');
+
+        // Legacy route - keep for backward compatibility
+        Route::post('/tripay/sync-channels', [CartController::class, 'syncTripayChannels'])->name('tripay.sync-channels');
+    });
 });
 
-// Role Pembeli
-Route::middleware(['auth', 'role:pembeli'])->name('frontend.')->group(function () {
-    // Cart
-    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-    Route::post('/cart/add', [CartController::class, 'addToCart'])->name('cart.add');
-    Route::post('/cart/update', [CartController::class, 'updateCart'])->name('cart.update');
-    Route::delete('/cart/remove/{id}', [CartController::class, 'removeFromCart'])->name('cart.remove');
-    Route::delete('/cart/clear', [CartController::class, 'clearCart'])->name('cart.clear');
 
-    // Checkout
+
+// ============================================================================
+// FRONTEND ROUTES (PEMBELI)
+// ============================================================================
+Route::middleware(['auth', 'role:pembeli'])->name('frontend.')->group(function () {
+    // Cart Management
+    Route::prefix('cart')->name('cart.')->group(function () {
+        Route::get('/', [CartController::class, 'index'])->name('index');
+        Route::post('/add', [CartController::class, 'addToCart'])->name('add');
+        Route::post('/update', [CartController::class, 'updateCart'])->name('update');
+        Route::put('/update/{id}', [CartController::class, 'updateCartItem'])->name('update.item');
+        Route::delete('/remove/{id}', [CartController::class, 'removeFromCart'])->name('remove');
+        Route::delete('/clear', [CartController::class, 'clearCart'])->name('clear');
+        Route::post('/sync', [CartController::class, 'syncCartToDatabase'])->name('sync');
+        Route::get('/count', [CartController::class, 'getCartCount'])->name('count');
+    });
+
+    // Checkout Process
+    Route::prefix('checkout')->name('checkout.')->group(function () {
+        Route::get('/', [CartController::class, 'checkout'])->name('index');
+        Route::post('/process', [CartController::class, 'processCheckout'])->name('process');
+    });
+});
+
+// ============================================================================
+// API ROUTES
+// ============================================================================
+Route::middleware(['auth', 'role:pembeli'])->prefix('api')->name('api.')->group(function () {
+    // Checkout API
+    Route::prefix('checkout')->name('checkout.')->group(function () {
+        Route::get('/data', [CartController::class, 'getCheckoutData'])->name('data');
+        Route::get('/cities/{provinceId}', [CartController::class, 'getCitiesByProvince'])->name('cities');
+        // IMPORTANT: Use ShippingController instead of CartController for consistency with admin
+        Route::post('/calculate', [ShippingController::class, 'calculateCost'])->name('calculate');
+    });
+});
+
+// ============================================================================
+// SHARED SHIPPING ROUTES (untuk admin dan pembeli)
+// ============================================================================
+Route::middleware('auth')->prefix('shipping')->name('shipping.')->group(function () {
+    Route::get('/cities/{province}', [ShippingController::class, 'getCitiesByProvince'])->name('cities');
+    Route::get('/provinces', [ShippingController::class, 'getProvinces'])->name('provinces');
+    // This route can be used by both admin and pembeli
+    Route::post('/calculate', [ShippingController::class, 'calculateCost'])->name('calculate');
+});
+
+// ============================================================================
+// BACKWARD COMPATIBILITY ROUTES
+// ============================================================================
+Route::middleware(['auth', 'role:pembeli'])->name('frontend.')->group(function () {
+    // Direct checkout routes for backward compatibility
     Route::get('/checkout', [CartController::class, 'checkout'])->name('checkout');
     Route::post('/checkout/process', [CartController::class, 'processCheckout'])->name('checkout.process');
+
+    // Direct cart routes for backward compatibility  
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+    Route::post('/cart/add', [CartController::class, 'addToCart'])->name('cart.add');
 });
