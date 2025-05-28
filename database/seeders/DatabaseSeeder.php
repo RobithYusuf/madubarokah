@@ -68,36 +68,37 @@ class DatabaseSeeder extends Seeder
         $this->command->info('Seeder User berhasil dijalankan!');
 
         // Seeder untuk transaksi
-        DB::table('transaksi')->insert([
-            ['id_user' => 2, 'tanggal_transaksi' => Carbon::now()->subDays(5), 'total_harga' => 205000, 'status' => 'selesai',  'created_at' => Carbon::now()->subDays(5), 'updated_at' => Carbon::now()->subDays(3)],
-            ['id_user' => 3, 'tanggal_transaksi' => Carbon::now()->subDays(3), 'total_harga' => 150000, 'status' => 'dikirim',  'created_at' => Carbon::now()->subDays(3), 'updated_at' => Carbon::now()->subDays(2)],
-            ['id_user' => 4, 'tanggal_transaksi' => Carbon::now()->subDays(2), 'total_harga' => 95000, 'status' => 'dibayar',  'created_at' => Carbon::now()->subDays(2), 'updated_at' => Carbon::now()->subDays(1)],
-            ['id_user' => 5, 'tanggal_transaksi' => Carbon::now()->subDay(), 'total_harga' => 135000, 'status' => 'pending',  'created_at' => Carbon::now()->subDay(), 'updated_at' => Carbon::now()->subDay()],
-        ]);
-        $this->command->info('Seeder Transaksi berhasil dijalankan!');
+        // DB::table('transaksi')->insert([
+        //     ['id_user' => 2, 'tanggal_transaksi' => Carbon::now()->subDays(5), 'total_harga' => 205000, 'status' => 'selesai',  'created_at' => Carbon::now()->subDays(5), 'updated_at' => Carbon::now()->subDays(3)],
+        //     ['id_user' => 3, 'tanggal_transaksi' => Carbon::now()->subDays(3), 'total_harga' => 150000, 'status' => 'dikirim',  'created_at' => Carbon::now()->subDays(3), 'updated_at' => Carbon::now()->subDays(2)],
+        //     ['id_user' => 4, 'tanggal_transaksi' => Carbon::now()->subDays(2), 'total_harga' => 95000, 'status' => 'dibayar',  'created_at' => Carbon::now()->subDays(2), 'updated_at' => Carbon::now()->subDays(1)],
+        //     ['id_user' => 5, 'tanggal_transaksi' => Carbon::now()->subDay(), 'total_harga' => 135000, 'status' => 'pending',  'created_at' => Carbon::now()->subDay(), 'updated_at' => Carbon::now()->subDay()],
+        // ]);
+        // $this->command->info('Seeder Transaksi berhasil dijalankan!');
 
-        // Seeder untuk detail transaksi
-        DB::table('detail_transaksi')->insert([
-            ['id_transaksi' => 1, 'id_produk' => 1, 'jumlah' => 1, 'harga_satuan' => 120000, 'subtotal' => 120000, 'created_at' => Carbon::now()->subDays(5), 'updated_at' => Carbon::now()->subDays(5)],
-            ['id_transaksi' => 1, 'id_produk' => 4, 'jumlah' => 1, 'harga_satuan' => 85000, 'subtotal' => 85000, 'created_at' => Carbon::now()->subDays(5), 'updated_at' => Carbon::now()->subDays(5)],
-            ['id_transaksi' => 2, 'id_produk' => 7, 'jumlah' => 1, 'harga_satuan' => 150000, 'subtotal' => 150000, 'created_at' => Carbon::now()->subDays(3), 'updated_at' => Carbon::now()->subDays(3)],
-            ['id_transaksi' => 3, 'id_produk' => 4, 'jumlah' => 1, 'harga_satuan' => 95000, 'subtotal' => 95000, 'created_at' => Carbon::now()->subDays(2), 'updated_at' => Carbon::now()->subDays(2)],
-            ['id_transaksi' => 4, 'id_produk' => 11, 'jumlah' => 1, 'harga_satuan' => 135000, 'subtotal' => 135000, 'created_at' => Carbon::now()->subDay(), 'updated_at' => Carbon::now()->subDay()],
-        ]);
-        $this->command->info('Seeder Detail Transaksi berhasil dijalankan!');
+        // // Seeder untuk detail transaksi
+        // DB::table('detail_transaksi')->insert([
+        //     ['id_transaksi' => 1, 'id_produk' => 1, 'jumlah' => 1, 'harga_satuan' => 120000, 'subtotal' => 120000, 'created_at' => Carbon::now()->subDays(5), 'updated_at' => Carbon::now()->subDays(5)],
+        //     ['id_transaksi' => 1, 'id_produk' => 4, 'jumlah' => 1, 'harga_satuan' => 85000, 'subtotal' => 85000, 'created_at' => Carbon::now()->subDays(5), 'updated_at' => Carbon::now()->subDays(5)],
+        //     ['id_transaksi' => 2, 'id_produk' => 7, 'jumlah' => 1, 'harga_satuan' => 150000, 'subtotal' => 150000, 'created_at' => Carbon::now()->subDays(3), 'updated_at' => Carbon::now()->subDays(3)],
+        //     ['id_transaksi' => 3, 'id_produk' => 4, 'jumlah' => 1, 'harga_satuan' => 95000, 'subtotal' => 95000, 'created_at' => Carbon::now()->subDays(2), 'updated_at' => Carbon::now()->subDays(2)],
+        //     ['id_transaksi' => 4, 'id_produk' => 11, 'jumlah' => 1, 'harga_satuan' => 135000, 'subtotal' => 135000, 'created_at' => Carbon::now()->subDay(), 'updated_at' => Carbon::now()->subDay()],
+        // ]);
+        // $this->command->info('Seeder Detail Transaksi berhasil dijalankan!');
 
-        // Seeder untuk cart
-        DB::table('carts')->insert([
-            ['id_user' => 2, 'id_produk' => 2, 'quantity' => 2, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['id_user' => 3, 'id_produk' => 5, 'quantity' => 1, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['id_user' => 4, 'id_produk' => 9, 'quantity' => 1, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-            ['id_user' => 5, 'id_produk' => 12, 'quantity' => 2, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
-        ]);
-        $this->command->info('Seeder Cart berhasil dijalankan!');
+        // // Seeder untuk cart
+        // DB::table('carts')->insert([
+        //     ['id_user' => 2, 'id_produk' => 2, 'quantity' => 2, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+        //     ['id_user' => 3, 'id_produk' => 5, 'quantity' => 1, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+        //     ['id_user' => 4, 'id_produk' => 9, 'quantity' => 1, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+        //     ['id_user' => 5, 'id_produk' => 12, 'quantity' => 2, 'created_at' => Carbon::now(), 'updated_at' => Carbon::now()],
+        // ]);
+        // $this->command->info('Seeder Cart berhasil dijalankan!');
 
         // Call additional seeders for Tripay & Raja Ongkir
         $this->call([
             PaymentChannelSeeder::class,
+            // PaymentChannelInstructionsSeeder::class,
             CourierSeeder::class,
             ShippingAreasSeeder::class,
         ]);

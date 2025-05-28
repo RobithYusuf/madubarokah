@@ -65,6 +65,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/create-test', [PesananController::class, 'createTestData'])->name('create-test');
         Route::get('/{id}', [PesananController::class, 'show'])->name('show');
         Route::put('/{id}/status', [PesananController::class, 'updateStatus'])->name('updateStatus');
+        Route::put('/{id}/update-payment', [App\Http\Controllers\Admin\PesananController::class, 'updatePayment'])->name('updatePayment');
+        Route::put('/{id}/update-shipping', [App\Http\Controllers\Admin\PesananController::class, 'updateShipping'])->name('updateShipping');
         Route::delete('/{id}', [PesananController::class, 'destroy'])->name('destroy');
     });
 
@@ -99,6 +101,24 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
 
         // Legacy route - keep for backward compatibility
         Route::post('/tripay/sync-channels', [CartController::class, 'syncTripayChannels'])->name('tripay.sync-channels');
+    });
+    
+     // Laporan Management
+    Route::prefix('laporan')->name('laporan.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\Admin\LaporanController::class, 'index'])->name('index');
+        Route::get('/transaksi', [\App\Http\Controllers\Admin\LaporanController::class, 'transaksi'])->name('transaksi');
+        Route::get('/penjualan', [\App\Http\Controllers\Admin\LaporanController::class, 'penjualan'])->name('penjualan');
+        Route::get('/produk', [\App\Http\Controllers\Admin\LaporanController::class, 'produk'])->name('produk');
+        Route::get('/pelanggan', [\App\Http\Controllers\Admin\LaporanController::class, 'pelanggan'])->name('pelanggan');
+        Route::get('/pengiriman', [\App\Http\Controllers\Admin\LaporanController::class, 'pengiriman'])->name('pengiriman');
+        
+        // Export routes
+        Route::get('/export/transaksi', [\App\Http\Controllers\Admin\LaporanController::class, 'exportTransaksi'])->name('export.transaksi');
+        Route::get('/export/penjualan', [\App\Http\Controllers\Admin\LaporanController::class, 'exportPenjualan'])->name('export.penjualan');
+        
+        // AJAX routes untuk chart data
+        Route::get('/chart/penjualan', [\App\Http\Controllers\Admin\LaporanController::class, 'chartPenjualan'])->name('chart.penjualan');
+        Route::get('/chart/status', [\App\Http\Controllers\Admin\LaporanController::class, 'chartStatus'])->name('chart.status');
     });
 
     // Di dalam admin middleware group
@@ -163,10 +183,10 @@ Route::middleware(['auth', 'role:pembeli'])->prefix('api')->name('api.')->group(
 // ============================================================================
 // TRIPAY CALLBACK ROUTES (No Auth Required)
 // ============================================================================
-Route::prefix('api/tripay')->name('api.tripay.')->group(function () {
-    Route::post('/callback', [\App\Http\Controllers\Api\TripayCallbackController::class, 'callback'])->name('callback');
-    Route::get('/return', [\App\Http\Controllers\Api\TripayCallbackController::class, 'return'])->name('return');
-});
+// Route::prefix('api/tripay')->name('api.tripay.')->group(function () {
+//     Route::post('/callback', [\App\Http\Controllers\Api\TripayCallbackController::class, 'callback'])->name('callback');
+//     Route::get('/return', [\App\Http\Controllers\Api\TripayCallbackController::class, 'return'])->name('return');
+// });
 
 // ============================================================================
 // SHARED SHIPPING ROUTES (untuk admin dan pembeli)
@@ -185,9 +205,9 @@ Route::middleware(['auth', 'role:pembeli'])->name('frontend.')->group(function (
     // Direct checkout routes for backward compatibility
     Route::get('/checkout', [CartController::class, 'checkout'])->name('checkout');
     Route::post('/checkout/process', [CartController::class, 'processCheckout'])->name('checkout.process');
-    
+
     // Legacy confirmation route - redirect to new route
-    Route::get('/checkout/confirmation/{transaksi}', function($transaksi) {
+    Route::get('/checkout/confirmation/{transaksi}', function ($transaksi) {
         return redirect()->route('frontend.confirmation.show', $transaksi);
     })->name('checkout.confirmation');
 

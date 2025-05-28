@@ -9,6 +9,21 @@ class Pembayaran extends Model
 {
     use HasFactory;
 
+    // Konstanta Status Pembayaran
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_BERHASIL = 'berhasil';
+    public const STATUS_DIBAYAR = 'dibayar';    // Alternatif untuk 'berhasil'
+    public const STATUS_GAGAL = 'gagal';
+    public const STATUS_EXPIRED = 'expired';
+    public const STATUS_REFUND = 'refund';
+    public const STATUS_CANCELED = 'canceled';
+    
+    // Konstanta Tipe Pembayaran
+    public const TYPE_MANUAL = 'manual';
+    public const TYPE_DIRECT = 'direct';
+    public const TYPE_REDIRECT = 'redirect';
+    public const TYPE_TRIPAY = 'tripay';
+
     protected $table = 'pembayaran';
     
     protected $fillable = [
@@ -23,7 +38,6 @@ class Pembayaran extends Model
         'checkout_url',
         'expired_time',
         'payment_instructions',
-        'callback_signature',
         'payment_type',
     ];
 
@@ -44,11 +58,13 @@ class Pembayaran extends Model
     public function getStatusBadgeAttribute()
     {
         $badges = [
-            'pending' => 'warning',
-            'berhasil' => 'success',
-            'gagal' => 'danger',
-            'expired' => 'secondary',
-            'canceled' => 'secondary'
+            self::STATUS_PENDING => 'warning',
+            self::STATUS_BERHASIL => 'success',
+            self::STATUS_DIBAYAR => 'success',  // Sama dengan berhasil
+            self::STATUS_GAGAL => 'danger',
+            self::STATUS_EXPIRED => 'secondary',
+            self::STATUS_REFUND => 'dark',
+            self::STATUS_CANCELED => 'secondary'
         ];
         
         return $badges[$this->status] ?? 'secondary';
@@ -58,9 +74,10 @@ class Pembayaran extends Model
     public function getPaymentTypeBadgeAttribute()
     {
         $badges = [
-            'manual' => 'info',
-            'direct' => 'primary',
-            'redirect' => 'success'
+            self::TYPE_MANUAL => 'info',
+            self::TYPE_DIRECT => 'primary',
+            self::TYPE_REDIRECT => 'success',
+            self::TYPE_TRIPAY => 'primary'
         ];
         
         return $badges[$this->payment_type] ?? 'secondary';

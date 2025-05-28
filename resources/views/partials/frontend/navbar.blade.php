@@ -20,11 +20,6 @@
                         <i class="fas fa-box"></i> Produk
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link text-gelap" href="{{ route('frontend.home') }}#kontak">
-                        <i class="fas fa-phone"></i> Kontak
-                    </a>
-                </li>
                 @auth
                 <li class="nav-item">
                     <a class="nav-link text-gelap position-relative" href="{{ route('frontend.cart.index') }}" id="cartLink">
@@ -62,70 +57,3 @@
         </div>
     </div>
 </nav>
-
-<!-- SweetAlert2 -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-<script>
-    // Navbar scroll effect
-    $(document).ready(function() {
-        $(window).scroll(function() {
-            if ($(this).scrollTop() > 50) {
-                $('#mainNavbar').addClass('scrolled');
-            } else {
-                $('#mainNavbar').removeClass('scrolled');
-            }
-        });
-
-        // Cart Management untuk navbar
-        function updateCartDisplay() {
-            const cartData = localStorage.getItem('madu_barokah_cart');
-            const cart = cartData ? JSON.parse(cartData) : [];
-            const count = cart.reduce((total, item) => total + item.quantity, 0);
-
-            const badge = document.getElementById('cartBadge');
-            const badgeGuest = document.getElementById('cartBadgeGuest');
-
-            if (count > 0) {
-                if (badge) {
-                    badge.textContent = count > 99 ? '99+' : count;
-                    badge.style.display = 'flex';
-                }
-                if (badgeGuest) {
-                    badgeGuest.textContent = count > 99 ? '99+' : count;
-                    badgeGuest.style.display = 'flex';
-                }
-            } else {
-                if (badge) badge.style.display = 'none';
-                if (badgeGuest) badgeGuest.style.display = 'none';
-            }
-        }
-
-        // Show login prompt for guests
-        window.showLoginPrompt = function() {
-            Swal.fire({
-                title: 'Login Diperlukan',
-                text: 'Anda perlu login untuk melihat keranjang.',
-                icon: 'info',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Login Sekarang',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = '{{ route("login") }}';
-                }
-            });
-        }
-
-        // Update cart display on page load
-        updateCartDisplay();
-
-        // Listen for storage changes to update cart count
-        window.addEventListener('storage', updateCartDisplay);
-
-        // Custom event listener untuk update cart dari halaman lain
-        document.addEventListener('cartUpdated', updateCartDisplay);
-    });
-</script>

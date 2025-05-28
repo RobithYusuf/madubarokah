@@ -62,26 +62,34 @@
                 <h5><i class="fas fa-key"></i> API Key Tidak Dikonfigurasi!</h5>
                 <p class="mb-2">Buka file <code>.env</code> dan tambahkan: <code>RAJAONGKIR_API_KEY=your_api_key_here</code></p>
                 <p class="mb-0 small">Dapatkan API key gratis di <a href="https://rajaongkir.com" target="_blank">RajaOngkir.com</a></p>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <button type="button" class="close" data-bs-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             @elseif($needsSync)
             <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
                 <h5><i class="fas fa-exclamation-triangle"></i> Data Wilayah Belum Tersedia!</h5>
                 <p class="mb-2">Klik tombol "Sinkronkan Data Wilayah" untuk mengambil data provinsi dan kota.</p>
                 <p class="mb-0 small">Tanpa data wilayah, fitur checkout tidak akan berfungsi.</p>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <button type="button" class="close" data-bs-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             @elseif($isDataLimited)
             <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
                 <h5><i class="fas fa-info-circle"></i> Data Wilayah Terbatas</h5>
                 <p class="mb-2">Sistem memiliki {{ $totalCities }} kota/kabupaten. Lakukan sinkronisasi ulang untuk data terlengkap.</p>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <button type="button" class="close" data-bs-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             @else
             <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
                 <h5><i class="fas fa-check-circle"></i> Data Wilayah Tersedia</h5>
                 <p class="mb-0">Sistem memiliki {{ number_format($totalCities) }} kota/kabupaten dari {{ $provinces->count() }} provinsi. Data siap digunakan!</p>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <button type="button" class="close" data-bs-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             @endif
 
@@ -198,7 +206,9 @@
                 <h5 class="modal-title" id="testShippingModalLabel">
                     <i class="fas fa-calculator"></i> Test Kalkulator Ongkir
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <form id="testShippingForm">

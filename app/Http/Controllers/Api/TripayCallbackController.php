@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Transaksi;
 use App\Models\Pembayaran;
+use App\Models\Pengiriman;
 use App\Services\TripayService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -24,6 +25,16 @@ class TripayCallbackController extends Controller
      */
     public function callback(Request $request)
     {
+        // Log raw request untuk debug
+        Log::info('Tripay Callback Raw Request', [
+            'headers' => $request->headers->all(),
+            'body' => $request->getContent(),
+            'method' => $request->method(),
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+            'url' => $request->fullUrl()
+        ]);
+
         // Log incoming callback
         Log::info('Tripay Callback Received', [
             'headers' => $request->headers->all(),
@@ -35,39 +46,125 @@ class TripayCallbackController extends Controller
             $callbackData = $request->all();
 
             // Verify callback signature
-            if (!$this->tripayService->verifyCallbackSignature($callbackData)) {
-                Log::error('Tripay Callback: Invalid signature', [
-                    'data' => $callbackData
+            $callbackSignature = $request->header('X-Callback-Signature');
+            $json = $request->getContent();
+            
+            if (!$callbackSignature) {
+                Log::error('Tripay Callback: Signature header tidak ditemukan');
+                return response()->json(['success' => false, 'message' => 'Signature header tidak ditemukan'], 400);
+            }
+            
+            // Verifikasi signature menggunakan private key
+            $privateKey = config('tripay.private_key');
+            $calculatedSignature = hash_hmac('sha256', $json, $privateKey);
+            
+            Log::info('Tripay Signature Verification', [
+                'received' => $callbackSignature,
+                'calculated' => $calculatedSignature,
+                'is_valid' => hash_equals($calculatedSignature, $callbackSignature)
+            ]);
+            
+            if (!hash_equals($calculatedSignature, $callbackSignature)) {
+                Log::error('Tripay Callback: Signature tidak valid', [
+                    'received' => $callbackSignature,
+                    'calculated' => $calculatedSignature
                 ]);
                 
                 return response()->json([
-                    'success' => false,
+                    'success' => false, 
                     'message' => 'Invalid signature'
                 ], 400);
             }
 
             // Get transaction reference
             $reference = $callbackData['reference'] ?? null;
-            $merchantRef = $callbackData['merchant_ref'] ?? null;
             $status = $callbackData['status'] ?? null;
 
-            if (!$reference || !$merchantRef || !$status) {
-                Log::error('Tripay Callback: Missing required fields', [
+            if (!$reference || !$status) {
+                Log::error('Tripay Callback: Missing critical fields', [
                     'reference' => $reference,
-                    'merchant_ref' => $merchantRef,
                     'status' => $status
                 ]);
                 
                 return response()->json([
                     'success' => false,
-                    'message' => 'Missing required fields'
+                    'message' => 'Missing critical fields'
                 ], 400);
             }
 
-            // Find transaction
-            $transaksi = Transaksi::where('merchant_ref', $merchantRef)
-                ->where('tripay_reference', $reference)
-                ->first();
+            // Get merchantRef either from callback or from database
+            $merchantRef = $callbackData['merchant_ref'] ?? null;
+            
+            // Jika merchant_ref null, coba cari transaksi berdasarkan reference saja
+            if (!$merchantRef) {
+                Log::info('Tripay Callback: merchant_ref is null, searching by reference only', [
+                    'reference' => $reference
+                ]);
+                
+                // Cari pembayaran berdasarkan reference
+                $pembayaran = Pembayaran::where('reference', $reference)->first();
+                
+                if ($pembayaran) {
+                    // Jika pembayaran ditemukan, ambil transaksi
+                    $transaksi = Transaksi::find($pembayaran->id_transaksi);
+                    
+                    if ($transaksi) {
+                        // Update status pembayaran
+                        $newStatus = $this->mapTripayStatus($status);
+                        $pembayaran->update([
+                            'status' => $newStatus,
+                            'waktu_bayar' => $status === 'PAID' ? now() : null
+                        ]);
+                        
+                        // Update status transaksi - gunakan getTransactionStatus yang sudah disesuaikan
+                        $transactionStatus = $this->getTransactionStatus($status);
+                        $transaksi->update([
+                            'status' => $transactionStatus
+                        ]);
+                        
+                        // Update shipping status if payment is successful
+                        if ($status === 'PAID' && $transaksi->pengiriman) {
+                        $transaksi->pengiriman->update([
+                        'status' => Pengiriman::STATUS_DIPROSES
+                        ]);
+                        }
+                        
+                        Log::info('Tripay Callback: Transaction updated by reference', [
+                            'reference' => $reference,
+                            'new_status' => $newStatus
+                        ]);
+                        
+                        return response()->json([
+                            'success' => true,
+                            'message' => 'Transaction updated by reference'
+                        ]);
+                    }
+                }
+                
+                Log::error('Tripay Callback: Transaction not found by reference', [
+                    'reference' => $reference
+                ]);
+                
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Transaction not found by reference'
+                ], 404);
+            }
+
+            // Find transaction by merchant_ref and reference
+            $transaksi = Transaksi::where(function($query) use ($merchantRef, $reference) {
+                $query->where('merchant_ref', $merchantRef)
+                    ->where('tripay_reference', $reference);
+            })->orWhere('merchant_ref', $reference)->first();
+
+            if (!$transaksi) {
+                // Coba cari transaksi berdasarkan referensi saja di tabel pembayaran
+                $pembayaran = Pembayaran::where('reference', $reference)->first();
+                
+                if ($pembayaran) {
+                    $transaksi = Transaksi::find($pembayaran->id_transaksi);
+                }
+            }
 
             if (!$transaksi) {
                 Log::error('Tripay Callback: Transaction not found', [
@@ -146,13 +243,21 @@ class TripayCallbackController extends Controller
             $pembayaran->update([
                 'status' => $this->mapTripayStatus($status),
                 'callback_data' => json_encode($callbackData),
-                'paid_at' => $status === 'PAID' ? now() : null
+                'waktu_bayar' => $status === 'PAID' ? now() : null
             ]);
         }
 
         // Update transaction status
         $newTransactionStatus = $this->getTransactionStatus($status);
         if ($newTransactionStatus !== $transaksi->status) {
+            Log::info('Transaction status update', [
+                'transaksi_id' => $transaksi->id,
+                'old_status' => $transaksi->status,
+                'new_status' => $newTransactionStatus,
+                'tripay_status' => $status,
+                'valid_statuses' => ['pending', 'dibayar', 'dikirim', 'selesai', 'batal']
+            ]);
+            
             $transaksi->update([
                 'status' => $newTransactionStatus
             ]);
@@ -160,7 +265,7 @@ class TripayCallbackController extends Controller
             // Update shipping status if payment is successful
             if ($status === 'PAID' && $transaksi->pengiriman) {
                 $transaksi->pengiriman->update([
-                    'status' => 'diproses'
+                    'status' => Pengiriman::STATUS_DIPROSES
                 ]);
             }
         }
@@ -181,14 +286,14 @@ class TripayCallbackController extends Controller
     private function mapTripayStatus($tripayStatus)
     {
         $statusMap = [
-            'UNPAID' => 'pending',
-            'PAID' => 'berhasil',
-            'FAILED' => 'gagal',
-            'EXPIRED' => 'expired',
-            'REFUND' => 'refund'
+            'UNPAID' => Pembayaran::STATUS_PENDING,
+            'PAID' => Pembayaran::STATUS_BERHASIL,
+            'FAILED' => Pembayaran::STATUS_GAGAL,
+            'EXPIRED' => Pembayaran::STATUS_EXPIRED,
+            'REFUND' => Pembayaran::STATUS_REFUND
         ];
 
-        return $statusMap[$tripayStatus] ?? 'pending';
+        return $statusMap[$tripayStatus] ?? Pembayaran::STATUS_PENDING;
     }
 
     /**
@@ -197,14 +302,14 @@ class TripayCallbackController extends Controller
     private function getTransactionStatus($tripayStatus)
     {
         $statusMap = [
-            'UNPAID' => 'pending',
-            'PAID' => 'berhasil',
-            'FAILED' => 'gagal',
-            'EXPIRED' => 'expired',
-            'REFUND' => 'refund'
+            'UNPAID' => Transaksi::STATUS_PENDING,
+            'PAID' => Transaksi::STATUS_DIBAYAR,    // Transaksi menggunakan 'dibayar', bukan 'berhasil'
+            'FAILED' => Transaksi::STATUS_BATAL,     // Transaksi menggunakan 'batal', bukan 'gagal'
+            'EXPIRED' => Transaksi::STATUS_BATAL,    // Transaksi menggunakan 'batal', bukan 'expired'
+            'REFUND' => Transaksi::STATUS_BATAL      // Transaksi menggunakan 'batal', bukan 'refund'
         ];
 
-        return $statusMap[$tripayStatus] ?? 'pending';
+        return $statusMap[$tripayStatus] ?? Transaksi::STATUS_PENDING;
     }
 
     /**

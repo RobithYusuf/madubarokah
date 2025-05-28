@@ -9,6 +9,17 @@ class Transaksi extends Model
 {
     use HasFactory;
 
+    // Konstanta Status Transaksi
+    public const STATUS_PENDING = 'pending';
+    public const STATUS_DIBAYAR = 'dibayar';
+    public const STATUS_BERHASIL = 'berhasil'; // Alternatif 'dibayar' dari Tripay
+    public const STATUS_DIKIRIM = 'dikirim';
+    public const STATUS_SELESAI = 'selesai';
+    public const STATUS_BATAL = 'batal';
+    public const STATUS_GAGAL = 'gagal';
+    public const STATUS_EXPIRED = 'expired';
+    public const STATUS_REFUND = 'refund';
+
     protected $table = 'transaksi';
 
     protected $fillable = [
@@ -66,11 +77,15 @@ class Transaksi extends Model
     public function getStatusBadgeAttribute()
     {
         $badges = [
-            'pending' => 'warning',
-            'dibayar' => 'info',
-            'dikirim' => 'primary',
-            'selesai' => 'success',
-            'batal' => 'danger'
+            self::STATUS_PENDING => 'warning',
+            self::STATUS_DIBAYAR => 'info',
+            self::STATUS_BERHASIL => 'info', // sama dengan 'dibayar'
+            self::STATUS_DIKIRIM => 'primary',
+            self::STATUS_SELESAI => 'success',
+            self::STATUS_BATAL => 'danger',
+            self::STATUS_GAGAL => 'danger',
+            self::STATUS_EXPIRED => 'secondary',
+            self::STATUS_REFUND => 'dark'
         ];
 
         return $badges[$this->status] ?? 'secondary';

@@ -15,7 +15,7 @@ class HistoryController extends Controller
             ->orderBy('tanggal_transaksi', 'desc')
             ->paginate(10);
 
-        return view('frontend.cart.history', compact('transaksi'));
+        return view('pembeli.histori.index', compact('transaksi'));
     }
 
     public function detail($transaksiId)
@@ -29,6 +29,6 @@ class HistoryController extends Controller
         $whatsappMessage = "Halo, saya ingin menanyakan status pesanan {$transaksi->merchant_ref}";
         $whatsappUrl = "https://wa.me/{$whatsappNumber}?text=" . urlencode($whatsappMessage);
 
-        return view('frontend.cart.history-detail', compact('transaksi', 'whatsappUrl'));
+        return view('pembeli.histori.detail', compact('transaksi', 'whatsappUrl'));
     }
 }

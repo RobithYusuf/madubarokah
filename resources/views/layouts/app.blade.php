@@ -9,6 +9,7 @@
     <meta name="author" content="Madu Barokah">
 
     <title>Toko Madu Barokah - @yield('title')</title>
+        <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <!-- Fonts -->
     <link href="{{ asset('assets/sbadmin/vendor/fontawesome-free/css/all.min.css') }}" rel="stylesheet">
@@ -300,7 +301,7 @@
         });
     </script>
     
-    @stack('scripts') {{-- Untuk tambahan script di halaman lain --}}
+    @stack('scripts') 
 </body>
 
 </html>

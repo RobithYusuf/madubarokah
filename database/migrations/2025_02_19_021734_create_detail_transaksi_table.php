@@ -19,6 +19,8 @@ return new class extends Migration
             $table->decimal('harga_satuan', 10, 2);
             $table->decimal('subtotal', 10, 2);
             $table->timestamps();
+            
+            $table->index('id_transaksi');
         });
     }
 

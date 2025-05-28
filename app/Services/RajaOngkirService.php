@@ -76,7 +76,7 @@ class RajaOngkirService
             $timeout = $this->getCourierTimeout($courier);
             
             $response = Http::timeout($timeout)
-                ->connectTimeout(8) // Connection timeout 8 seconds
+                ->connectTimeout(20) // Connection timeout 8 seconds
                 ->retry(1, 500) // Retry 1 time with 0.5 second delay
                 ->withHeaders([
                     'key' => $this->apiKey,

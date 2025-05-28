@@ -15,11 +15,14 @@ return new class extends Migration
             $table->id();
             $table->string('nama');
             $table->string('username')->unique();
+            $table->string('email')->nullable();
             $table->string('password');
             $table->text('alamat')->nullable();
             $table->string('nohp', 15)->nullable();
             $table->enum('role', ['admin', 'pembeli'])->default('pembeli');
             $table->timestamps();
+            
+            $table->index('email');
         });
     }
 

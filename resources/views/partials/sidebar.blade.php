@@ -80,20 +80,49 @@
 
 
 
-    <!-- Nav Item - Laporan Penjualan -->
-    <li class="nav-item {{ request()->is('admin/laporan*') ? 'active' : '' }}">
+    <!-- Nav Item - Laporan -->
+    <li class="nav-item {{ request()->routeIs('admin.laporan.*') ? 'active' : '' }}">
         <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseLaporan"
-            aria-expanded="true" aria-controls="collapseLaporan">
-            <i class="fas fa-fw fa-chart-line"></i>
+            aria-expanded="{{ request()->routeIs('admin.laporan.*') ? 'true' : 'false' }}" aria-controls="collapseLaporan">
+            <i class="fas fa-fw fa-chart-area"></i>
             <span>Laporan</span>
         </a>
-        <div id="collapseLaporan" class="collapse {{ request()->is('admin/laporan*') ? 'show' : '' }}"
+        <div id="collapseLaporan" class="collapse {{ request()->routeIs('admin.laporan.*') ? 'show' : '' }}"
             aria-labelledby="headingLaporan" data-parent="#accordionSidebar">
             <div class="bg-white py-2 collapse-inner rounded">
-                <h6 class="collapse-header">Laporan Penjualan:</h6>
-                <a class="collapse-item" href="#" onclick="alert('Fitur sedang dalam pengembangan')">Harian</a>
-                <a class="collapse-item" href="#" onclick="alert('Fitur sedang dalam pengembangan')">Bulanan</a>
-                <a class="collapse-item" href="#" onclick="alert('Fitur sedang dalam pengembangan')">Tahunan</a>
+                <h6 class="collapse-header">Menu Laporan:</h6>
+                
+                <a class="collapse-item {{ request()->routeIs('admin.laporan.index') || request()->routeIs('admin.laporan.transaksi') ? 'active' : '' }}" 
+                   href="{{ route('admin.laporan.index') }}">
+                    <i class="fas fa-list mr-1"></i>Laporan Transaksi
+                </a>
+                
+                <a class="collapse-item {{ request()->routeIs('admin.laporan.penjualan') ? 'active' : '' }}" 
+                   href="{{ route('admin.laporan.penjualan') }}">
+                    <i class="fas fa-chart-line mr-1"></i>Laporan Penjualan
+                </a>
+                
+                <a class="collapse-item {{ request()->routeIs('admin.laporan.produk') ? 'active' : '' }}" 
+                   href="{{ route('admin.laporan.produk') }}">
+                    <i class="fas fa-box mr-1"></i>Laporan Produk
+                </a>
+                
+                <a class="collapse-item {{ request()->routeIs('admin.laporan.pelanggan') ? 'active' : '' }}" 
+                   href="{{ route('admin.laporan.pelanggan') }}">
+                    <i class="fas fa-users mr-1"></i>Laporan Pelanggan
+                </a>
+                
+                <a class="collapse-item {{ request()->routeIs('admin.laporan.pengiriman') ? 'active' : '' }}" 
+                   href="{{ route('admin.laporan.pengiriman') }}">
+                    <i class="fas fa-shipping-fast mr-1"></i>Laporan Pengiriman
+                </a>
+                
+                <div class="collapse-divider"></div>
+                <h6 class="collapse-header">Export Data:</h6>
+                
+                <a class="collapse-item" href="#" onclick="showExportModal()">
+                    <i class="fas fa-download mr-1"></i>Export Excel
+                </a>
             </div>
         </div>
     </li>

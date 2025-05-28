@@ -34,7 +34,7 @@ class CartController extends Controller
             return $item->quantity * $item->produk->harga;
         });
 
-        return view('frontend.cart.index', compact('cartItems', 'total'));
+        return view('pembeli.cart.index', compact('cartItems', 'total'));
     }
 
     public function addToCart(Request $request)
@@ -156,13 +156,6 @@ class CartController extends Controller
             })
         ]);
 
-        // Check minimum order
-        $minimumOrder = config('shop.minimum_order', 0);
-        if ($subtotal < $minimumOrder) {
-            return redirect()->route('frontend.cart.index')
-                ->with('error', 'Minimum order Rp ' . number_format($minimumOrder, 0, ',', '.') . '. Tambah produk senilai Rp ' . number_format($minimumOrder - $subtotal, 0, ',', '.') . ' lagi.');
-        }
-
         // Get payment channels
         $paymentChannels = \App\Models\PaymentChannel::active()
             ->orderBy('group')
@@ -170,15 +163,12 @@ class CartController extends Controller
             ->get()
             ->groupBy('group');
 
-        // Calculate total with proper formatting
-        $tax = config('shop.tax_rate', 0) > 0 ? ($subtotal * config('shop.tax_rate') / 100) : 0;
-        $total = $subtotal + $tax;
+        $total = $subtotal; // Initialize total with subtotal
 
-        return view('frontend.cart.checkout', compact(
+        return view('pembeli.checkout.index', compact(
             'cartItems',
             'subtotal',
             'total',
-            'tax',
             'provinces',
             'paymentChannels',
             'totalWeight'
@@ -262,7 +252,7 @@ class CartController extends Controller
         ]);
 
         $startTime = microtime(true);
-        
+
         \Log::info('CartController: Shipping calculation started', [
             'origin' => $request->origin,
             'destination' => $request->destination,
@@ -280,7 +270,7 @@ class CartController extends Controller
             );
 
             $executionTime = microtime(true) - $startTime;
-            
+
             \Log::info('CartController: RajaOngkir result received', [
                 'success' => $result['success'],
                 'execution_time' => round($executionTime, 2) . 's',
@@ -292,16 +282,15 @@ class CartController extends Controller
                 \Log::info('CartController: Using RajaOngkir API result');
                 return response()->json($result);
             }
-            
+
             // Use fallback if API failed or too slow
             \Log::warning('CartController: Using fallback shipping rates', [
                 'reason' => !$result['success'] ? 'API_FAILED' : 'TOO_SLOW',
                 'execution_time' => round($executionTime, 2) . 's',
                 'api_message' => $result['message'] ?? 'Unknown error'
             ]);
-            
-            return $this->getFallbackShippingRates($request->courier, $request->weight);
 
+            return $this->getFallbackShippingRates($request->courier, $request->weight);
         } catch (\Exception $e) {
             $executionTime = microtime(true) - $startTime;
             \Log::error('CartController: Shipping calculation exception', [
@@ -326,7 +315,7 @@ class CartController extends Controller
         $baseCost = 8000; // Base cost
         $weightCost = ceil($weight / 1000) * 3000; // Per kg
         $courierMultiplier = 1.0;
-        
+
         // Courier-specific adjustments
         switch (strtolower($courier)) {
             case 'jne':
@@ -457,7 +446,7 @@ class CartController extends Controller
                 'costs' => $services
             ]
         ];
-        
+
         \Log::info('CartController: Fallback rates generated', [
             'courier' => $courier,
             'services_count' => count($services),
@@ -486,6 +475,8 @@ class CartController extends Controller
     public function processCheckout(Request $request)
     {
         $request->validate([
+            'nama_penerima' => 'required|string|max:255',
+            'telepon_penerima' => 'required|string|max:15',
             'destination_province' => 'required|integer',
             'destination_city' => 'required|integer',
             'alamat_lengkap' => 'required|string|max:500',
@@ -534,8 +525,8 @@ class CartController extends Controller
                 'callback_url' => null, // Will be set later if using Tripay
                 'fee_customer' => 0,
                 'fee_merchant' => 0,
-                'nama_penerima' => auth()->user()->name ?? 'Customer',
-                'telepon_penerima' => auth()->user()->phone ?? '08123456789',
+                'nama_penerima' => $request->nama_penerima,
+                'telepon_penerima' => $request->telepon_penerima,
                 'alamat_pengiriman' => $request->alamat_lengkap,
                 'catatan' => $request->catatan ?? null
             ]);
@@ -586,7 +577,14 @@ class CartController extends Controller
             $paymentChannel = PaymentChannel::where('code', $request->metode_pembayaran)
                 ->where('is_active', true)
                 ->first();
-            
+
+            \Log::info('Processing payment for transaction', [
+                'merchant_ref' => $transaksi->merchant_ref,
+                'payment_method' => $request->metode_pembayaran,
+                'channel_found' => $paymentChannel ? true : false,
+                'channel_synced' => $paymentChannel ? $paymentChannel->is_synced : false
+            ]);
+
             $this->handlePaymentProcessing($transaksi, $request, $paymentChannel);
 
             // Clear cart
@@ -594,9 +592,20 @@ class CartController extends Controller
 
             DB::commit();
 
+            // Prepare user-friendly info for confirmation page
+            $orderInfo = [
+                'merchant_ref' => $transaksi->merchant_ref,
+                'total' => number_format($transaksi->total_harga, 0, ',', '.'),
+                'recipient' => $transaksi->nama_penerima,
+                'address' => $transaksi->alamat_pengiriman,
+                'phone' => $transaksi->telepon_penerima,
+                'payment_method' => $paymentChannel ? $paymentChannel->name : $request->metode_pembayaran
+            ];
+
             // Redirect to payment confirmation page
             return redirect()->route('frontend.checkout.confirmation', $transaksi->id)
-                ->with('success', 'Pesanan berhasil dibuat! Silakan lakukan pembayaran.');
+                ->with('success', 'Pesanan berhasil dibuat! Silakan lakukan pembayaran')
+                ->with('order_info', $orderInfo);
         } catch (\Exception $e) {
             DB::rollback();
             \Log::error('Checkout error: ' . $e->getMessage());
@@ -625,6 +634,17 @@ class CartController extends Controller
                         'return_url' => route('frontend.confirmation.show', $transaksi->id)
                     ]);
 
+                    // Log Tripay response for debugging
+                    \Log::info('Tripay transaction response data', [
+                        'merchant_ref' => $transaksi->merchant_ref,
+                        'reference' => $tripayTransaction['data']['reference'] ?? null,
+                        'pay_code' => $tripayTransaction['data']['pay_code'] ?? null,
+                        'qr_string' => isset($tripayTransaction['data']['qr_string']) ? 'present' : 'missing',
+                        'qr_url' => isset($tripayTransaction['data']['qr_url']) ? 'present' : 'missing',
+                        'payment_method' => $request->metode_pembayaran,
+                        'all_keys' => array_keys($tripayTransaction['data'] ?? [])
+                    ]);
+
                     // Create Tripay pembayaran record
                     Pembayaran::create([
                         'id_transaksi' => $transaksi->id,
@@ -644,7 +664,8 @@ class CartController extends Controller
 
                     \Log::info('Tripay transaction created successfully', [
                         'merchant_ref' => $transaksi->merchant_ref,
-                        'tripay_reference' => $tripayTransaction['data']['reference']
+                        'tripay_reference' => $tripayTransaction['data']['reference'],
+                        'payment_type' => 'tripay'
                     ]);
                 } else {
                     \Log::error('Failed to create Tripay transaction', [
@@ -652,23 +673,24 @@ class CartController extends Controller
                         'payment_method' => $request->metode_pembayaran,
                         'tripay_response' => $tripayTransaction
                     ]);
-                    
-                    // Fallback to manual payment
-                    $this->createManualPayment($transaksi, $request);
+
+                    // Fallback to manual payment but still mark channel as synced
+                    $this->createFallbackPayment($transaksi, $request, $paymentChannel);
                 }
             } catch (\Exception $e) {
                 \Log::error('Tripay transaction creation failed: ' . $e->getMessage());
-                
-                // Fallback to manual payment
-                $this->createManualPayment($transaksi, $request);
+
+                // Fallback to manual payment but still mark channel as synced
+                $this->createFallbackPayment($transaksi, $request, $paymentChannel);
             }
         } else {
             // Create manual payment for non-Tripay channels
             \Log::info('Creating manual payment', [
                 'merchant_ref' => $transaksi->merchant_ref,
-                'payment_method' => $request->metode_pembayaran
+                'payment_method' => $request->metode_pembayaran,
+                'reason' => 'No synced payment channel found'
             ]);
-            
+
             $this->createManualPayment($transaksi, $request);
         }
     }
@@ -684,12 +706,42 @@ class CartController extends Controller
             'expired_time' => $transaksi->expired_time,
             'payment_type' => 'manual'
         ]);
+
+        \Log::info('Manual payment created', [
+            'merchant_ref' => $transaksi->merchant_ref,
+            'payment_method' => $request->metode_pembayaran,
+            'payment_type' => 'manual'
+        ]);
+    }
+
+    private function createFallbackPayment($transaksi, $request, $paymentChannel)
+    {
+        // Create payment record that uses manual type but keeps the synced channel info
+        // This allows the confirmation page to still show Tripay instructions
+        Pembayaran::create([
+            'id_transaksi' => $transaksi->id,
+            'reference' => $transaksi->merchant_ref,
+            'metode' => $request->metode_pembayaran,
+            'total_bayar' => $transaksi->total_harga,
+            'status' => 'pending',
+            'expired_time' => $transaksi->expired_time,
+            'payment_type' => 'manual', // Manual processing but still use channel instructions
+            'payment_instructions' => 'Tripay gagal, gunakan instruksi manual dari channel'
+        ]);
+
+        \Log::info('Fallback payment created', [
+            'merchant_ref' => $transaksi->merchant_ref,
+            'payment_method' => $request->metode_pembayaran,
+            'payment_type' => 'manual',
+            'channel_synced' => $paymentChannel->is_synced,
+            'reason' => 'Tripay transaction failed but channel is synced'
+        ]);
     }
 
     private function createTripayTransaction($transaksi, $paymentChannel)
     {
         $user = Auth::user();
-        
+
         \Log::info('Creating Tripay transaction for user', [
             'user_id' => $user->id,
             'user_name' => $user->name,
@@ -703,13 +755,13 @@ class CartController extends Controller
             // Generate a valid email if user email is invalid
             $domain = parse_url(config('app.url', 'http://localhost'), PHP_URL_HOST) ?: 'localhost';
             $customerEmail = 'customer' . $user->id . '@' . $domain;
-            
+
             \Log::warning('User email invalid, using generated email', [
                 'original_email' => $user->email,
                 'generated_email' => $customerEmail
             ]);
         }
-        
+
         // Validate and format phone number properly
         $customerPhone = $user->phone ?? '08123456789';
         // Clean phone number - remove any non-numeric characters except +
@@ -724,7 +776,7 @@ class CartController extends Controller
             'name' => $user->name ?? 'Customer',
             'phone' => $customerPhone
         ];
-        
+
         \Log::info('Customer details for Tripay', $customerDetails);
 
         $orderItems = $transaksi->detailTransaksi->map(function ($detail) {
@@ -737,7 +789,7 @@ class CartController extends Controller
                 'image_url' => $detail->produk->gambar ? asset('storage/' . $detail->produk->gambar) : null
             ];
         })->toArray();
-        
+
         \Log::info('Order items for Tripay', ['items_count' => count($orderItems)]);
 
         $requestData = [
@@ -752,7 +804,7 @@ class CartController extends Controller
             'expired_time' => (int) $transaksi->expired_time->timestamp,
             'signature' => ''
         ];
-        
+
         \Log::info('Tripay request data prepared', [
             'method' => $requestData['method'],
             'merchant_ref' => $requestData['merchant_ref'],
@@ -762,13 +814,13 @@ class CartController extends Controller
         ]);
 
         $result = $this->tripayService->createTransaction($requestData);
-        
+
         \Log::info('Tripay service createTransaction result', [
             'success' => $result['success'] ?? false,
             'has_data' => isset($result['data']),
             'message' => $result['message'] ?? 'No message'
         ]);
-        
+
         return $result;
     }
 

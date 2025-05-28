@@ -151,7 +151,7 @@ class CheckSystemHealth extends Command
         // Check if Tripay fields exist
         $tables = [
             'transaksi' => ['tripay_reference', 'callback_url'],
-            'pembayaran' => ['qr_string', 'qr_url', 'callback_data', 'paid_at'],
+            'pembayaran' => ['qr_string', 'qr_url', 'callback_data', 'waktu_bayar'],
             'payment_channels' => ['is_synced', 'last_synced_at']
         ];
 

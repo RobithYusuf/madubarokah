@@ -118,6 +118,16 @@
                         <div class="card-body">
                             <div class="row">
                                 <div class="col-md-6 mb-3">
+                                    <label class="form-label font-weight-bold">Nama Penerima <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="nama_penerima" value="{{ Auth::user()->nama ?? '' }}" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label font-weight-bold">Telepon Penerima <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" name="telepon_penerima" value="{{ Auth::user()->nohp ?? '' }}" required>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
                                     <label class="form-label font-weight-bold">Provinsi Tujuan <span class="text-danger">*</span></label>
                                     <select class="form-control" name="destination_province" id="destinationProvince" required>
                                         <option value="">Pilih Provinsi</option>
@@ -833,9 +843,72 @@
         }
 
         function handleFormSubmit(e) {
+            e.preventDefault();
             console.log('Form submitting...');
-            elements.checkoutBtn.html('<span class="spinner-border spinner-border-sm me-2" role="status" style="width: 1rem; height: 1rem;"></span>Memproses...').prop('disabled', true);
-            // Form will submit normally
+            
+            // Collect form data for confirmation
+            const formData = {
+                namaPenerima: $('input[name="nama_penerima"]').val(),
+                teleponPenerima: $('input[name="telepon_penerima"]').val(),
+                alamat: $('textarea[name="alamat_lengkap"]').val(),
+                provinsi: $('#destinationProvince option:selected').text(),
+                kota: $('#destinationCity option:selected').text(),
+                kurir: $('#courierSelect option:selected').text() + ' - ' + $('#selectedService').val(),
+                metodePembayaran: $('input[name="metode_pembayaran"]:checked').closest('.payment-channel-card').find('.payment-channel-name').text(),
+                totalBayar: $('#totalAmount').text()
+            };
+            
+            // Show confirmation dialog
+            Swal.fire({
+                title: 'Konfirmasi Pesanan',
+                html: `
+                    <div class="text-left">
+                        <h6 class="mb-3">Detail Pengiriman:</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <td><strong>Nama Penerima</strong></td>
+                                <td>: ${formData.namaPenerima}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Telepon</strong></td>
+                                <td>: ${formData.teleponPenerima}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Alamat</strong></td>
+                                <td>: ${formData.alamat}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Kota/Provinsi</strong></td>
+                                <td>: ${formData.kota}, ${formData.provinsi}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Kurir</strong></td>
+                                <td>: ${formData.kurir}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Metode Pembayaran</strong></td>
+                                <td>: ${formData.metodePembayaran}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Total Bayar</strong></td>
+                                <td>: ${formData.totalBayar}</td>
+                            </tr>
+                        </table>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#cc8400',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Ya, Buat Pesanan',
+                cancelButtonText: 'Periksa Kembali',
+                reverseButtons: true,
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    elements.checkoutBtn.html('<span class="spinner-border spinner-border-sm mr-2" role="status" style="width: 1rem; height: 1rem;"></span>Memproses...').prop('disabled', true);
+                    $('#checkoutForm').unbind('submit').submit();
+                }
+            });
         }
 
         function updateTotalWithPaymentFee() {
@@ -940,7 +1013,7 @@
             if (debugInfo && debugInfo.source === 'fallback_dummy_data') {
                 html += `
                 <div class="alert alert-info alert-sm py-2 px-3 mb-2">
-                    <i class="fas fa-info-circle me-2"></i> 
+                    <i class="fas fa-info-circle mr-2"></i> 
                     <small><strong>Info:</strong> ${debugInfo.message}</small>
                     ${debugInfo.note ? `<br><small class="text-muted">${debugInfo.note}</small>` : ''}
                 </div>
@@ -1021,10 +1094,10 @@
         function createLoadingHTML() {
             return `
             <div class="text-center py-3">
-                <div class="spinner-border spinner-border-sm text-primary mb-2" role="status" style="width: 1.5rem; height: 1.5rem;">
+                <div class="spinner-border text-warning mb-2" role="status" style="width: 1.5rem; height: 1.5rem;">
                     <span class="visually-hidden">Loading...</span>
                 </div>
-                <p class="mb-0 text-muted small">Menghitung ongkos kirim...</p>
+                <p class="mb-0 text-muted small" style="margin-top: 8px;">Menghitung ongkos kirim...</p>
             </div>
         `;
         }
@@ -1032,7 +1105,7 @@
         function createErrorHTML(message) {
             return `
             <div class="alert alert-warning alert-sm py-2 px-3 mb-0">
-                <i class="fas fa-exclamation-triangle me-2"></i>
+                <i class="fas fa-exclamation-triangle mr-2"></i>
                 <small>${message}</small>
             </div>
         `;
@@ -1080,7 +1153,9 @@
                 elements.courierSelect.val() &&
                 elements.selectedService.val() &&
                 elements.paymentInputs.filter(':checked').length > 0 &&
-                elements.addressInput.val().trim();
+                elements.addressInput.val().trim() &&
+                $('input[name="nama_penerima"]').val().trim() &&
+                $('input[name="telepon_penerima"]').val().trim();
 
             elements.checkoutBtn.prop('disabled', !isValid);
 

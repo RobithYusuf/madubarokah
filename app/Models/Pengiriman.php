@@ -9,16 +9,20 @@ class Pengiriman extends Model
 {
     use HasFactory;
 
+    // Konstanta Status Pengiriman
+    public const STATUS_MENUNGGU_PEMBAYARAN = 'menunggu_pembayaran';
+    public const STATUS_DIPROSES = 'diproses';
+    public const STATUS_DIKIRIM = 'dikirim';
+    public const STATUS_DITERIMA = 'diterima';
+    public const STATUS_DIBATALKAN = 'dibatalkan';
+
     protected $table = 'pengiriman';
     
     protected $fillable = [
         'id_transaksi',
-        'origin_province_id',
         'origin_city_id', 
-        'origin_subdistrict_id',
         'destination_province_id',
         'destination_city_id',
-        'destination_subdistrict_id',
         'weight',
         'kurir',
         'layanan',
@@ -45,11 +49,11 @@ class Pengiriman extends Model
     public function getStatusBadgeAttribute()
     {
         $badges = [
-            'menunggu_pembayaran' => 'secondary',
-            'diproses' => 'warning',
-            'dikirim' => 'primary',
-            'diterima' => 'success',
-            'dibatalkan' => 'danger'
+            self::STATUS_MENUNGGU_PEMBAYARAN => 'secondary',
+            self::STATUS_DIPROSES => 'warning',
+            self::STATUS_DIKIRIM => 'primary',
+            self::STATUS_DITERIMA => 'success',
+            self::STATUS_DIBATALKAN => 'danger'
         ];
         
         return $badges[$this->status] ?? 'secondary';
