@@ -1,4 +1,4 @@
-<!-- Summary Cards untuk Transaksi -->
+<!-- Summary Cards untuk Transaksi
 <div class="summary-cards">
     <div class="summary-card">
         <h3>Total Transaksi</h3>
@@ -16,7 +16,7 @@
         <h3>Selesai</h3>
         <div class="value text-warning">{{ number_format($summaryData['transaksi_selesai'] ?? 0) }}</div>
     </div>
-</div>
+</div> -->
 
 <!-- Tabel Detail Transaksi -->
 <table class="data-table">

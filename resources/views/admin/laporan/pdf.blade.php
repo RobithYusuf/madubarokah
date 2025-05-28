@@ -408,67 +408,41 @@
 
         /* Print Specific Styles */
         @media print {
-            .no-print { display: none !important; }
-            
+            .no-print {
+                display: none !important;
+            }
+
             body {
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
-                margin: 0; 
-                padding: 10mm 8mm; 
-                font-size: 9px !important; /* Consistent base font for print */
-                width: 100% !important; /* Use full printable area */
+                margin: 0;
+                /* Ensure no extra margins from browser */
+                padding: 10mm 8mm;
+                /* Top/Bottom, Left/Right for print */
+                font-size: 9px;
+                /* Consistent font size for actual print */
             }
 
-            .letterhead, .info-period, .section-header {
+            .letterhead,
+            .summary-cards,
+            .info-period,
+            .section-header {
                 page-break-inside: avoid;
             }
-            
-            .summary-cards {
-                display: flex !important;
-                flex-wrap: nowrap !important; /* CRITICAL: Prevents wrapping */
-                justify-content: space-between !important;
-                gap: 4px !important; /* Slightly reduced gap for print */
-                page-break-inside: avoid !important; /* Keep the whole row of cards on one page */
-                width: 100% !important; /* Ensure it uses full available width */
+
+            .data-table {
+                page-break-inside: auto;
             }
 
-            .summary-card {
-                flex: 1 1 0px !important; /* Grow and shrink from a zero basis */
-                min-width: 0 !important; /* Allows card to shrink properly */
-                padding: 5px 3px !important; /* Further reduced padding for print if needed */
-                height: auto; /* Ensure height adjusts to content */
-                 /* Internal content alignment for print if needed */
-                display: flex !important;
-                flex-direction: column !important;
-                align-items: center !important;
-                justify-content: center !important;
+            .data-table tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
             }
 
-            .summary-card h3 {
-                font-size: 7px !important; 
-                margin-bottom: 2px !important;
-                white-space: normal !important; /* Allow title to wrap if very long, or use nowrap if titles are short */
-                line-height: 1.1 !important;
+            .footer {
+                font-size: 7px;
+                padding-top: 5px;
             }
-
-            .summary-card .value {
-                font-size: 12px !important; 
-                margin-bottom: 1px !important;
-                white-space: nowrap !important; /* Keep value on one line */
-            }
-
-            .summary-card .label {
-                font-size: 6px !important;
-                white-space: normal !important; /* Allow label to wrap if necessary */
-                line-height: 1.1 !important;
-            }
-            
-            .data-table { page-break-inside: auto; font-size: 8px !important; }
-            .data-table th, .data-table td { padding: 3px 4px !important; }
-            .data-table th { font-size: 7px !important; }
-            .data-table tr { page-break-inside: avoid; page-break-after: auto; }
-            
-            .footer { font-size: 7px !important; padding-top: 5px !important;}
         }
 
         /* A4 Page Settings */
