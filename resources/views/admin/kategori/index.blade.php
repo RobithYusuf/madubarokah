@@ -3,10 +3,25 @@
 @section('title', 'Daftar Kategori')
 
 @section('content')
+
+{{-- TAMBAHKAN BAGIAN INI UNTUK JUDUL DAN DESKRIPSI --}}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="h3 mb-0 text-gray-800">Manajemen Kategori</h1>
+        <p class="text-gray-500 mt-2 mb-0">Kelola daftar kategori produk Anda di sini. Anda dapat menambah, mengubah, dan menghapus kategori.</p>
+    </div>
+    {{-- Opsional: Anda bisa menambahkan tombol aksi di sini jika perlu --}}
+    {{-- <a href="#" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+        <i class="fas fa-download fa-sm text-white-50"></i> Generate Report
+    </a> --}}
+</div>
+{{-- AKHIR BAGIAN TAMBAHAN --}}
+
 <div id="content">
     <div class="card shadow mb-4">
         <div class="card-header py-3">
-            <h4 class="m-0 font-weight-bold text-primary">Manajemen Kategori</h4>
+            {{-- Judul di dalam card bisa dipertahankan atau disesuaikan --}}
+            <h4 class="m-0 font-weight-bold text-primary">Daftar Kategori Produk</h4>
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -42,10 +57,10 @@
                             </td>
                             <td>
                                 <div class="d-flex align-items-center">
-                                    <div class="color-preview" 
-                                         style="width: 20px; height: 20px; background-color: {{ $kategori->warna ?? '#6C757D' }}; border-radius: 4px; margin-right: 8px; border: 1px solid #ddd;"></div>
-                                    <span class="badge text-white" 
-                                          style="background-color: {{ $kategori->warna ?? '#6C757D' }}; color: white;">
+                                    <div class="color-preview"
+                                        style="width: 20px; height: 20px; background-color: {{ $kategori->warna ?? '#6C757D' }}; border-radius: 4px; margin-right: 8px; border: 1px solid #ddd;"></div>
+                                    <span class="badge text-white"
+                                        style="background-color: {{ $kategori->warna ?? '#6C757D' }}; color: white;">
                                         {{ $kategori->warna ?? '#6C757D' }}
                                     </span>
                                 </div>
@@ -54,18 +69,17 @@
                             <td>
                                 <div class="btn-group btn-group-sm" role="group">
                                     <button class="btn btn-warning" data-bs-toggle="modal"
-                                            data-bs-target="#modalEdit{{ $kategori->id }}" title="Edit">
+                                        data-bs-target="#modalEdit{{ $kategori->id }}" title="Edit">
                                         <i class="fa fa-edit"></i>
                                     </button>
                                     <button class="btn btn-danger" data-bs-toggle="modal"
-                                            data-bs-target="#modalHapus{{ $kategori->id }}" title="Hapus">
+                                        data-bs-target="#modalHapus{{ $kategori->id }}" title="Hapus">
                                         <i class="fa fa-trash"></i>
                                     </button>
                                 </div>
                             </td>
                         </tr>
 
-                        <!-- Modal Edit Kategori -->
                         <div class="modal fade" id="modalEdit{{ $kategori->id }}" tabindex="-1"
                             aria-labelledby="modalEditLabel" aria-hidden="true">
                             <div class="modal-dialog modal-lg">
@@ -94,30 +108,30 @@
                                                     <div class="color-preview ms-2" id="colorPreview_edit{{ $kategori->id }}" style="width: 40px; height: 40px; background-color: {{ $kategori->warna ?? '#6C757D' }}; border-radius: 4px; border: 1px solid #ddd;"></div>
                                                 </div>
                                                 <div class="d-flex flex-wrap gap-1 mb-2">
-                                                    <span class="badge color-quick" 
-                                                          style="background-color: #FF6B6B; cursor: pointer; width: 25px; height: 25px;" 
-                                                          onclick="setQuickColor('#FF6B6B', 'edit{{ $kategori->id }}')" title="Merah Muda"></span>
-                                                    <span class="badge color-quick" 
-                                                          style="background-color: #4ECDC4; cursor: pointer; width: 25px; height: 25px;" 
-                                                          onclick="setQuickColor('#4ECDC4', 'edit{{ $kategori->id }}')" title="Tosca"></span>
-                                                    <span class="badge color-quick" 
-                                                          style="background-color: #45B7D1; cursor: pointer; width: 25px; height: 25px;" 
-                                                          onclick="setQuickColor('#45B7D1', 'edit{{ $kategori->id }}')" title="Biru Langit"></span>
-                                                    <span class="badge color-quick" 
-                                                          style="background-color: #F39C12; cursor: pointer; width: 25px; height: 25px;" 
-                                                          onclick="setQuickColor('#F39C12', 'edit{{ $kategori->id }}')" title="Oranye"></span>
-                                                    <span class="badge color-quick" 
-                                                          style="background-color: #8E44AD; cursor: pointer; width: 25px; height: 25px;" 
-                                                          onclick="setQuickColor('#8E44AD', 'edit{{ $kategori->id }}')" title="Ungu"></span>
-                                                    <span class="badge color-quick" 
-                                                          style="background-color: #E74C3C; cursor: pointer; width: 25px; height: 25px;" 
-                                                          onclick="setQuickColor('#E74C3C', 'edit{{ $kategori->id }}')" title="Merah"></span>
-                                                    <span class="badge color-quick" 
-                                                          style="background-color: #2ECC71; cursor: pointer; width: 25px; height: 25px;" 
-                                                          onclick="setQuickColor('#2ECC71', 'edit{{ $kategori->id }}')" title="Hijau"></span>
-                                                    <span class="badge color-quick" 
-                                                          style="background-color: #34495E; cursor: pointer; width: 25px; height: 25px;" 
-                                                          onclick="setQuickColor('#34495E', 'edit{{ $kategori->id }}')" title="Abu Gelap"></span>
+                                                    <span class="badge color-quick"
+                                                        style="background-color: #FF6B6B; cursor: pointer; width: 25px; height: 25px;"
+                                                        onclick="setQuickColor('#FF6B6B', 'edit{{ $kategori->id }}')" title="Merah Muda"></span>
+                                                    <span class="badge color-quick"
+                                                        style="background-color: #4ECDC4; cursor: pointer; width: 25px; height: 25px;"
+                                                        onclick="setQuickColor('#4ECDC4', 'edit{{ $kategori->id }}')" title="Tosca"></span>
+                                                    <span class="badge color-quick"
+                                                        style="background-color: #45B7D1; cursor: pointer; width: 25px; height: 25px;"
+                                                        onclick="setQuickColor('#45B7D1', 'edit{{ $kategori->id }}')" title="Biru Langit"></span>
+                                                    <span class="badge color-quick"
+                                                        style="background-color: #F39C12; cursor: pointer; width: 25px; height: 25px;"
+                                                        onclick="setQuickColor('#F39C12', 'edit{{ $kategori->id }}')" title="Oranye"></span>
+                                                    <span class="badge color-quick"
+                                                        style="background-color: #8E44AD; cursor: pointer; width: 25px; height: 25px;"
+                                                        onclick="setQuickColor('#8E44AD', 'edit{{ $kategori->id }}')" title="Ungu"></span>
+                                                    <span class="badge color-quick"
+                                                        style="background-color: #E74C3C; cursor: pointer; width: 25px; height: 25px;"
+                                                        onclick="setQuickColor('#E74C3C', 'edit{{ $kategori->id }}')" title="Merah"></span>
+                                                    <span class="badge color-quick"
+                                                        style="background-color: #2ECC71; cursor: pointer; width: 25px; height: 25px;"
+                                                        onclick="setQuickColor('#2ECC71', 'edit{{ $kategori->id }}')" title="Hijau"></span>
+                                                    <span class="badge color-quick"
+                                                        style="background-color: #34495E; cursor: pointer; width: 25px; height: 25px;"
+                                                        onclick="setQuickColor('#34495E', 'edit{{ $kategori->id }}')" title="Abu Gelap"></span>
                                                 </div>
                                                 <small class="text-muted">Pilih warna untuk kategori ini (format: #RRGGBB) atau klik warna cepat di atas</small>
                                             </div>
@@ -135,7 +149,6 @@
                             </div>
                         </div>
 
-                        <!-- Modal Hapus Kategori -->
                         <div class="modal fade" id="modalHapus{{ $kategori->id }}" tabindex="-1"
                             aria-labelledby="modalHapusLabel" aria-hidden="true">
                             <div class="modal-dialog">
@@ -169,7 +182,6 @@
     </div>
 </div>
 
-<!-- Modal Tambah Kategori -->
 <div class="modal fade" id="modalTambah" tabindex="-1" aria-labelledby="modalTambahLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -194,30 +206,30 @@
                             <div class="color-preview ms-2" id="colorPreview_add" style="width: 40px; height: 40px; background-color: #6C757D; border-radius: 4px; border: 1px solid #ddd;"></div>
                         </div>
                         <div class="d-flex flex-wrap gap-1 mb-2">
-                            <span class="badge color-quick" 
-                                  style="background-color: #FF6B6B; cursor: pointer; width: 25px; height: 25px;" 
-                                  onclick="setQuickColor('#FF6B6B', 'add')" title="Merah Muda"></span>
-                            <span class="badge color-quick" 
-                                  style="background-color: #4ECDC4; cursor: pointer; width: 25px; height: 25px;" 
-                                  onclick="setQuickColor('#4ECDC4', 'add')" title="Tosca"></span>
-                            <span class="badge color-quick" 
-                                  style="background-color: #45B7D1; cursor: pointer; width: 25px; height: 25px;" 
-                                  onclick="setQuickColor('#45B7D1', 'add')" title="Biru Langit"></span>
-                            <span class="badge color-quick" 
-                                  style="background-color: #F39C12; cursor: pointer; width: 25px; height: 25px;" 
-                                  onclick="setQuickColor('#F39C12', 'add')" title="Oranye"></span>
-                            <span class="badge color-quick" 
-                                  style="background-color: #8E44AD; cursor: pointer; width: 25px; height: 25px;" 
-                                  onclick="setQuickColor('#8E44AD', 'add')" title="Ungu"></span>
-                            <span class="badge color-quick" 
-                                  style="background-color: #E74C3C; cursor: pointer; width: 25px; height: 25px;" 
-                                  onclick="setQuickColor('#E74C3C', 'add')" title="Merah"></span>
-                            <span class="badge color-quick" 
-                                  style="background-color: #2ECC71; cursor: pointer; width: 25px; height: 25px;" 
-                                  onclick="setQuickColor('#2ECC71', 'add')" title="Hijau"></span>
-                            <span class="badge color-quick" 
-                                  style="background-color: #34495E; cursor: pointer; width: 25px; height: 25px;" 
-                                  onclick="setQuickColor('#34495E', 'add')" title="Abu Gelap"></span>
+                            <span class="badge color-quick"
+                                style="background-color: #FF6B6B; cursor: pointer; width: 25px; height: 25px;"
+                                onclick="setQuickColor('#FF6B6B', 'add')" title="Merah Muda"></span>
+                            <span class="badge color-quick"
+                                style="background-color: #4ECDC4; cursor: pointer; width: 25px; height: 25px;"
+                                onclick="setQuickColor('#4ECDC4', 'add')" title="Tosca"></span>
+                            <span class="badge color-quick"
+                                style="background-color: #45B7D1; cursor: pointer; width: 25px; height: 25px;"
+                                onclick="setQuickColor('#45B7D1', 'add')" title="Biru Langit"></span>
+                            <span class="badge color-quick"
+                                style="background-color: #F39C12; cursor: pointer; width: 25px; height: 25px;"
+                                onclick="setQuickColor('#F39C12', 'add')" title="Oranye"></span>
+                            <span class="badge color-quick"
+                                style="background-color: #8E44AD; cursor: pointer; width: 25px; height: 25px;"
+                                onclick="setQuickColor('#8E44AD', 'add')" title="Ungu"></span>
+                            <span class="badge color-quick"
+                                style="background-color: #E74C3C; cursor: pointer; width: 25px; height: 25px;"
+                                onclick="setQuickColor('#E74C3C', 'add')" title="Merah"></span>
+                            <span class="badge color-quick"
+                                style="background-color: #2ECC71; cursor: pointer; width: 25px; height: 25px;"
+                                onclick="setQuickColor('#2ECC71', 'add')" title="Hijau"></span>
+                            <span class="badge color-quick"
+                                style="background-color: #34495E; cursor: pointer; width: 25px; height: 25px;"
+                                onclick="setQuickColor('#34495E', 'add')" title="Abu Gelap"></span>
                         </div>
                         <small class="text-muted">Pilih warna untuk kategori ini (format: #RRGGBB) atau klik warna cepat di atas</small>
                     </div>
@@ -286,7 +298,7 @@
 
         // Update the actual form input value
         colorInput.value = color;
-        textInput.setAttribute('name', 'warna');
+        // textInput.setAttribute('name', 'warna'); // Ini tidak perlu karena input color sudah punya name="warna"
     }
 
     function updateColorPicker(textInput, suffix) {
@@ -294,11 +306,11 @@
 
         // Validate hex color format
         if (/^#[0-9A-F]{6}$/i.test(color)) {
-            const colorInput = textInput.previousElementSibling;
+            const colorInput = textInput.closest('.d-flex').querySelector('input[type="color"]'); // Disesuaikan selectornya
             const preview = document.getElementById('colorPreview_' + suffix);
 
-            colorInput.value = color;
-            preview.style.backgroundColor = color;
+            if (colorInput) colorInput.value = color; // Pastikan colorInput ada
+            if (preview) preview.style.backgroundColor = color; // Pastikan preview ada
             textInput.style.borderColor = '';
         } else {
             textInput.style.borderColor = 'red';
@@ -306,7 +318,7 @@
     }
 
     function setQuickColor(color, suffix) {
-        const colorInput = document.querySelector(`input[type="color"][onchange*="${suffix}"]`);
+        const colorInput = document.querySelector(`#modal${suffix === 'add' ? 'Tambah' : 'Edit' + suffix.replace('edit', '')} input[type="color"][name="warna"]`);
         const textInput = document.getElementById('colorText_' + suffix);
         const preview = document.getElementById('colorPreview_' + suffix);
 
@@ -318,28 +330,59 @@
         }
     }
 
-    // Sync color inputs on modal show
+    // Sync color inputs on modal show for Edit
     $('[id^="modalEdit"]').on('shown.bs.modal', function() {
-        const modalId = this.id;
-        const suffix = modalId.replace('modalEdit', 'edit');
-        const colorInput = this.querySelector('input[type="color"]');
-        const textInput = document.getElementById('colorText_' + suffix);
+        const modalInstance = this; // Simpan referensi ke modal
+        const modalId = modalInstance.id;
+        const suffix = 'edit' + modalId.replace('modalEdit', ''); // Buat suffix yang benar untuk elemen edit
+        const colorInput = modalInstance.querySelector('input[type="color"][name="warna"]');
+        const textInput = modalInstance.querySelector('#colorText_' + suffix); // Gunakan selector yang benar
 
         if (colorInput && textInput) {
+            // Set initial values from color input to text input and preview
+            // Ini mungkin tidak perlu jika value sudah di-set dari backend dengan benar
+            // updateColorPreview(colorInput, suffix); // Panggil ini untuk sinkronisasi awal jika perlu
+
             textInput.addEventListener('input', function() {
                 updateColorPicker(this, suffix);
             });
+            colorInput.addEventListener('input', function() {
+                 updateColorPreview(this, suffix);
+            });
         }
     });
+
+    // Sync color input for Add modal (jika belum ada event listener)
+    const modalTambahNode = document.getElementById('modalTambah');
+    if (modalTambahNode) {
+        const colorInputAdd = modalTambahNode.querySelector('input[type="color"][name="warna"]');
+        const textInputAdd = modalTambahNode.querySelector('#colorText_add');
+
+        if (colorInputAdd && textInputAdd) {
+             colorInputAdd.addEventListener('input', function() {
+                 updateColorPreview(this, 'add');
+             });
+             textInputAdd.addEventListener('input', function() {
+                updateColorPicker(this, 'add');
+             });
+        }
+    }
+
 
     // Reset form on modal close
     $('#modalTambah').on('hidden.bs.modal', function() {
         const form = this.querySelector('form');
         if (form) {
             form.reset();
-            document.getElementById('warna').value = '#6C757D';
-            document.getElementById('colorText_add').value = '#6C757D';
-            document.getElementById('colorPreview_add').style.backgroundColor = '#6C757D';
+            // Reset warna secara manual karena form.reset() mungkin tidak mengembalikan value input color ke default awal
+            const defaultColor = '#6C757D';
+            const colorInput = form.querySelector('input[type="color"][name="warna"]');
+            const textInput = form.querySelector('#colorText_add');
+            const preview = form.querySelector('#colorPreview_add');
+
+            if(colorInput) colorInput.value = defaultColor;
+            if(textInput) textInput.value = defaultColor;
+            if(preview) preview.style.backgroundColor = defaultColor;
         }
     });
 </script>

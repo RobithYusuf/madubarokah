@@ -618,31 +618,14 @@ class CartController extends Controller
         if ($paymentChannel && $paymentChannel->is_synced) {
             // Process Tripay payment channel
             try {
-                \Log::info('Processing Tripay payment', [
-                    'merchant_ref' => $transaksi->merchant_ref,
-                    'payment_method' => $request->metode_pembayaran,
-                    'channel' => $paymentChannel->toArray()
-                ]);
-
                 $tripayTransaction = $this->createTripayTransaction($transaksi, $paymentChannel);
 
                 if ($tripayTransaction && isset($tripayTransaction['success']) && $tripayTransaction['success'] && isset($tripayTransaction['data'])) {
-                    // Update transaksi with Tripay reference and callback URL
+                    // Update transaksi with Tripay reference
                     $transaksi->update([
                         'tripay_reference' => $tripayTransaction['data']['reference'],
-                        'callback_url' => url('/api/tripay/callback'), // Use direct URL for now
+                        'callback_url' => url('/api/tripay/callback'),
                         'return_url' => route('frontend.confirmation.show', $transaksi->id)
-                    ]);
-
-                    // Log Tripay response for debugging
-                    \Log::info('Tripay transaction response data', [
-                        'merchant_ref' => $transaksi->merchant_ref,
-                        'reference' => $tripayTransaction['data']['reference'] ?? null,
-                        'pay_code' => $tripayTransaction['data']['pay_code'] ?? null,
-                        'qr_string' => isset($tripayTransaction['data']['qr_string']) ? 'present' : 'missing',
-                        'qr_url' => isset($tripayTransaction['data']['qr_url']) ? 'present' : 'missing',
-                        'payment_method' => $request->metode_pembayaran,
-                        'all_keys' => array_keys($tripayTransaction['data'] ?? [])
                     ]);
 
                     // Create Tripay pembayaran record
@@ -661,36 +644,22 @@ class CartController extends Controller
                         'qr_string' => $tripayTransaction['data']['qr_string'] ?? null,
                         'qr_url' => $tripayTransaction['data']['qr_url'] ?? null
                     ]);
-
-                    \Log::info('Tripay transaction created successfully', [
-                        'merchant_ref' => $transaksi->merchant_ref,
-                        'tripay_reference' => $tripayTransaction['data']['reference'],
-                        'payment_type' => 'tripay'
-                    ]);
                 } else {
-                    \Log::error('Failed to create Tripay transaction', [
-                        'merchant_ref' => $transaksi->merchant_ref,
-                        'payment_method' => $request->metode_pembayaran,
-                        'tripay_response' => $tripayTransaction
-                    ]);
-
-                    // Fallback to manual payment but still mark channel as synced
-                    $this->createFallbackPayment($transaksi, $request, $paymentChannel);
+                    // Tripay failed, create fallback payment
+                    $errorMessage = $tripayTransaction['message'] ?? 'Unknown error';
+                    throw new \Exception('Tripay transaction failed: ' . $errorMessage);
                 }
             } catch (\Exception $e) {
-                \Log::error('Tripay transaction creation failed: ' . $e->getMessage());
+                \Log::error('Tripay transaction creation failed', [
+                    'merchant_ref' => $transaksi->merchant_ref,
+                    'error' => $e->getMessage()
+                ]);
 
-                // Fallback to manual payment but still mark channel as synced
+                // Fallback to manual payment
                 $this->createFallbackPayment($transaksi, $request, $paymentChannel);
             }
         } else {
             // Create manual payment for non-Tripay channels
-            \Log::info('Creating manual payment', [
-                'merchant_ref' => $transaksi->merchant_ref,
-                'payment_method' => $request->metode_pembayaran,
-                'reason' => 'No synced payment channel found'
-            ]);
-
             $this->createManualPayment($transaksi, $request);
         }
     }
@@ -742,86 +711,111 @@ class CartController extends Controller
     {
         $user = Auth::user();
 
-        \Log::info('Creating Tripay transaction for user', [
-            'user_id' => $user->id,
-            'user_name' => $user->name,
-            'user_email' => $user->email,
-            'payment_channel' => $paymentChannel->code
-        ]);
-
         // Validate and fix email format
         $customerEmail = $user->email;
         if (!filter_var($customerEmail, FILTER_VALIDATE_EMAIL)) {
-            // Generate a valid email if user email is invalid
             $domain = parse_url(config('app.url', 'http://localhost'), PHP_URL_HOST) ?: 'localhost';
             $customerEmail = 'customer' . $user->id . '@' . $domain;
-
-            \Log::warning('User email invalid, using generated email', [
-                'original_email' => $user->email,
-                'generated_email' => $customerEmail
-            ]);
         }
 
-        // Validate and format phone number properly
-        $customerPhone = $user->phone ?? '08123456789';
-        // Clean phone number - remove any non-numeric characters except +
+        // Validate and format phone number
+        $customerPhone = $user->nohp ?? '08123456789';
         $customerPhone = preg_replace('/[^0-9+]/', '', $customerPhone);
-        // Ensure it starts with 08 or +62 and has proper length
         if (!preg_match('/^(08\d{8,11}|\+628\d{8,11})$/', $customerPhone)) {
             $customerPhone = '08123456789';
         }
 
-        $customerDetails = [
-            'email' => $customerEmail,
-            'name' => $user->name ?? 'Customer',
-            'phone' => $customerPhone
-        ];
-
-        \Log::info('Customer details for Tripay', $customerDetails);
-
-        $orderItems = $transaksi->detailTransaksi->map(function ($detail) {
-            return [
+        // Calculate subtotals
+        $subtotalProduk = $transaksi->detailTransaksi->sum('subtotal');
+        $biayaKirim = $transaksi->pengiriman ? $transaksi->pengiriman->biaya : 0;
+        $totalAmount = (int) $transaksi->total_harga;
+        
+        // PENTING: Pastikan order_items total = amount
+        // Jika ada biaya kirim, tambahkan sebagai item terpisah
+        $orderItems = [];
+        
+        // Add product items
+        foreach ($transaksi->detailTransaksi as $detail) {
+            $price = (int) $detail->harga_satuan;
+            $quantity = (int) $detail->jumlah;
+            
+            if ($price <= 0 || $quantity <= 0) {
+                throw new \Exception("Invalid price or quantity for product: " . ($detail->produk->nama_produk ?? 'Unknown'));
+            }
+            
+            $orderItems[] = [
                 'sku' => 'PRD-' . $detail->id_produk,
                 'name' => $detail->produk->nama_produk ?? 'Product',
-                'price' => (int) $detail->harga_satuan,
-                'quantity' => $detail->jumlah,
-                'product_url' => url('/'),
-                'image_url' => $detail->produk->gambar ? asset('storage/' . $detail->produk->gambar) : null
+                'price' => $price,
+                'quantity' => $quantity,
+                'product_url' => config('app.url', 'http://127.0.0.1:8000'),
+                'image_url' => $detail->produk->gambar ? asset('storage/' . $detail->produk->gambar) : ''
             ];
-        })->toArray();
+        }
+        
+        // Add shipping cost as separate item if exists
+        if ($biayaKirim > 0) {
+            $orderItems[] = [
+                'sku' => 'SHIPPING-' . $transaksi->id,
+                'name' => 'Biaya Pengiriman (' . ($transaksi->pengiriman->kurir ?? 'Unknown') . ')',
+                'price' => (int) $biayaKirim,
+                'quantity' => 1,
+                'product_url' => config('app.url', 'http://127.0.0.1:8000'),
+                'image_url' => ''
+            ];
+        }
+        
+        // Calculate additional fees/tax if any
+        $totalOrderItems = array_sum(array_map(function($item) {
+            return $item['price'] * $item['quantity'];
+        }, $orderItems));
+        
+        // If there's a difference, add as additional fee
+        $difference = $totalAmount - $totalOrderItems;
+        if ($difference > 0) {
+            $orderItems[] = [
+                'sku' => 'FEE-' . $transaksi->id,
+                'name' => 'Biaya Admin & Layanan',
+                'price' => (int) $difference,
+                'quantity' => 1,
+                'product_url' => config('app.url', 'http://127.0.0.1:8000'),
+                'image_url' => ''
+            ];
+        } elseif ($difference < 0) {
+            // Adjust last item if over
+            $lastIndex = count($orderItems) - 1;
+            $orderItems[$lastIndex]['price'] += $difference;
+        }
+        
+        // Validate total amount matches
+        $finalTotal = array_sum(array_map(function($item) {
+            return $item['price'] * $item['quantity'];
+        }, $orderItems));
+        
+        if ($finalTotal !== $totalAmount) {
+            throw new \Exception("Amount mismatch: order_items total (" . $finalTotal . ") != transaction amount (" . $totalAmount . ")");
+        }
 
-        \Log::info('Order items for Tripay', ['items_count' => count($orderItems)]);
+        // Validate expired time
+        $expiredTime = (int) $transaksi->expired_time->timestamp;
+        if ($expiredTime <= time()) {
+            throw new \Exception("Invalid expired time: expired time must be in the future");
+        }
 
+        // Prepare request data
         $requestData = [
             'method' => $paymentChannel->code,
             'merchant_ref' => $transaksi->merchant_ref,
-            'amount' => (int) $transaksi->total_harga,
-            'customer_name' => $customerDetails['name'],
-            'customer_email' => $customerDetails['email'],
-            'customer_phone' => $customerDetails['phone'],
+            'amount' => $totalAmount,
+            'customer_name' => $user->nama ?? 'Customer',
+            'customer_email' => $customerEmail,
+            'customer_phone' => $customerPhone,
             'order_items' => $orderItems,
             'return_url' => route('frontend.confirmation.show', $transaksi->id),
-            'expired_time' => (int) $transaksi->expired_time->timestamp,
-            'signature' => ''
+            'expired_time' => $expiredTime,
         ];
 
-        \Log::info('Tripay request data prepared', [
-            'method' => $requestData['method'],
-            'merchant_ref' => $requestData['merchant_ref'],
-            'amount' => $requestData['amount'],
-            'customer_email' => $requestData['customer_email'],
-            'return_url' => $requestData['return_url']
-        ]);
-
-        $result = $this->tripayService->createTransaction($requestData);
-
-        \Log::info('Tripay service createTransaction result', [
-            'success' => $result['success'] ?? false,
-            'has_data' => isset($result['data']),
-            'message' => $result['message'] ?? 'No message'
-        ]);
-
-        return $result;
+        return $this->tripayService->createTransaction($requestData);
     }
 
 

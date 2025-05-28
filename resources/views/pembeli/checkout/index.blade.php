@@ -331,7 +331,7 @@
 <!-- Meta tags untuk menyimpan data -->
 <meta name="checkout-subtotal" content="{{ $subtotal }}">
 <meta name="checkout-total-weight" content="{{ $totalWeight ?? 1000 }}">
-<meta name="checkout-origin-city" content="{{ config('shop.warehouse_city_id', 209) }}">
+<meta name="checkout-origin-city" content="{{ config('shop.warehouse_city_id', 155) }}">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 @push('styles')
 <style>
@@ -752,9 +752,6 @@
         initializeCheckout();
 
         function initializeCheckout() {
-            console.log('=== CHECKOUT INITIALIZED ===');
-            console.log('Config:', checkoutConfig);
-
             // Setup event handlers
             setupEventHandlers();
 
@@ -776,7 +773,6 @@
 
         function handleProvinceChange() {
             const provinceId = $(this).val();
-            console.log('Province changed:', provinceId);
             if (provinceId) {
                 loadCities(provinceId);
             } else {
@@ -788,10 +784,6 @@
         function handleShippingCalculation() {
             const cityId = elements.citySelect.val();
             const courier = elements.courierSelect.val();
-            console.log('Calculating shipping:', {
-                cityId,
-                courier
-            });
             if (cityId && courier) {
                 calculateShipping(cityId, courier);
             } else {
@@ -824,7 +816,6 @@
                 updateTotalDisplay();
                 validateForm();
 
-                console.log('✅ Service selected:', serviceData);
                 showServiceSelectedFeedback($card, serviceData);
             } catch (error) {
                 console.error('Error handling service selection:', error);
@@ -836,15 +827,10 @@
         function handlePaymentChange() {
             updateTotalWithPaymentFee();
             validateForm();
-            const selectedChannel = $('input[name="metode_pembayaran"]:checked');
-            if (selectedChannel.length > 0) {
-                console.log('Payment method selected:', selectedChannel.val());
-            }
         }
 
         function handleFormSubmit(e) {
             e.preventDefault();
-            console.log('Form submitting...');
             
             // Collect form data for confirmation
             const formData = {
@@ -969,7 +955,7 @@
                 _token: checkoutConfig.csrf
             };
 
-            console.log('Calculating shipping:', requestData);
+            // console.log('Calculating shipping:', requestData);
             elements.shippingServices.html(createLoadingHTML());
             elements.shippingSection.show();
 
@@ -980,7 +966,6 @@
                 timeout: 15000,
                 cache: false,
                 success: function(response) {
-                    console.log('Shipping calculation response:', response);
                     if (response.success && response.data && response.data.length > 0) {
                         renderShippingServices(response.data, response.debug);
                     } else {
@@ -1060,7 +1045,6 @@
             if (servicesHtml && serviceCount > 0) {
                 html += `<div class="shipping-services-grid">${servicesHtml}</div>`;
                 elements.shippingServices.html(html);
-                console.log(`✅ Rendered ${serviceCount} shipping services`);
             } else {
                 elements.shippingServices.html(createErrorHTML('Tidak ada layanan pengiriman yang tersedia'));
             }
@@ -1095,7 +1079,7 @@
             return `
             <div class="text-center py-3">
                 <div class="spinner-border text-warning mb-2" role="status" style="width: 1.5rem; height: 1.5rem;">
-                    <span class="visually-hidden">Loading...</span>
+                    <span class="visually-hidden"></span>
                 </div>
                 <p class="mb-0 text-muted small" style="margin-top: 8px;">Menghitung ongkos kirim...</p>
             </div>

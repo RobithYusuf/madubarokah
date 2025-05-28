@@ -117,12 +117,7 @@
                     <i class="fas fa-shipping-fast mr-1"></i>Laporan Pengiriman
                 </a>
                 
-                <div class="collapse-divider"></div>
-                <h6 class="collapse-header">Export Data:</h6>
-                
-                <a class="collapse-item" href="#" onclick="showExportModal()">
-                    <i class="fas fa-download mr-1"></i>Export Excel
-                </a>
+            
             </div>
         </div>
     </li>

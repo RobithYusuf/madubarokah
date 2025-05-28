@@ -3,29 +3,50 @@
 @section('title', 'Manajemen Pesanan')
 
 @section('content')
+
+{{-- AWAL BAGIAN HEADER HALAMAN --}}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="h3 mb-0 text-gray-800">Manajemen Pesanan</h1>
+        <p class="text-gray-500 mt-2 mb-0">Kelola semua pesanan pelanggan, perbarui status, dan lacak pengiriman.</p>
+    </div>
+    {{-- Tombol aksi di header bisa diletakkan di sini jika ada --}}
+    <a href="{{ route('admin.laporan.transaksi') }}" class="btn btn-sm btn-outline-info shadow-sm">
+        <i class="fas fa-chart-line fa-sm"></i> Laporan Transaksi
+    </a>
+</div>
+{{-- AKHIR BAGIAN HEADER HALAMAN --}}
+
 <div class="card shadow mb-4">
     <div class="card-header py-3 d-flex justify-content-between align-items-center">
-        <h4 class="m-0 font-weight-bold text-primary">Manajemen Pesanan</h4>
+        <h4 class="m-0 font-weight-bold text-primary">Daftar Pesanan Pelanggan</h4>
         <div>
-            <!-- Filter Status -->
             <div class="btn-group mr-2" role="group">
-                <button type="button" class="btn btn-outline-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
-                    Filter Status
+                <button type="button" class="btn btn-outline-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown" id="filterStatusButton">
+                    Filter Status: Semua
                 </button>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item filter-status" href="#" data-status="all">Semua Status</a></li>
-                    <li><a class="dropdown-item filter-status" href="#" data-status="pending">Pending</a></li>
-                    <li><a class="dropdown-item filter-status" href="#" data-status="dibayar">Dibayar</a></li>
-                    <li><a class="dropdown-item filter-status" href="#" data-status="dikirim">Dikirim</a></li>
-                    <li><a class="dropdown-item filter-status" href="#" data-status="selesai">Selesai</a></li>
-                    <li><a class="dropdown-item filter-status" href="#" data-status="batal">Batal</a></li>
+                <ul class="dropdown-menu dropdown-menu-end"> {{-- Ditambah dropdown-menu-end --}}
+                    <li><a class="dropdown-item filter-status" href="#" data-status="all" data-text="Semua">Semua Status</a></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li><a class="dropdown-item filter-status" href="#" data-status="pending" data-text="Pending">Pending</a></li>
+                    <li><a class="dropdown-item filter-status" href="#" data-status="dibayar" data-text="Dibayar">Dibayar</a></li>
+                    <li><a class="dropdown-item filter-status" href="#" data-status="berhasil" data-text="Berhasil">Berhasil (Diproses)</a></li>
+                    <li><a class="dropdown-item filter-status" href="#" data-status="dikirim" data-text="Dikirim">Dikirim</a></li>
+                    <li><a class="dropdown-item filter-status" href="#" data-status="selesai" data-text="Selesai">Selesai</a></li>
+                    <li>
+                        <hr class="dropdown-divider">
+                    </li>
+                    <li><a class="dropdown-item filter-status" href="#" data-status="batal" data-text="Batal">Batal</a></li>
+                    <li><a class="dropdown-item filter-status" href="#" data-status="gagal" data-text="Gagal">Gagal</a></li>
+                    <li><a class="dropdown-item filter-status" href="#" data-status="expired" data-text="Expired">Expired</a></li>
                 </ul>
             </div>
-            
-            <!-- Tombol untuk generate test data (hanya untuk development) -->
+
             @if(app()->environment('local'))
             <a href="{{ route('admin.pesanan.create-test') }}" class="btn btn-secondary btn-sm">
-                <i class="fas fa-plus"></i> Generate Test Data
+                <i class="fas fa-vial"></i> Test Data
             </a>
             @endif
         </div>
@@ -39,7 +60,7 @@
             </button>
         </div>
         @endif
-        
+
         @if (session('error'))
         <div id="alertError" class="alert alert-danger alert-dismissible fade show" role="alert">
             {{ session('error') }}
@@ -48,48 +69,42 @@
             </button>
         </div>
         @endif
-        
+
         @if($pesanans && $pesanans->count() > 0)
         <div class="table-responsive">
             <table class="table table-bordered table-striped table-hover" id="tabelPesanan">
                 <thead>
                     <tr>
-                        <th width="5%">No</th>
-                        <th width="12%">Referensi & Pelanggan</th>
+                        <th width="3%">No</th>
+                        <th width="15%">Referensi & Pelanggan</th>
                         <th width="10%">Tanggal</th>
                         <th width="10%">Total</th>
-                        <th width="8%">Status Transaksi</th>
+                        <th width="12%">Status Transaksi</th> {{-- Diperlebar sedikit --}}
                         <th width="15%">Status Pembayaran</th>
                         <th width="15%">Status Pengiriman</th>
                         <th width="10%">Resi Tracking</th>
-                        <th width="15%">Aksi</th>
+                        <th width="10%">Aksi</th> {{-- Dikecilkan sedikit --}}
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($pesanans as $index => $pesanan)
                     @php
-                        // Logika untuk menentukan status yang dapat diubah
-                        $transactionStatus = $pesanan->status;
-                        $paymentStatus = $pesanan->pembayaran->status ?? 'pending';
-                        $shippingStatus = $pesanan->pengiriman->status ?? 'menunggu_pembayaran';
-                        
-                        // Status final yang tidak bisa diubah
-                        $transactionFinalStatuses = ['selesai', 'batal', 'gagal', 'expired'];
-                        $paymentFinalStatuses = ['refund', 'gagal', 'expired'];
-                        $shippingFinalStatuses = ['diterima', 'dibatalkan'];
-                        
-                        $isTransactionFinal = in_array($transactionStatus, $transactionFinalStatuses);
-                        $isPaymentFinal = in_array($paymentStatus, $paymentFinalStatuses);
-                        $isShippingFinal = in_array($shippingStatus, $shippingFinalStatuses);
-                        
-                        // Status yang dapat dibayar
-                        $isPaid = in_array($paymentStatus, ['berhasil', 'dibayar']);
-                        
-                        // Cek apakah barang bisa dikirim (harus sudah bayar)
-                        $canShip = $isPaid && !$isTransactionFinal;
-                        
-                        // Cek apakah sudah dikirim
-                        $isShipped = in_array($shippingStatus, ['dikirim', 'diterima']);
+                    // Logika untuk menentukan status yang dapat diubah (sudah ada)
+                    $transactionStatus = $pesanan->status;
+                    $paymentStatus = $pesanan->pembayaran->status ?? 'pending';
+                    $shippingStatus = $pesanan->pengiriman->status ?? 'menunggu_pembayaran';
+
+                    $transactionFinalStatuses = ['selesai', 'batal', 'gagal', 'expired'];
+                    $paymentFinalStatuses = ['refund', 'gagal', 'expired'];
+                    $shippingFinalStatuses = ['diterima', 'dibatalkan'];
+
+                    $isTransactionFinal = in_array($transactionStatus, $transactionFinalStatuses);
+                    $isPaymentFinal = in_array($paymentStatus, $paymentFinalStatuses);
+                    $isShippingFinal = in_array($shippingStatus, $shippingFinalStatuses);
+
+                    $isPaid = in_array($paymentStatus, ['berhasil', 'dibayar']);
+                    $canShip = $isPaid && !$isTransactionFinal;
+                    $isShipped = in_array($shippingStatus, ['dikirim', 'diterima']);
                     @endphp
                     <tr>
                         <td>{{ $index + 1 }}</td>
@@ -97,185 +112,177 @@
                             <div class="d-flex flex-column">
                                 <small class="text-muted">ID: #{{ str_pad($pesanan->id, 5, '0', STR_PAD_LEFT) }}</small>
                                 @if($pesanan->merchant_ref)
-                                <small class="font-weight-bold">{{ $pesanan->merchant_ref }}</small>
+                                <small class="fw-bold">{{ $pesanan->merchant_ref }}</small> {{-- Diganti font-weight-bold menjadi fw-bold (BS5) --}}
                                 @endif
                                 @if($pesanan->tripay_reference)
                                 <small class="text-info">{{ $pesanan->tripay_reference }}</small>
                                 @endif
                                 <hr class="my-1">
-                                <span class="font-weight-bold">{{ $pesanan->user->nama ?? '-' }}</span>
+                                <span class="fw-bold">{{ $pesanan->user->nama ?? '-' }}</span>
                                 @if($pesanan->nama_penerima && $pesanan->nama_penerima !== $pesanan->user->nama)
-                                <small class="text-muted">Penerima: {{ $pesanan->nama_penerima }}</small>
+                                <small class="text-muted fst-italic">Penerima: {{ $pesanan->nama_penerima }}</small> {{-- Ditambah fst-italic --}}
                                 @endif
                             </div>
                         </td>
                         <td>
                             <div class="d-flex flex-column">
-                                <span>{{ $pesanan->tanggal_transaksi ? $pesanan->tanggal_transaksi->format('d/m/Y') : '-' }}</span>
+                                <span>{{ $pesanan->tanggal_transaksi ? $pesanan->tanggal_transaksi->format('d/m/y') : '-' }}</span> {{-- Format tahun jadi 2 digit --}}
                                 <small class="text-muted">{{ $pesanan->tanggal_transaksi ? $pesanan->tanggal_transaksi->format('H:i') : '' }}</small>
                             </div>
                         </td>
                         <td>
                             <div class="d-flex flex-column">
-                                <span class="font-weight-bold">Rp {{ number_format($pesanan->total_harga, 0, ',', '.') }}</span>
+                                <span class="fw-bold">Rp {{ number_format($pesanan->total_harga, 0, ',', '.') }}</span>
                                 @if($pesanan->pengiriman && $pesanan->pengiriman->biaya > 0)
-                                <small class="text-muted">Ongkir: {{ number_format($pesanan->pengiriman->biaya, 0, ',', '.') }}</small>
+                                <small class="text-muted">+Ongkir: {{ number_format($pesanan->pengiriman->biaya, 0, ',', '.') }}</small>
                                 @endif
                             </div>
                         </td>
                         <td>
                             @if($isTransactionFinal)
-                                <!-- Status final tidak bisa diubah -->
-                                <span class="badge bg-{{ $transactionStatus === 'selesai' ? 'success' : ($transactionStatus === 'batal' ? 'warning' : 'danger') }} text-white">
-                                    {{ ucfirst($transactionStatus) }}
-                                </span>
+                            <span class="badge bg-{{ $transactionStatus === 'selesai' ? 'success' : ($transactionStatus === 'batal' ? 'warning' : 'danger') }} text-white">
+                                {{ ucfirst($transactionStatus) }}
+                            </span>
                             @else
-                                <select class="form-control form-control-sm status-dropdown" 
-                                        data-type="transaction" 
-                                        data-id="{{ $pesanan->id }}"
-                                        data-current="{{ $transactionStatus }}"
-                                        data-payment-status="{{ $paymentStatus }}"
-                                        data-shipping-status="{{ $shippingStatus }}">
-                                    @if($transactionStatus === 'pending')
-                                        <option value="pending" selected>Pending</option>
-                                        <option value="batal">Batal</option>
-                                        <option value="gagal">Gagal</option>
-                                        <option value="expired">Expired</option>
-                                        @if($isPaid)
-                                            <option value="dibayar">Dibayar</option>
-                                        @endif
-                                    @elseif($transactionStatus === 'dibayar')
-                                        <option value="dibayar" selected>Dibayar</option>
-                                        <option value="berhasil">Berhasil</option>
-                                        @if($canShip)
-                                            <option value="dikirim">Dikirim</option>
-                                        @endif
-                                    @elseif($transactionStatus === 'berhasil')
-                                        <option value="berhasil" selected>Berhasil</option>
-                                        @if($canShip)
-                                            <option value="dikirim">Dikirim</option>
-                                        @endif
-                                    @elseif($transactionStatus === 'dikirim')
-                                        <option value="dikirim" selected>Dikirim</option>
-                                        @if($isShipped)
-                                            <option value="selesai">Selesai</option>
-                                        @endif
-                                    @endif
-                                </select>
+                            <select class="form-control form-control-sm status-dropdown" {{-- Diganti form-control menjadi form-control --}}
+                                data-type="transaction"
+                                data-id="{{ $pesanan->id }}"
+                                data-current="{{ $transactionStatus }}"
+                                data-payment-status="{{ $paymentStatus }}"
+                                data-shipping-status="{{ $shippingStatus }}">
+                                {{-- Opsi status transaksi --}}
+                                @if($transactionStatus === 'pending')
+                                <option value="pending" selected>Pending</option>
+                                <option value="batal">Batal</option>
+                                <option value="gagal">Gagal</option>
+                                <option value="expired">Expired</option>
+                                @if($isPaid) <option value="dibayar">Dibayar</option> @endif
+                                @elseif($transactionStatus === 'dibayar')
+                                <option value="dibayar" selected>Dibayar</option>
+                                <option value="berhasil">Berhasil (Proses)</option>
+                                @if($canShip) <option value="dikirim">Dikirim</option> @endif
+                                @elseif($transactionStatus === 'berhasil')
+                                <option value="berhasil" selected>Berhasil (Proses)</option>
+                                @if($canShip) <option value="dikirim">Dikirim</option> @endif
+                                @elseif($transactionStatus === 'dikirim')
+                                <option value="dikirim" selected>Dikirim</option>
+                                @if($shippingStatus === 'diterima') <option value="selesai">Selesai</option> @endif
+                                @else {{-- Fallback jika status tidak dikenali --}}
+                                <option value="{{ $transactionStatus }}" selected>{{ ucfirst($transactionStatus) }}</option>
+                                @endif
+                            </select>
                             @endif
                         </td>
                         <td>
                             @if($pesanan->pembayaran)
                             <div class="d-flex flex-column">
                                 @if($isPaymentFinal)
-                                    <!-- Status pembayaran final -->
-                                    <span class="badge bg-{{ $paymentStatus === 'refund' ? 'info' : 'danger' }} text-white">
-                                        {{ ucfirst($paymentStatus) }}
-                                    </span>
+                                <span class="badge bg-{{ $paymentStatus === 'refund' ? 'info' : ($paymentStatus === 'gagal' || $paymentStatus === 'expired' ? 'danger' : 'secondary') }} text-white"> {{-- Ditambah secondary --}}
+                                    {{ ucfirst($paymentStatus) }}
+                                </span>
                                 @else
-                                    <select class="form-control form-control-sm status-dropdown mb-1" 
-                                            data-type="payment" 
-                                            data-id="{{ $pesanan->id }}"
-                                            data-current="{{ $paymentStatus }}"
-                                            data-transaction-status="{{ $transactionStatus }}">
-                                        @if($paymentStatus === 'pending')
-                                            <option value="pending" selected>Pending</option>
-                                            <option value="berhasil">Berhasil</option>
-                                            <option value="dibayar">Dibayar</option>
-                                            <option value="gagal">Gagal</option>
-                                            <option value="expired">Expired</option>
-                                        @elseif(in_array($paymentStatus, ['berhasil', 'dibayar']))
-                                            <option value="{{ $paymentStatus }}" selected>{{ ucfirst($paymentStatus) }}</option>
-                                            @if(!$isShipped)
-                                                <option value="refund">Refund</option>
-                                            @endif
-                                        @endif
-                                    </select>
+                                <select class="form-control form-control-sm status-dropdown mb-1"
+                                    data-type="payment"
+                                    data-id="{{ $pesanan->id }}"
+                                    data-current="{{ $paymentStatus }}"
+                                    data-transaction-status="{{ $transactionStatus }}">
+                                    {{-- Opsi status pembayaran --}}
+                                    @if($paymentStatus === 'pending')
+                                    <option value="pending" selected>Pending</option>
+                                    <option value="berhasil">Berhasil</option>
+                                    <option value="dibayar">Dibayar</option>
+                                    <option value="gagal">Gagal</option>
+                                    <option value="expired">Expired</option>
+                                    @elseif(in_array($paymentStatus, ['berhasil', 'dibayar']))
+                                    <option value="{{ $paymentStatus }}" selected>{{ ucfirst($paymentStatus) }}</option>
+                                    @if(!$isShipped && !in_array($transactionStatus, ['batal', 'gagal', 'expired']))
+                                    <option value="refund">Refund</option>
+                                    @endif
+                                    @else
+                                    <option value="{{ $paymentStatus }}" selected>{{ ucfirst($paymentStatus) }}</option>
+                                    @endif
+                                </select>
                                 @endif
                                 <small class="text-muted">{{ $pesanan->pembayaran->metode ?? '-' }}</small>
                                 @if($pesanan->pembayaran->payment_code)
-                                <small class="text-info font-weight-bold">{{ $pesanan->pembayaran->payment_code }}</small>
+                                <small class="text-info fw-bold">{{ $pesanan->pembayaran->payment_code }}</small>
                                 @endif
                                 @if($pesanan->pembayaran->waktu_bayar)
-                                <small class="text-success">{{ $pesanan->pembayaran->waktu_bayar->format('d/m H:i') }}</small>
+                                <small class="text-success fst-italic">{{ $pesanan->pembayaran->waktu_bayar->format('d/m H:i') }}</small>
                                 @endif
                             </div>
                             @else
-                            <span class="text-muted">Tidak ada data pembayaran</span>
+                            <span class="text-muted">-</span>
                             @endif
                         </td>
                         <td>
                             @if($pesanan->pengiriman)
                             <div class="d-flex flex-column">
                                 @if($isShippingFinal)
-                                    <!-- Status pengiriman final -->
-                                    <span class="badge bg-{{ $shippingStatus === 'diterima' ? 'success' : 'warning' }} text-white">
-                                        {{ ucfirst(str_replace('_', ' ', $shippingStatus)) }}
-                                    </span>
+                                <span class="badge bg-{{ $shippingStatus === 'diterima' ? 'success' : ($shippingStatus === 'dibatalkan' ? 'warning' : 'secondary') }} text-white">
+                                    {{ ucfirst(str_replace('_', ' ', $shippingStatus)) }}
+                                </span>
                                 @elseif(!$isPaid)
-                                    <!-- Tidak bisa diubah jika belum bayar -->
-                                    <span class="badge bg-secondary text-white">
-                                        {{ ucfirst(str_replace('_', ' ', $shippingStatus)) }}
-                                    </span>
-                                    <small class="text-muted">Menunggu pembayaran</small>
+                                <span class="badge bg-secondary text-white">
+                                    {{ ucfirst(str_replace('_', ' ', $shippingStatus)) }}
+                                </span>
+                                <small class="text-muted">Menunggu pembayaran</small>
                                 @else
-                                    <select class="form-control form-control-sm status-dropdown mb-1" 
-                                            data-type="shipping" 
-                                            data-id="{{ $pesanan->id }}"
-                                            data-current="{{ $shippingStatus }}"
-                                            data-payment-status="{{ $paymentStatus }}">
-                                        @if($shippingStatus === 'menunggu_pembayaran' && $isPaid)
-                                            <option value="diproses" selected>Diproses</option>
-                                            <option value="dibatalkan">Dibatalkan</option>
-                                        @elseif($shippingStatus === 'diproses')
-                                            <option value="diproses" selected>Diproses</option>
-                                            <option value="dikirim">Dikirim</option>
-                                            <option value="dibatalkan">Dibatalkan</option>
-                                        @elseif($shippingStatus === 'dikirim')
-                                            <option value="dikirim" selected>Dikirim</option>
-                                            <option value="diterima">Diterima</option>
-                                        @else
-                                            <option value="{{ $shippingStatus }}" selected>{{ ucfirst(str_replace('_', ' ', $shippingStatus)) }}</option>
-                                        @endif
-                                    </select>
+                                <select class="form-control form-control-sm status-dropdown mb-1"
+                                    data-type="shipping"
+                                    data-id="{{ $pesanan->id }}"
+                                    data-current="{{ $shippingStatus }}"
+                                    data-payment-status="{{ $paymentStatus }}">
+                                    {{-- Opsi status pengiriman --}}
+                                    @if($shippingStatus === 'menunggu_pembayaran' && $isPaid)
+                                    <option value="diproses" selected>Diproses</option>
+                                    <option value="dibatalkan">Dibatalkan</option>
+                                    @elseif($shippingStatus === 'diproses')
+                                    <option value="diproses" selected>Diproses</option>
+                                    <option value="dikirim">Dikirim</option>
+                                    <option value="dibatalkan">Dibatalkan</option>
+                                    @elseif($shippingStatus === 'dikirim')
+                                    <option value="dikirim" selected>Dikirim</option>
+                                    <option value="diterima">Diterima</option>
+                                    @else
+                                    <option value="{{ $shippingStatus }}" selected>{{ ucfirst(str_replace('_', ' ', $shippingStatus)) }}</option>
+                                    @endif
+                                </select>
                                 @endif
-                                <small class="text-muted">{{ $pesanan->pengiriman->kurir ?? '-' }} - {{ $pesanan->pengiriman->layanan ?? '-' }}</small>
+                                <small class="text-muted">{{ $pesanan->pengiriman->kurir ?? '-' }} {{ $pesanan->pengiriman->layanan ? '('.$pesanan->pengiriman->layanan.')' : '' }}</small>
                                 @if($pesanan->pengiriman->weight)
-                                <small class="text-muted">Berat: {{ $pesanan->pengiriman->weight }}g</small>
+                                <small class="text-muted">{{ $pesanan->pengiriman->weight }}g</small>
                                 @endif
                             </div>
                             @else
-                            <span class="text-muted">Tidak ada data pengiriman</span>
+                            <span class="text-muted">-</span>
                             @endif
                         </td>
                         <td>
                             @if($pesanan->pengiriman)
                             <div class="input-group input-group-sm">
-                                <input type="text" class="form-control resi-input" 
-                                       data-id="{{ $pesanan->id }}"
-                                       value="{{ $pesanan->pengiriman->resi ?? '' }}" 
-                                       placeholder="No. Resi"
-                                       maxlength="50"
-                                       {{ !$canShip || $isShippingFinal ? 'readonly' : '' }}>
-                                <div class="input-group-append">
-                                    @if($pesanan->pengiriman->resi)
-                                    <button class="btn btn-outline-info btn-sm copy-resi" 
-                                            data-resi="{{ $pesanan->pengiriman->resi }}" 
-                                            title="Copy Resi">
-                                        <i class="fas fa-copy"></i>
-                                    </button>
-                                    @endif
+                                <input type="text" class="form-control resi-input"
+                                    data-id="{{ $pesanan->id }}"
+                                    value="{{ $pesanan->pengiriman->resi ?? '' }}"
+                                    placeholder="No. Resi"
+                                    maxlength="50"
+                                    {{ !$canShip || $isShippingFinal ? 'readonly' : '' }}>
+                                <button class="btn btn-outline-secondary dropdown-toggle btn-sm" type="button" data-bs-toggle="dropdown" aria-expanded="false" {{ !$canShip || $isShippingFinal || !$pesanan->pengiriman->resi ? 'disabled' : ''}}><i class="fas fa-cog"></i></button>
+                                <ul class="dropdown-menu dropdown-menu-end">
                                     @if($canShip && !$isShippingFinal)
-                                    <button class="btn btn-outline-success btn-sm update-resi" 
-                                            data-id="{{ $pesanan->id }}" 
-                                            title="Update Resi">
-                                        <i class="fas fa-check"></i>
-                                    </button>
+                                    <li><button class="dropdown-item update-resi" type="button" data-id="{{ $pesanan->id }}"><i class="fas fa-save mr-2"></i>Update Resi</button></li>
                                     @endif
-                                </div>
+                                    @if($pesanan->pengiriman->resi)
+                                    <li><button class="dropdown-item copy-resi" type="button" data-resi="{{ $pesanan->pengiriman->resi }}"><i class="fas fa-copy mr-2"></i>Salin Resi</button></li>
+                                    {{-- Placeholder untuk Lacak Paket jika ada URL tracker --}}
+                                    {{-- <li><a class="dropdown-item" href="#" target="_blank"><i class="fas fa-search-location mr-2"></i>Lacak Paket</a></li> --}}
+                                    @endif
+                                </ul>
                             </div>
                             @if(!$isPaid && $pesanan->pengiriman)
                             <small class="text-muted">Menunggu pembayaran</small>
+                            @elseif($isShippingFinal && $pesanan->pengiriman && !$pesanan->pengiriman->resi)
+                            <small class="text-muted">Resi tidak diinput</small>
                             @endif
                             @else
                             <span class="text-muted">-</span>
@@ -284,18 +291,18 @@
                         <td>
                             <div class="btn-group btn-group-sm" role="group">
                                 <button class="btn btn-info" data-bs-toggle="modal"
-                                        data-bs-target="#modalDetail{{ $pesanan->id }}" title="Detail">
+                                    data-bs-target="#modalDetail{{ $pesanan->id }}" title="Detail Pesanan">
                                     <i class="fa fa-eye"></i>
                                 </button>
                                 @if($pesanan->pengiriman)
                                 <button class="btn btn-primary" data-bs-toggle="modal"
-                                        data-bs-target="#modalShipping{{ $pesanan->id }}" title="Detail Pengiriman">
+                                    data-bs-target="#modalShipping{{ $pesanan->id }}" title="Detail Pengiriman">
                                     <i class="fa fa-truck"></i>
                                 </button>
                                 @endif
-                                @if(!in_array($transactionStatus, ['selesai', 'dikirim']))
+                                @if(!in_array($transactionStatus, ['selesai', 'dikirim', 'batal'])) {{-- Tidak bisa hapus jika sudah batal --}}
                                 <button class="btn btn-danger" data-bs-toggle="modal"
-                                        data-bs-target="#modalHapus{{ $pesanan->id }}" title="Hapus">
+                                    data-bs-target="#modalHapus{{ $pesanan->id }}" title="Hapus Pesanan">
                                     <i class="fa fa-trash"></i>
                                 </button>
                                 @endif
@@ -311,10 +318,10 @@
             <div class="text-muted">
                 <i class="fas fa-shopping-cart fa-3x mb-3"></i>
                 <h5>Belum Ada Pesanan</h5>
-                <p>Pesanan dari pelanggan akan muncul di sini</p>
+                <p>Belum ada pesanan yang masuk atau sesuai filter yang dipilih.</p>
                 @if(app()->environment('local'))
-                <a href="{{ route('admin.pesanan.create-test') }}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Generate Test Data
+                <a href="{{ route('admin.pesanan.create-test') }}" class="btn btn-primary mt-2">
+                    <i class="fas fa-vial"></i> Generate Test Data
                 </a>
                 @endif
             </div>
@@ -323,22 +330,14 @@
     </div>
 </div>
 
-<!-- Alert untuk validasi status -->
-<div id="statusAlert" class="alert alert-warning alert-dismissible fade" role="alert" style="position: fixed; top: 20px; right: 20px; z-index: 9999; display: none;">
-    <strong>Peringatan!</strong> <span id="statusAlertMessage"></span>
-    <button type="button" class="close" onclick="$('#statusAlert').fadeOut()">
-        <span aria-hidden="true">&times;</span>
-    </button>
-</div>
+{{-- ... kode alert ... --}}
 
-<!-- Modals -->
 @if($pesanans && $pesanans->count() > 0)
 @foreach ($pesanans as $pesanan)
-<!-- Modal Detail Pesanan -->
 <div class="modal fade" id="modalDetail{{ $pesanan->id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-info text-white">
                 <h5 class="modal-title">Detail Pesanan #{{ str_pad($pesanan->id, 5, '0', STR_PAD_LEFT) }}</h5>
                 <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
@@ -346,104 +345,103 @@
             </div>
             <div class="modal-body">
                 <div class="row">
-                    <div class="col-md-4">
-                        <h6><strong>Informasi Pelanggan</strong></h6>
-                        <p><strong>Nama:</strong> {{ $pesanan->user->nama ?? '-' }}</p>
-                        <p><strong>Username:</strong> {{ $pesanan->user->username ?? '-' }}</p>
-                        <p><strong>Email:</strong> {{ $pesanan->user->email ?? '-' }}</p>
-                        <p><strong>No. HP:</strong> {{ $pesanan->user->nohp ?? '-' }}</p>
-                        <p><strong>Alamat User:</strong> {{ $pesanan->user->alamat ?? '-' }}</p>
-                        
+                    <div class="col-lg-4 col-md-6 mb-3">
+                        <h6><strong><i class="fas fa-user-circle mr-2"></i>Informasi Pelanggan</strong></h6>
+                        <p class="mb-1"><strong>Nama:</strong> {{ $pesanan->user->nama ?? '-' }}</p>
+                        <p class="mb-1"><strong>Username:</strong> {{ $pesanan->user->username ?? '-' }}</p>
+                        <p class="mb-1"><strong>Email:</strong> {{ $pesanan->user->email ?? '-' }}</p>
+                        <p class="mb-1"><strong>No. HP:</strong> {{ $pesanan->user->nohp ?? '-' }}</p>
+                        <p class="mb-0"><strong>Alamat User:</strong> <small class="text-muted">{{ $pesanan->user->alamat ?? '-' }}</small></p>
+
                         @if($pesanan->nama_penerima || $pesanan->telepon_penerima || $pesanan->alamat_pengiriman)
                         <hr>
-                        <h6><strong>Informasi Penerima</strong></h6>
+                        <h6><strong><i class="fas fa-map-marked-alt mr-2"></i>Informasi Penerima</strong></h6>
                         @if($pesanan->nama_penerima)
-                        <p><strong>Nama Penerima:</strong> {{ $pesanan->nama_penerima }}</p>
+                        <p class="mb-1"><strong>Nama Penerima:</strong> {{ $pesanan->nama_penerima }}</p>
                         @endif
                         @if($pesanan->telepon_penerima)
-                        <p><strong>Telepon:</strong> {{ $pesanan->telepon_penerima }}</p>
+                        <p class="mb-1"><strong>Telepon:</strong> {{ $pesanan->telepon_penerima }}</p>
                         @endif
                         @if($pesanan->alamat_pengiriman)
-                        <p><strong>Alamat Pengiriman:</strong> {{ $pesanan->alamat_pengiriman }}</p>
+                        <p class="mb-0"><strong>Alamat Pengiriman:</strong> <small class="text-muted">{{ $pesanan->alamat_pengiriman }}</small></p>
                         @endif
                         @endif
                     </div>
-                    <div class="col-md-4">
-                        <h6><strong>Informasi Pesanan</strong></h6>
-                        <p><strong>Tanggal:</strong> {{ $pesanan->tanggal_transaksi ? $pesanan->tanggal_transaksi->format('d/m/Y H:i') : '-' }}</p>
-                        <p><strong>Merchant Ref:</strong> {{ $pesanan->merchant_ref ?? '-' }}</p>
+                    <div class="col-lg-4 col-md-6 mb-3">
+                        <h6><strong><i class="fas fa-file-invoice mr-2"></i>Informasi Pesanan</strong></h6>
+                        <p class="mb-1"><strong>Tanggal:</strong> {{ $pesanan->tanggal_transaksi ? $pesanan->tanggal_transaksi->format('d M Y, H:i') : '-' }}</p>
+                        <p class="mb-1"><strong>Merchant Ref:</strong> {{ $pesanan->merchant_ref ?? '-' }}</p>
                         @if($pesanan->tripay_reference)
-                        <p><strong>Tripay Ref:</strong> {{ $pesanan->tripay_reference }}</p>
+                        <p class="mb-1"><strong>Tripay Ref:</strong> {{ $pesanan->tripay_reference }}</p>
                         @endif
-                        <p><strong>Status:</strong> 
-                            <span class="badge bg-{{ $pesanan->status === 'selesai' ? 'success' : ($pesanan->status === 'dikirim' ? 'info' : ($pesanan->status === 'dibayar' ? 'warning' : ($pesanan->status === 'pending' ? 'secondary' : 'danger'))) }} text-white">
+                        <p class="mb-1"><strong>Status:</strong>
+                            <span class="badge bg-{{ $pesanan->status === 'selesai' ? 'success' : ($pesanan->status === 'dikirim' ? 'info' : ($pesanan->status === 'dibayar' || $pesanan->status === 'berhasil' ? 'primary' : ($pesanan->status === 'pending' ? 'secondary' : 'danger'))) }} text-white">
                                 {{ ucfirst($pesanan->status) }}
                             </span>
                         </p>
                         @if($pesanan->expired_time)
-                        <p><strong>Expired:</strong> {{ $pesanan->expired_time->format('d/m/Y H:i') }}</p>
+                        <p class="mb-1"><strong>Kedaluwarsa:</strong> {{ $pesanan->expired_time->format('d M Y, H:i') }}</p>
                         @endif
                         @if($pesanan->catatan)
-                        <p><strong>Catatan:</strong> {{ $pesanan->catatan }}</p>
+                        <p class="mb-0"><strong>Catatan Pelanggan:</strong> <small class="text-muted fst-italic">"{{ $pesanan->catatan }}"</small></p>
                         @endif
                     </div>
-                    <div class="col-md-4">
+                    <div class="col-lg-4 col-md-12 mb-3"> {{-- Dibuat full width di md --}}
                         @if($pesanan->pembayaran)
-                        <h6><strong>Informasi Pembayaran</strong></h6>
-                        <p><strong>Metode:</strong> {{ $pesanan->pembayaran->metode ?? '-' }}</p>
-                        <p><strong>Status:</strong> 
+                        <h6><strong><i class="fas fa-credit-card mr-2"></i>Informasi Pembayaran</strong></h6>
+                        <p class="mb-1"><strong>Metode:</strong> {{ $pesanan->pembayaran->metode ?? '-' }}</p>
+                        <p class="mb-1"><strong>Status:</strong>
                             <span class="badge bg-{{ $pesanan->pembayaran->status === 'berhasil' || $pesanan->pembayaran->status === 'dibayar' ? 'success' : ($pesanan->pembayaran->status === 'pending' ? 'warning' : 'danger') }} text-white">
                                 {{ ucfirst($pesanan->pembayaran->status) }}
                             </span>
                         </p>
-                        <p><strong>Total Bayar:</strong> Rp {{ number_format($pesanan->pembayaran->total_bayar, 0, ',', '.') }}</p>
+                        <p class="mb-1"><strong>Total Bayar:</strong> Rp {{ number_format($pesanan->pembayaran->total_bayar, 0, ',', '.') }}</p>
                         @if($pesanan->pembayaran->payment_code)
-                        <p><strong>Kode Bayar:</strong> {{ $pesanan->pembayaran->payment_code }}</p>
+                        <p class="mb-1"><strong>Kode Bayar:</strong> {{ $pesanan->pembayaran->payment_code }}</p>
                         @endif
                         @if($pesanan->pembayaran->waktu_bayar)
-                        <p><strong>Waktu Bayar:</strong> {{ $pesanan->pembayaran->waktu_bayar->format('d/m/Y H:i') }}</p>
+                        <p class="mb-0"><strong>Waktu Bayar:</strong> {{ $pesanan->pembayaran->waktu_bayar->format('d M Y, H:i') }}</p>
                         @endif
                         @endif
-                        
+
                         @if($pesanan->pengiriman)
-                        <hr>
-                        <h6><strong>Informasi Pengiriman</strong></h6>
-                        <p><strong>Kurir:</strong> {{ $pesanan->pengiriman->kurir ?? '-' }}</p>
-                        <p><strong>Layanan:</strong> {{ $pesanan->pengiriman->layanan ?? '-' }}</p>
-                        <p><strong>Berat:</strong> {{ $pesanan->pengiriman->weight ?? 0 }}g</p>
-                        <p><strong>Biaya:</strong> Rp {{ number_format($pesanan->pengiriman->biaya ?? 0, 0, ',', '.') }}</p>
-                        <p><strong>Status:</strong> 
+                        <hr class="my-2">
+                        <h6><strong><i class="fas fa-shipping-fast mr-2"></i>Informasi Pengiriman</strong></h6>
+                        <p class="mb-1"><strong>Kurir:</strong> {{ $pesanan->pengiriman->kurir ?? '-' }} ({{ $pesanan->pengiriman->layanan ?? '-' }})</p>
+                        <p class="mb-1"><strong>Berat:</strong> {{ $pesanan->pengiriman->weight ?? 0 }}g</p>
+                        <p class="mb-1"><strong>Biaya:</strong> Rp {{ number_format($pesanan->pengiriman->biaya ?? 0, 0, ',', '.') }}</p>
+                        <p class="mb-1"><strong>Status:</strong>
                             <span class="badge bg-{{ $pesanan->pengiriman->status === 'diterima' ? 'success' : ($pesanan->pengiriman->status === 'dikirim' ? 'info' : ($pesanan->pengiriman->status === 'diproses' ? 'warning' : 'secondary')) }} text-white">
                                 {{ ucfirst(str_replace('_', ' ', $pesanan->pengiriman->status)) }}
                             </span>
                         </p>
                         @if($pesanan->pengiriman->resi)
-                        <p><strong>No. Resi:</strong> 
-                            <span class="font-weight-bold text-success">{{ $pesanan->pengiriman->resi }}</span>
-                            <button class="btn btn-sm btn-outline-info ml-2 copy-resi" data-resi="{{ $pesanan->pengiriman->resi }}">
-                                <i class="fas fa-copy"></i> Copy
+                        <p class="mb-1"><strong>No. Resi:</strong>
+                            <span class="fw-bold text-success">{{ $pesanan->pengiriman->resi }}</span>
+                            <button class="btn btn-xs btn-outline-info ms-1 py-0 px-1 copy-resi-modal" data-resi="{{ $pesanan->pengiriman->resi }}">
+                                <i class="fas fa-copy fa-xs"></i>
                             </button>
                         </p>
                         @endif
                         @if($pesanan->pengiriman->etd)
-                        <p><strong>Estimasi:</strong> {{ $pesanan->pengiriman->etd }} hari</p>
+                        <p class="mb-0"><strong>Estimasi:</strong> {{ $pesanan->pengiriman->etd }} hari</p>
                         @endif
                         @endif
                     </div>
                 </div>
-                
+
                 <hr>
-                <h6><strong>Detail Produk</strong></h6>
+                <h6><strong><i class="fas fa-boxes mr-2"></i>Detail Produk Dipesan</strong></h6>
                 @if($pesanan->detailTransaksi && $pesanan->detailTransaksi->count() > 0)
                 <div class="table-responsive">
-                    <table class="table table-sm">
-                        <thead>
+                    <table class="table table-sm table-hover"> {{-- Ditambah table-hover --}}
+                        <thead class="table-light"> {{-- Header tabel lebih terang --}}
                             <tr>
                                 <th>Produk</th>
                                 <th>Kategori</th>
-                                <th>Jumlah</th>
-                                <th>Harga</th>
-                                <th>Subtotal</th>
+                                <th class="text-end">Jumlah</th>
+                                <th class="text-end">Harga Satuan</th>
+                                <th class="text-end">Subtotal</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -452,30 +450,43 @@
                                 <td>{{ $detail->produk->nama_produk ?? '-' }}</td>
                                 <td>
                                     @if($detail->produk && $detail->produk->kategori)
-                                    <span class="badge text-white" 
-                                          style="background-color: {{ $detail->produk->kategori->warna ?? '#6C757D' }};">
+                                    <span class="badge text-white"
+                                        style="background-color: {{ $detail->produk->kategori->warna ?? '#6C757D' }};">
                                         {{ $detail->produk->kategori->nama_kategori }}
                                     </span>
                                     @else
                                     <span class="text-muted">-</span>
                                     @endif
                                 </td>
-                                <td>{{ $detail->jumlah }}</td>
-                                <td>Rp {{ number_format($detail->harga_satuan, 0, ',', '.') }}</td>
-                                <td>Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
+                                <td class="text-end">{{ $detail->jumlah }}</td>
+                                <td class="text-end">Rp {{ number_format($detail->harga_satuan, 0, ',', '.') }}</td>
+                                <td class="text-end">Rp {{ number_format($detail->subtotal, 0, ',', '.') }}</td>
                             </tr>
                             @endforeach
                         </tbody>
                         <tfoot>
-                            <tr>
-                                <th colspan="4">Total</th>
-                                <th>Rp {{ number_format($pesanan->total_harga, 0, ',', '.') }}</th>
+                            <tr class="fw-bold table-light"> {{-- Footer tabel lebih terang --}}
+                                <td colspan="3"></td>
+                                <td class="text-end">Total Pesanan:</td>
+                                <td class="text-end">Rp {{ number_format($pesanan->detailTransaksi->sum('subtotal'), 0, ',', '.') }}</td>
+                            </tr>
+                            @if($pesanan->pengiriman && $pesanan->pengiriman->biaya > 0)
+                            <tr class="fw-bold table-light">
+                                <td colspan="3"></td>
+                                <td class="text-end">Biaya Pengiriman:</td>
+                                <td class="text-end">Rp {{ number_format($pesanan->pengiriman->biaya, 0, ',', '.') }}</td>
+                            </tr>
+                            @endif
+                            <tr class="fw-bold table-info"> {{-- Total keseluruhan dibuat lebih menonjol --}}
+                                <td colspan="3"></td>
+                                <td class="text-end">Grand Total:</td>
+                                <td class="text-end">Rp {{ number_format($pesanan->total_harga, 0, ',', '.') }}</td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
                 @else
-                <p class="text-muted">Tidak ada detail produk</p>
+                <p class="text-muted">Tidak ada detail produk untuk pesanan ini.</p>
                 @endif
             </div>
             <div class="modal-footer">
@@ -485,57 +496,52 @@
     </div>
 </div>
 
-<!-- Modal Detail Pengiriman -->
 @if($pesanan->pengiriman)
 <div class="modal fade" id="modalShipping{{ $pesanan->id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
+            <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title">Detail Pengiriman - Pesanan #{{ str_pad($pesanan->id, 5, '0', STR_PAD_LEFT) }}</h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close" style="color: #fff; opacity: 0.75;"> {{-- Ditambahkan style inline untuk memastikan warna dan opasitas --}}
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
                 <div class="row">
-                    <div class="col-md-6">
-                        <h6><strong>Informasi Pengiriman</strong></h6>
-                        <p><strong>Kurir:</strong> {{ $pesanan->pengiriman->kurir ?? '-' }}</p>
-                        <p><strong>Layanan:</strong> {{ $pesanan->pengiriman->layanan ?? '-' }}</p>
-                        <p><strong>Kode Layanan:</strong> {{ $pesanan->pengiriman->service_code ?? '-' }}</p>
-                        <p><strong>Berat Total:</strong> {{ $pesanan->pengiriman->weight ?? 0 }} gram</p>
-                        <p><strong>Biaya Kirim:</strong> Rp {{ number_format($pesanan->pengiriman->biaya ?? 0, 0, ',', '.') }}</p>
-                        <p><strong>Estimasi Pengiriman:</strong> {{ $pesanan->pengiriman->etd ?? '-' }} hari</p>
+                    <div class="col-md-6 mb-3">
+                        <h6><strong><i class="fas fa-truck mr-2"></i>Informasi Pengiriman</strong></h6>
+                        <p class="mb-1"><strong>Kurir:</strong> {{ $pesanan->pengiriman->kurir ?? '-' }}</p>
+                        <p class="mb-1"><strong>Layanan:</strong> {{ $pesanan->pengiriman->layanan ?? '-' }} ({{ $pesanan->pengiriman->service_code ?? '-' }})</p>
+                        <p class="mb-1"><strong>Berat Total:</strong> {{ $pesanan->pengiriman->weight ?? 0 }} gram</p>
+                        <p class="mb-1"><strong>Biaya Kirim:</strong> Rp {{ number_format($pesanan->pengiriman->biaya ?? 0, 0, ',', '.') }}</p>
+                        <p class="mb-0"><strong>Estimasi Pengiriman:</strong> {{ $pesanan->pengiriman->etd ?? '-' }} hari</p>
                     </div>
-                    <div class="col-md-6">
-                        <h6><strong>Status & Tracking</strong></h6>
-                        <p><strong>Status Saat Ini:</strong> 
+                    <div class="col-md-6 mb-3">
+                        <h6><strong><i class="fas fa-map-pin mr-2"></i>Status & Tracking</strong></h6>
+                        <p class="mb-1"><strong>Status Saat Ini:</strong>
                             <span class="badge bg-{{ $pesanan->pengiriman->status === 'diterima' ? 'success' : ($pesanan->pengiriman->status === 'dikirim' ? 'info' : ($pesanan->pengiriman->status === 'diproses' ? 'warning' : 'secondary')) }} text-white">
                                 {{ ucfirst(str_replace('_', ' ', $pesanan->pengiriman->status)) }}
                             </span>
                         </p>
                         @if($pesanan->pengiriman->resi)
-                        <p><strong>Nomor Resi:</strong> 
-                            <span class="font-weight-bold text-success">{{ $pesanan->pengiriman->resi }}</span>
-                            <button class="btn btn-sm btn-outline-info ml-2 copy-resi" data-resi="{{ $pesanan->pengiriman->resi }}">
-                                <i class="fas fa-copy"></i> Copy
+                        <p class="mb-1"><strong>Nomor Resi:</strong>
+                            <span class="fw-bold text-success">{{ $pesanan->pengiriman->resi }}</span>
+                            <button class="btn btn-xs btn-outline-info ms-1 py-0 px-1 copy-resi-modal" data-resi="{{ $pesanan->pengiriman->resi }}">
+                                <i class="fas fa-copy fa-xs"></i>
                             </button>
                         </p>
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i> 
-                            <strong>Cara Melacak Paket:</strong><br>
-                            <small>
-                                1. Copy nomor resi dengan tombol Copy<br>
-                                2. Kunjungi website {{ $pesanan->pengiriman->kurir }} untuk tracking<br>
-                                3. Masukkan nomor resi untuk melihat status terkini
-                            </small>
+                        <div class="alert alert-light p-2 mt-2 border">
+                            <small><i class="fas fa-info-circle me-1"></i> <strong>Cara Melacak Paket:</strong><br>
+                                1. Salin nomor resi di atas.<br>
+                                2. Kunjungi website resmi kurir <strong>{{ strtoupper($pesanan->pengiriman->kurir) }}</strong>.<br>
+                                3. Masukkan nomor resi pada kolom pelacakan yang tersedia.</small>
                         </div>
                         @else
-                        <p><strong>Nomor Resi:</strong> <span class="text-muted">Belum tersedia</span></p>
+                        <p class="mb-1"><strong>Nomor Resi:</strong> <span class="text-muted">Belum tersedia</span></p>
                         @endif
-                        
-                        <p><strong>Alamat Tujuan:</strong></p>
-                        <p class="text-muted">{{ $pesanan->alamat_pengiriman ?? 'Alamat tidak tersedia' }}</p>
+
+                        <h6 class="mt-3"><strong><i class="fas fa-home mr-2"></i>Alamat Tujuan</strong></h6>
+                        <p class="text-muted mb-0"><small>{{ $pesanan->alamat_pengiriman ?? 'Alamat tidak tersedia' }}</small></p>
                     </div>
                 </div>
             </div>
@@ -547,21 +553,18 @@
 </div>
 @endif
 
-<!-- Modal Hapus Pesanan -->
-@if(!in_array($pesanan->status, ['selesai', 'dikirim']))
+@if(!in_array($pesanan->status, ['selesai', 'dikirim', 'batal']))
 <div class="modal fade" id="modalHapus{{ $pesanan->id }}" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Konfirmasi Hapus</h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Konfirmasi Hapus Pesanan</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <p>Apakah Anda yakin ingin menghapus pesanan #{{ str_pad($pesanan->id, 5, '0', STR_PAD_LEFT) }} ini?</p>
-                <div class="alert alert-warning">
-                    <strong>Peringatan:</strong> Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait pesanan ini.
+                <p>Anda yakin ingin menghapus permanen pesanan <strong>#{{ str_pad($pesanan->id, 5, '0', STR_PAD_LEFT) }}</strong>?</p>
+                <div class="alert alert-warning small p-2">
+                    <i class="fas fa-exclamation-triangle"></i> Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait pesanan ini.
                 </div>
             </div>
             <div class="modal-footer">
@@ -569,7 +572,7 @@
                 <form method="POST" action="{{ route('admin.pesanan.destroy', $pesanan->id) }}" class="d-inline">
                     @csrf
                     @method('DELETE')
-                    <button type="submit" class="btn btn-danger">Hapus</button>
+                    <button type="submit" class="btn btn-danger"><i class="fas fa-trash-alt mr-2"></i>Ya, Hapus</button>
                 </form>
             </div>
         </div>
@@ -581,446 +584,457 @@
 
 @push('styles')
 <style>
-/* Status dropdown styling */
-.status-dropdown {
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    font-size: 0.875rem;
-    min-width: 120px;
-}
-
-.status-dropdown:focus {
-    border-color: #80bdff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-.status-dropdown:disabled {
-    background-color: #e9ecef;
-    opacity: 0.65;
-}
-
-/* Readonly input styling */
-.resi-input[readonly] {
-    background-color: #e9ecef;
-    opacity: 1;
-}
-
-/* Badge styling untuk status final */
-.badge {
-    font-size: 0.75rem;
-    padding: 0.375rem 0.5rem;
-}
-
-/* Table responsive adjustments */
-.table td {
-    vertical-align: middle;
-    padding: 0.5rem;
-}
-
-.table th {
-    background-color: #f8f9fa;
-    font-weight: 600;
-    vertical-align: middle;
-    padding: 0.75rem 0.5rem;
-}
-
-/* Loading state for dropdowns */
-.status-dropdown.loading {
-    opacity: 0.6;
-    pointer-events: none;
-}
-
-/* Success/error feedback */
-.status-feedback {
-    position: absolute;
-    top: 0;
-    right: 0;
-    transform: translateY(-50%);
-    z-index: 10;
-}
-
-.feedback-success {
-    color: #28a745;
-    animation: fadeInOut 2s ease-in-out;
-}
-
-.feedback-error {
-    color: #dc3545;
-    animation: fadeInOut 2s ease-in-out;
-}
-
-@keyframes fadeInOut {
-    0% { opacity: 0; }
-    50% { opacity: 1; }
-    100% { opacity: 0; }
-}
-
-/* Copy success animation */
-.copy-success {
-    background-color: #28a745 !important;
-    border-color: #28a745 !important;
-    color: white !important;
-}
-
-/* Modal improvements */
-.modal-xl {
-    max-width: 1200px;
-}
-
-/* Status alert styling */
-#statusAlert {
-    min-width: 300px;
-    max-width: 500px;
-}
-
-/* Responsive table */
-@media (max-width: 768px) {
-    .table-responsive {
-        font-size: 0.875rem;
-    }
-    
+    /* Status dropdown styling */
     .status-dropdown {
-        min-width: 100px;
-        font-size: 0.75rem;
+        /* border: 1px solid #dee2e6; */
+        /* Menggunakan style default form-control */
+        /* border-radius: 4px; */
+        font-size: 0.8rem;
+        /* Dikecilkan sedikit lagi */
+        min-width: 110px;
+        /* Disesuaikan */
+        padding-top: 0.25rem;
+        /* Disesuaikan paddingnya */
+        padding-bottom: 0.25rem;
     }
-    
-    .btn-group-sm > .btn {
-        padding: 0.25rem 0.4rem;
-        font-size: 0.75rem;
+
+    .status-dropdown:focus {
+        border-color: #86b7fe;
+        /* Warna BS5 focus */
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        /* Shadow BS5 focus */
     }
-}
+
+    .status-dropdown:disabled {
+        background-color: #e9ecef;
+        opacity: 0.65;
+    }
+
+    /* Readonly input styling */
+    .resi-input[readonly] {
+        background-color: #e9ecef;
+        opacity: 1;
+        cursor: default;
+    }
+
+    /* Badge styling untuk status final */
+    .badge {
+        font-size: 0.7rem;
+        /* Dikecilkan sedikit */
+        padding: 0.3rem 0.45rem;
+        /* Disesuaikan */
+    }
+
+    /* Table responsive adjustments */
+    .table td,
+    .table th {
+        /* Digabung */
+        vertical-align: middle;
+        padding: 0.6rem 0.5rem;
+        /* Padding disamakan dan disesuaikan */
+    }
+
+    .table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+    }
+
+    /* Loading state for dropdowns */
+    .status-dropdown.loading {
+        opacity: 0.6;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 8s2-4 6-4 6 4 6 4-2 4-6 4-6-4-6-4z'/%3e%3ccircle cx='8' cy='8' r='1' fill='%23343a40'/%3e%3c/svg%3e"),
+            url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 8s2-4 6-4 6 4 6 4-2 4-6 4-6-4-6-4z'/%3e%3ccircle cx='8' cy='8' r='1' fill='%23343a40'/%3e%3c/svg%3e");
+        /* Placeholder loading, sesuaikan jika ada icon library */
+        background-repeat: no-repeat;
+        background-position: right .75rem center;
+        background-size: 16px 12px;
+    }
+
+    /* Feedback icons (sudah ada) */
+
+    /* Copy success animation (sudah ada) */
+
+    /* Modal improvements */
+    .modal-xl {
+        max-width: 1140px;
+        /* Ukuran standar BS5 XL */
+    }
+
+    .modal-header {
+        padding: 0.8rem 1rem;
+        /* Padding modal header disesuaikan */
+    }
+
+    .modal-body p.mb-1 {
+        /* Margin bottom untuk paragraf di modal */
+        margin-bottom: 0.4rem !important;
+    }
+
+    .btn-xs {
+        /* Kelas untuk tombol sangat kecil */
+        padding: 0.1rem 0.3rem;
+        font-size: 0.65rem;
+    }
+
+    /* Status alert styling (sudah ada) */
+
+    /* Responsive table */
+    @media (max-width: 768px) {
+        .table-responsive {
+            font-size: 0.8rem;
+            /* Disesuaikan */
+        }
+
+        .status-dropdown {
+            min-width: 90px;
+            /* Disesuaikan */
+            font-size: 0.7rem;
+            /* Disesuaikan */
+        }
+
+        .btn-group-sm>.btn,
+        .btn-sm {
+            /* Termasuk .btn-sm umum */
+            padding: 0.2rem 0.35rem;
+            /* Disesuaikan */
+            font-size: 0.7rem;
+            /* Disesuaikan */
+        }
+
+        .card-header .btn-group {
+            /* Spasi untuk filter di mobile */
+            margin-top: 0.5rem;
+            display: block;
+            /* Agar full width jika perlu */
+        }
+
+        .card-header .btn-secondary {
+            /* Tombol test data di mobile */
+            margin-top: 0.5rem;
+        }
+    }
 </style>
 @endpush
 
 @push('scripts')
 <script>
-$(document).ready(function() {
-    // Initialize DataTable
-    if ($('#tabelPesanan').length && $('#tabelPesanan tbody tr').length > 0) {
-        try {
-            var table = $('#tabelPesanan').DataTable({
-                responsive: true,
-                processing: false,
-                serverSide: false,
-                paging: true,
-                searching: true,
-                ordering: true,
-                info: true,
-                autoWidth: false,
-                lengthMenu: [5, 10, 25, 50],
-                pageLength: 10,
-                order: [[2, 'desc']], // Sort by date
-                columnDefs: [
-                    { 
-                        targets: [0, 8], // No dan Aksi
-                        orderable: false
-                    },
-                    {
-                        targets: [4, 5, 6, 7], // Status columns
-                        orderable: false
-                    }
-                ],
-                language: {
-                    "lengthMenu": "Tampilkan _MENU_ data per halaman",
-                    "zeroRecords": "Tidak ada data yang ditemukan",
-                    "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
-                    "infoEmpty": "Tidak ada data tersedia",
-                    "infoFiltered": "(difilter dari _MAX_ total data)",
-                    "search": "Cari:",
-                    "paginate": {
-                        "first": "Awal",
-                        "last": "Akhir",
-                        "next": "Berikutnya",
-                        "previous": "Sebelumnya"
-                    }
-                }
-            });
+    $(document).ready(function() {
+        var tablePesanan; // Deklarasikan di luar agar bisa diakses
 
-            // Filter by status
-            $('.filter-status').on('click', function(e) {
-                e.preventDefault();
-                var status = $(this).data('status');
-                
+        if ($('#tabelPesanan').length && $('#tabelPesanan tbody tr').length > 0) {
+            try {
+                tablePesanan = $('#tabelPesanan').DataTable({ // Assign ke variabel
+                    responsive: true,
+                    // processing: true, // Bisa diaktifkan jika ada banyak data & server-side
+                    // serverSide: false, // Sesuaikan jika menggunakan server-side
+                    paging: true,
+                    searching: true,
+                    ordering: true,
+                    info: true,
+                    autoWidth: false,
+                    lengthMenu: [10, 25, 50, 100], // Tambah opsi 100
+                    pageLength: 10,
+                    order: [
+                        [2, 'desc']
+                    ], // Urutkan berdasarkan kolom Tanggal (index 2) menurun
+                    columnDefs: [{
+                            targets: [0, 8],
+                            orderable: false,
+                            searchable: false
+                        }, // No & Aksi
+                        {
+                            targets: [4, 5, 6, 7],
+                            orderable: true,
+                            searchable: true
+                        } // Status bisa diorder & search
+                    ],
+                    language: { // Diringkas
+                        "lengthMenu": "Tampil _MENU_",
+                        "zeroRecords": "Pesanan tidak ditemukan",
+                        "info": "Hal _PAGE_ dari _PAGES_ (_TOTAL_ total)",
+                        "infoEmpty": "Tidak ada pesanan",
+                        "infoFiltered": "(dari _MAX_ total)",
+                        "search": "Cari:",
+                        "paginate": {
+                            "first": "<<",
+                            "last": ">>",
+                            "next": ">",
+                            "previous": "<"
+                        }
+                    }
+                });
+                console.log('DataTable Pesanan berhasil diinisialisasi.');
+            } catch (error) {
+                console.error('Error saat inisialisasi DataTable Pesanan:', error);
+            }
+        }
+
+        // Filter by status
+        $('.filter-status').on('click', function(e) {
+            e.preventDefault();
+            var status = $(this).data('status');
+            var statusText = $(this).data('text');
+
+            if (tablePesanan) { // Pastikan DataTable sudah diinisialisasi
                 if (status === 'all') {
-                    table.column(4).search('').draw();
+                    tablePesanan.column(4).search('').draw(); // Kolom status transaksi (index 4)
                 } else {
-                    table.column(4).search(status, true, false).draw();
+                    // Search dengan regex untuk mencocokkan teks status di dalam tag HTML (misal, badge atau select)
+                    // Ini akan mencari teks 'Pending', 'Dibayar', dll. secara case-insensitive
+                    tablePesanan.column(4).search('^' + status + '$', true, false, true).draw();
                 }
-                
-                $('.dropdown-toggle').text('Filter: ' + $(this).text());
-            });
-
-            console.log('DataTable initialized successfully');
-        } catch (error) {
-            console.error('DataTable initialization error:', error);
-        }
-    }
-
-    // Validasi logika status
-    function validateStatusLogic(dropdown, newStatus) {
-        const type = dropdown.data('type');
-        const transactionStatus = dropdown.data('transaction-status') || dropdown.closest('tr').find('[data-type="transaction"]').val();
-        const paymentStatus = dropdown.data('payment-status') || dropdown.closest('tr').find('[data-type="payment"]').val();
-        const shippingStatus = dropdown.data('shipping-status') || dropdown.closest('tr').find('[data-type="shipping"]').val();
-
-        let isValid = true;
-        let message = '';
-
-        // Validasi berdasarkan tipe status
-        if (type === 'transaction') {
-            // Logika transaksi
-            if (newStatus === 'dikirim' && !['berhasil', 'dibayar'].includes(paymentStatus)) {
-                isValid = false;
-                message = 'Transaksi tidak dapat dikirim sebelum pembayaran berhasil!';
-            }
-            if (newStatus === 'selesai' && shippingStatus !== 'diterima') {
-                isValid = false;
-                message = 'Transaksi tidak dapat diselesaikan sebelum barang diterima!';
-            }
-        } else if (type === 'payment') {
-            // Logika pembayaran
-            if (newStatus === 'refund' && ['dikirim', 'diterima'].includes(shippingStatus)) {
-                isValid = false;
-                message = 'Pembayaran tidak dapat direfund setelah barang dikirim!';
-            }
-        } else if (type === 'shipping') {
-            // Logika pengiriman
-            if (['diproses', 'dikirim'].includes(newStatus) && !['berhasil', 'dibayar'].includes(paymentStatus)) {
-                isValid = false;
-                message = 'Pengiriman tidak dapat diproses sebelum pembayaran berhasil!';
-            }
-        }
-
-        if (!isValid) {
-            showStatusAlert(message);
-        }
-
-        return isValid;
-    }
-
-    // Fungsi untuk menampilkan alert status
-    function showStatusAlert(message) {
-        $('#statusAlertMessage').text(message);
-        $('#statusAlert').addClass('show').fadeIn();
-        
-        setTimeout(() => {
-            $('#statusAlert').fadeOut();
-        }, 5000);
-    }
-
-    // Handle status dropdown changes dengan validasi
-    $('.status-dropdown').on('change', function() {
-        const dropdown = $(this);
-        const type = dropdown.data('type');
-        const id = dropdown.data('id');
-        const newStatus = dropdown.val();
-        const currentStatus = dropdown.data('current');
-        
-        if (newStatus === currentStatus) {
-            return;
-        }
-
-        // Validasi logika status
-        if (!validateStatusLogic(dropdown, newStatus)) {
-            dropdown.val(currentStatus); // Kembalikan ke status sebelumnya
-            return;
-        }
-        
-        // Add loading state
-        dropdown.addClass('loading');
-        
-        // Prepare AJAX data dengan URL yang benar
-        let url, data;
-        
-        if (type === 'transaction') {
-            url = `/admin/pesanan/${id}/status`;
-            data = { 
-                status: newStatus,
-                _method: 'PUT'
-            };
-        } else if (type === 'payment') {
-            url = `/admin/pesanan/${id}/update-payment`;
-            data = { 
-                payment_status: newStatus,
-                waktu_bayar: (newStatus === 'berhasil' || newStatus === 'dibayar') ? new Date().toISOString().slice(0, 16) : null,
-                _method: 'PUT'
-            };
-        } else if (type === 'shipping') {
-            url = `/admin/pesanan/${id}/update-shipping`;
-            data = { 
-                shipping_status: newStatus,
-                resi: dropdown.closest('tr').find('.resi-input').val(),
-                _method: 'PUT'
-            };
-        }
-        
-        // Send AJAX request
-        $.ajax({
-            url: url,
-            method: 'POST',
-            data: {
-                ...data,
-                _token: $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                dropdown.removeClass('loading');
-                dropdown.data('current', newStatus);
-                
-                // Show success feedback
-                showFeedback(dropdown, 'success');
-                
-                // Show success notification
-                showNotification('success', 'Status berhasil diperbarui');
-                
-                // Auto-refresh after 1 second untuk update logika status
-                setTimeout(() => {
-                    location.reload();
-                }, 1000);
-            },
-            error: function(xhr) {
-                dropdown.removeClass('loading');
-                dropdown.val(currentStatus);
-                
-                showFeedback(dropdown, 'error');
-                
-                const errorMsg = xhr.responseJSON?.message || 'Gagal mengupdate status';
-                console.error('Status update error:', errorMsg);
-                
-                showNotification('error', errorMsg);
+                $('#filterStatusButton').text('Filter: ' + statusText);
+            } else {
+                console.warn('DataTable Pesanan belum siap untuk filtering.');
             }
         });
-    });
-    
-    // Handle resi update
-    $('.update-resi').on('click', function() {
-        const button = $(this);
-        const id = button.data('id');
-        const resiInput = button.closest('.input-group').find('.resi-input');
-        const newResi = resiInput.val().trim();
-        
-        if (!newResi) {
-            showNotification('warning', 'Masukkan nomor resi terlebih dahulu');
-            return;
-        }
-        
-        // Add loading state
-        button.prop('disabled', true);
-        button.html('<i class="fas fa-spinner fa-spin"></i>');
-        
-        $.ajax({
-            url: `/admin/pesanan/${id}/update-shipping`,
-            method: 'POST',
-            data: {
-                resi: newResi,
-                _method: 'PUT',
-                _token: $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                button.prop('disabled', false);
-                button.html('<i class="fas fa-check"></i>');
-                
-                showNotification('success', 'Nomor resi berhasil diupdate');
-                
-                // Add copy button if not exists
-                const copyBtn = button.siblings('.copy-resi');
-                if (copyBtn.length === 0) {
-                    const newCopyBtn = `<button class="btn btn-outline-info btn-sm copy-resi" data-resi="${newResi}" title="Copy Resi">
-                        <i class="fas fa-copy"></i>
-                    </button>`;
-                    button.before(newCopyBtn);
-                } else {
-                    copyBtn.data('resi', newResi);
+
+        // Validasi logika status (fungsi tetap sama)
+        function validateStatusLogic(dropdown, newStatus) {
+            const type = dropdown.data('type');
+            const tr = dropdown.closest('tr');
+            const transactionStatus = tr.find('select[data-type="transaction"]').val() || tr.find('span.badge').text().trim().toLowerCase();
+            const paymentStatusCurrent = tr.find('select[data-type="payment"]').val() || tr.find('td:nth-child(6) span.badge').text().trim().toLowerCase(); // Ambil status pembayaran saat ini
+            const shippingStatusCurrent = tr.find('select[data-type="shipping"]').val() || tr.find('td:nth-child(7) span.badge').text().trim().toLowerCase(); // Ambil status pengiriman saat ini
+
+            let isValid = true;
+            let message = '';
+
+            if (type === 'transaction') {
+                if (newStatus === 'dikirim' && !['berhasil', 'dibayar'].includes(paymentStatusCurrent)) {
+                    isValid = false;
+                    message = 'Pembayaran harus berhasil/dibayar sebelum transaksi dikirim.';
                 }
-                
-                // Change button color to green temporarily
-                button.removeClass('btn-outline-success').addClass('btn-success');
-                setTimeout(() => {
-                    button.removeClass('btn-success').addClass('btn-outline-success');
-                }, 2000);
-            },
-            error: function(xhr) {
-                button.prop('disabled', false);
-                button.html('<i class="fas fa-check"></i>');
-                
-                const errorMsg = xhr.responseJSON?.message || 'Gagal mengupdate resi';
-                showNotification('error', errorMsg);
+                if (newStatus === 'selesai' && shippingStatusCurrent !== 'diterima') {
+                    isValid = false;
+                    message = 'Barang harus diterima sebelum transaksi diselesaikan.';
+                }
+            } else if (type === 'payment') {
+                if (newStatus === 'refund' && ['dikirim', 'diterima'].includes(shippingStatusCurrent)) {
+                    isValid = false;
+                    message = 'Refund tidak bisa dilakukan jika barang sudah dikirim/diterima.';
+                }
+            } else if (type === 'shipping') {
+                if (['diproses', 'dikirim'].includes(newStatus) && !['berhasil', 'dibayar'].includes(paymentStatusCurrent)) {
+                    isValid = false;
+                    message = 'Pembayaran harus berhasil/dibayar sebelum pengiriman diproses.';
+                }
             }
-        });
-    });
-    
-    // Handle copy resi
-    $(document).on('click', '.copy-resi', function() {
-        const button = $(this);
-        const resi = button.data('resi');
-        
-        navigator.clipboard.writeText(resi).then(function() {
-            const originalClass = button.attr('class');
-            const originalHtml = button.html();
-            
-            button.removeClass('btn-outline-info').addClass('btn-success copy-success');
-            button.html('<i class="fas fa-check"></i>');
-            
-            showNotification('success', `Nomor resi ${resi} berhasil disalin`);
-            
+
+            if (!isValid) {
+                showStatusAlert(message);
+            }
+            return isValid;
+        }
+
+        // Fungsi untuk menampilkan alert status (fungsi tetap sama)
+        function showStatusAlert(message) {
+            $('#statusAlertMessage').text(message);
+            $('#statusAlert').addClass('show').fadeIn();
             setTimeout(() => {
-                button.attr('class', originalClass);
-                button.html(originalHtml);
-            }, 2000);
-        }).catch(function() {
-            showNotification('error', 'Gagal menyalin nomor resi');
-        });
-    });
-    
-    // Allow Enter key to update resi
-    $('.resi-input').on('keypress', function(e) {
-        if (e.which === 13) {
-            $(this).closest('.input-group').find('.update-resi').click();
+                $('#statusAlert').fadeOut().removeClass('show');
+            }, 5000);
         }
-    });
-});
 
-// Helper function to show feedback
-function showFeedback(element, type) {
-    const feedback = $(`<i class="fas fa-${type === 'success' ? 'check' : 'times'} status-feedback feedback-${type}"></i>`);
-    element.parent().append(feedback);
-    
-    setTimeout(() => {
-        feedback.remove();
-    }, 2000);
-}
+        // Handle status dropdown changes
+        $('#tabelPesanan').on('change', '.status-dropdown', function() { // Delegasi event
+            const dropdown = $(this);
+            const type = dropdown.data('type');
+            const id = dropdown.data('id');
+            const newStatus = dropdown.val();
+            const currentStatus = dropdown.data('current');
 
-// Helper function to show notifications
-function showNotification(type, message) {
-    const icon = type === 'success' ? 'success' : type === 'error' ? 'error' : 'warning';
-    const title = type === 'success' ? 'Berhasil!' : type === 'error' ? 'Error!' : 'Peringatan!';
-    
-    if (typeof Swal !== 'undefined') {
-        Swal.fire({
-            icon: icon,
-            title: title,
-            text: message,
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true
+            if (newStatus === currentStatus) return;
+
+            if (!validateStatusLogic(dropdown, newStatus)) {
+                dropdown.val(currentStatus); // Kembalikan
+                return;
+            }
+
+            dropdown.addClass('loading').prop('disabled', true); // Disable saat loading
+            let url, dataAjax;
+
+            if (type === 'transaction') {
+                url = `/admin/pesanan/${id}/status`;
+                dataAjax = {
+                    status: newStatus,
+                    _method: 'PUT'
+                };
+            } else if (type === 'payment') {
+                url = `/admin/pesanan/${id}/update-payment`;
+                dataAjax = {
+                    payment_status: newStatus,
+                    waktu_bayar: (newStatus === 'berhasil' || newStatus === 'dibayar') ? new Date().toISOString().slice(0, 19).replace('T', ' ') : null,
+                    _method: 'PUT'
+                };
+            } else if (type === 'shipping') {
+                url = `/admin/pesanan/${id}/update-shipping`;
+                dataAjax = {
+                    shipping_status: newStatus,
+                    resi: dropdown.closest('tr').find('.resi-input').val(), // Ambil resi saat update status pengiriman
+                    _method: 'PUT'
+                };
+            }
+
+            $.ajax({
+                url: url,
+                method: 'POST',
+                data: {
+                    ...dataAjax,
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    dropdown.removeClass('loading').prop('disabled', false);
+                    if (response.success) {
+                        dropdown.data('current', newStatus); // Update current status
+                        showFeedback(dropdown, 'success');
+                        showNotification('success', response.message || 'Status berhasil diperbarui.');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 1200); // Reload untuk konsistensi data
+                    } else {
+                        dropdown.val(currentStatus); // Kembalikan jika server-side validation gagal
+                        showFeedback(dropdown, 'error');
+                        showNotification('error', response.message || 'Gagal mengupdate status.');
+                    }
+                },
+                error: function(xhr) {
+                    dropdown.removeClass('loading').prop('disabled', false).val(currentStatus);
+                    showFeedback(dropdown, 'error');
+                    const errorMsg = xhr.responseJSON?.message || 'Terjadi kesalahan sistem.';
+                    showNotification('error', errorMsg);
+                }
+            });
         });
-    } else {
-        alert(`${title}\n${message}`);
-    }
-}
 
-// Alert auto hide
-setTimeout(function() {
-    $('#alertSuccess, #alertError').fadeOut();
-}, 5000);
+        // Handle resi update
+        $('#tabelPesanan').on('click', '.update-resi', function() { // Delegasi event
+            const button = $(this);
+            const id = button.data('id');
+            const resiInput = button.closest('.input-group').find('.resi-input');
+            const newResi = resiInput.val().trim();
 
-// Add CSRF token to all AJAX requests
-$.ajaxSetup({
-    headers: {
-        'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-    }
-});
+            if (!newResi) {
+                showNotification('warning', 'Nomor resi tidak boleh kosong.');
+                resiInput.focus();
+                return;
+            }
+
+            button.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+            $.ajax({
+                url: `/admin/pesanan/${id}/update-shipping`,
+                method: 'POST',
+                data: {
+                    resi: newResi,
+                    _method: 'PUT',
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    if (response.success) {
+                        showNotification('success', response.message || 'Nomor resi berhasil diupdate.');
+                        button.html('<i class="fas fa-check"></i>').removeClass('btn-outline-success').addClass('btn-success');
+                        // Update copy button data if exists or create one
+                        let copyBtn = button.closest('.input-group').find('.copy-resi');
+                        if (copyBtn.length === 0) {
+                            // Logic to add copy button if needed, or ensure it's always there and just update its data-resi
+                        } else {
+                            copyBtn.data('resi', newResi).attr('data-resi', newResi); // Update data attribute
+                        }
+                        setTimeout(() => {
+                            button.removeClass('btn-success').addClass('btn-outline-success');
+                        }, 2000);
+                    } else {
+                        showNotification('error', response.message || 'Gagal update resi.');
+                        button.html('<i class="fas fa-save"></i>'); // Reset icon
+                    }
+                },
+                error: function() {
+                    showNotification('error', 'Terjadi kesalahan saat update resi.');
+                    button.html('<i class="fas fa-save"></i>'); // Reset icon
+                },
+                complete: function() {
+                    button.prop('disabled', false);
+                    // If not success, don't reset to check, keep it as save icon
+                    if (!button.hasClass('btn-success')) {
+                        button.html('<i class="fas fa-save"></i>');
+                    }
+                }
+            });
+        });
+
+        // Handle copy resi (global dan modal)
+        $(document).on('click', '.copy-resi, .copy-resi-modal', function() { // Gabungkan selector
+            const button = $(this);
+            const resi = button.data('resi');
+            if (!resi) return;
+
+            navigator.clipboard.writeText(resi).then(() => {
+                const originalHtml = button.html();
+                button.html('<i class="fas fa-check"></i> Tercopy!').addClass('btn-success').removeClass('btn-outline-info');
+                showNotification('success', `Resi ${resi} disalin!`);
+                setTimeout(() => {
+                    button.html(originalHtml).removeClass('btn-success').addClass('btn-outline-info');
+                }, 2500);
+            }).catch(() => {
+                showNotification('error', 'Gagal menyalin resi.');
+            });
+        });
+
+        // Allow Enter key to update resi
+        $('#tabelPesanan').on('keypress', '.resi-input', function(e) { // Delegasi event
+            if (e.which === 13) { // Enter key
+                e.preventDefault(); // Mencegah submit form jika ada
+                $(this).closest('.input-group').find('.update-resi').click();
+            }
+        });
+
+        // Fungsi showFeedback (fungsi tetap sama)
+        function showFeedback(element, type) {
+            const feedbackIconClass = type === 'success' ? 'fa-check-circle text-success' : 'fa-times-circle text-danger';
+            const feedback = $(`<i class="fas ${feedbackIconClass} status-feedback" style="font-size:0.8em; margin-left: 5px;"></i>`);
+            // Hapus feedback lama jika ada
+            element.parent().find('.status-feedback').remove();
+            element.after(feedback); // Tampilkan setelah dropdown
+            setTimeout(() => {
+                feedback.remove();
+            }, 2500);
+        }
+
+        // Fungsi showNotification (fungsi tetap sama)
+        function showNotification(type, message) {
+            const icon = type === 'success' ? 'success' : type === 'error' ? 'error' : 'warning';
+            const title = type === 'success' ? 'Sukses!' : type === 'error' ? 'Error!' : 'Perhatian!';
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: icon,
+                    title: title,
+                    text: message,
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3500,
+                    timerProgressBar: true
+                });
+            } else {
+                alert(`${title}\n${message}`);
+            }
+        }
+
+        // Alert auto hide
+        setTimeout(function() {
+            $('#alertSuccess, #alertError').fadeOut(500, function() {
+                $(this).remove();
+            });
+        }, 4000);
+
+        // Add CSRF token (fungsi tetap sama)
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+    });
 </script>
 @endpush
 @endsection

@@ -17,14 +17,21 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
-            'nama' => 'required|string|max:255',
-            'username' => 'required|string|max:255|unique:users',
-            'password' => 'required|string|min:6',
-            'alamat' => 'nullable|string',
-            'nohp' => 'nullable|string|max:15',
-            'role' => 'required|in:admin,pembeli'
-        ]);
+        try {
+            $request->validate([
+                'nama' => 'required|string|max:255',
+                'username' => 'required|string|max:255|unique:users',
+                'password' => 'required|string|min:6',
+                'alamat' => 'nullable|string',
+                'nohp' => 'nullable|string|max:15',
+                'role' => 'required|in:admin,pembeli'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->route('admin.user.index')
+                ->withErrors($e->validator)
+                ->withInput()
+                ->with('modal_add_error', true);
+        }
 
         User::create([
             'nama' => $request->nama,
@@ -42,14 +49,21 @@ class UserController extends Controller
     {
         $user = User::findOrFail($id);
 
-        $request->validate([
-            'nama' => 'required|string|max:255',
-            'username' => 'required|string|max:255|unique:users,username,' . $id,
-            'password' => 'nullable|string|min:6',
-            'alamat' => 'nullable|string',
-            'nohp' => 'nullable|string|max:15',
-            'role' => 'required|in:admin,pembeli'
-        ]);
+        try {
+            $request->validate([
+                'nama' => 'required|string|max:255',
+                'username' => 'required|string|max:255|unique:users,username,' . $id,
+                'password' => 'nullable|string|min:6',
+                'alamat' => 'nullable|string',
+                'nohp' => 'nullable|string|max:15',
+                'role' => 'required|in:admin,pembeli'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return redirect()->route('admin.user.index')
+                ->withErrors($e->validator)
+                ->withInput()
+                ->with('modal_edit_error', $id);
+        }
 
         $updateData = [
             'nama' => $request->nama,

@@ -195,152 +195,82 @@ class TripayService
     }
 
     /**
-     * Create transaction with improved logging
+     * Create transaction with correct data formatting
      */
     public function createTransaction($data)
     {
-        $startTime = microtime(true);
-        
         try {
-            \Log::info('TripayService: Starting transaction creation', [
-                'method' => $data['method'] ?? 'unknown',
-                'merchant_ref' => $data['merchant_ref'] ?? 'unknown',
-                'amount' => $data['amount'] ?? 0
-            ]);
+            // Ensure data types are correct
+            $cleanData = [
+                'method' => $data['method'],
+                'merchant_ref' => $data['merchant_ref'],
+                'amount' => (int) $data['amount'],
+                'customer_name' => $data['customer_name'],
+                'customer_email' => $data['customer_email'],
+                'customer_phone' => $data['customer_phone'],
+                'order_items' => [],
+                'expired_time' => (int) $data['expired_time']
+            ];
             
-            // Add callback URL if not provided with better fallback
-            if (!isset($data['callback_url']) || empty($data['callback_url'])) {
-                $callbackUrl = config('tripay.callback_url');
-                
-                // If config is still empty, create fallback URL
-                if (empty($callbackUrl)) {
-                    $appUrl = config('app.url', 'http://localhost:8000');
-                    $callbackUrl = rtrim($appUrl, '/') . '/api/tripay/callback';
-                    \Log::warning('TripayService: Using fallback callback URL', [
-                        'fallback_url' => $callbackUrl,
-                        'app_url' => $appUrl
-                    ]);
+            // Process order_items with correct data types
+            if (isset($data['order_items']) && is_array($data['order_items'])) {
+                foreach ($data['order_items'] as $item) {
+                    $cleanData['order_items'][] = [
+                        'sku' => $item['sku'],
+                        'name' => $item['name'],
+                        'price' => (int) $item['price'],
+                        'quantity' => (int) $item['quantity'],
+                        'product_url' => $item['product_url'] ?? '',
+                        'image_url' => $item['image_url'] ?? ''
+                    ];
                 }
-                
-                $data['callback_url'] = $callbackUrl;
-                \Log::info('TripayService: Added callback URL', [
-                    'callback_url' => $data['callback_url']
-                ]);
             }
             
-            // Add return URL if not provided with better fallback
-            if (!isset($data['return_url']) || empty($data['return_url'])) {
-                $returnUrl = config('tripay.return_url');
-                
-                // If config is still empty, create fallback URL
-                if (empty($returnUrl)) {
-                    $appUrl = config('app.url', 'http://localhost:8000');
-                    $returnUrl = rtrim($appUrl, '/') . '/api/tripay/return';
-                    \Log::warning('TripayService: Using fallback return URL', [
-                        'fallback_url' => $returnUrl,
-                        'app_url' => $appUrl
-                    ]);
-                }
-                
-                $data['return_url'] = $returnUrl;
-                \Log::info('TripayService: Added return URL', [
-                    'return_url' => $data['return_url']
-                ]);
+            // Add callback URL
+            $callbackUrl = $data['callback_url'] ?? config('tripay.callback_url');
+            if (empty($callbackUrl)) {
+                $appUrl = config('app.url', 'http://127.0.0.1:8000');
+                $callbackUrl = rtrim($appUrl, '/') . '/api/tripay/callback';
             }
+            $cleanData['callback_url'] = $callbackUrl;
             
-            // Final validation for callback URL
-            if (empty($data['callback_url'])) {
-                \Log::error('TripayService: Callback URL masih kosong setelah fallback', [
-                    'config_callback' => config('tripay.callback_url'),
-                    'app_url' => config('app.url'),
-                    'data_callback' => $data['callback_url'] ?? 'not_set'
-                ]);
-                return [
-                    'success' => false,
-                    'message' => 'Callback URL tidak dapat dikonfigurasi. Periksa APP_URL di file .env'
-                ];
+            // Add return URL
+            $returnUrl = $data['return_url'] ?? config('tripay.return_url');
+            if (empty($returnUrl)) {
+                $appUrl = config('app.url', 'http://127.0.0.1:8000');
+                $returnUrl = rtrim($appUrl, '/') . '/confirmation';
             }
+            $cleanData['return_url'] = $returnUrl;
             
-            $signature = $this->generateSignature($data);
-
-            $payload = array_merge($data, [
-                'signature' => $signature
-            ]);
+            // Generate signature
+            $signature = $this->generateSignature($cleanData);
+            $cleanData['signature'] = $signature;
             
-            \Log::info('TripayService: Payload prepared', [
-                'method' => $payload['method'],
-                'merchant_ref' => $payload['merchant_ref'],
-                'amount' => $payload['amount'],
-                'callback_url' => $payload['callback_url'],
-                'return_url' => $payload['return_url'],
-                'customer_email' => $payload['customer_email'] ?? 'not_set',
-                'signature_length' => strlen($signature)
-            ]);
-
+            // Send to Tripay API
             $response = Http::timeout(30)
-                ->connectTimeout(10)
-                ->retry(2, 1000)
                 ->withHeaders([
                     'Authorization' => 'Bearer ' . $this->apiKey,
-                    'Content-Type' => 'application/json'
+                    'Content-Type' => 'application/json',
+                    'Accept' => 'application/json'
                 ])
-                ->post($this->baseUrl . '/transaction/create', $payload);
-
-            $executionTime = microtime(true) - $startTime;
-            
-            \Log::info('TripayService: API response received', [
-                'status' => $response->status(),
-                'successful' => $response->successful(),
-                'execution_time' => round($executionTime, 2) . 's'
-            ]);
+                ->post($this->baseUrl . '/transaction/create', $cleanData);
 
             if ($response->successful()) {
                 $responseData = $response->json();
                 
-                \Log::info('TripayService: Transaction created successfully', [
-                    'merchant_ref' => $payload['merchant_ref'],
-                    'tripay_reference' => $responseData['data']['reference'] ?? 'unknown',
-                    'response_success' => $responseData['success'] ?? false,
-                    'has_qr_string' => isset($responseData['data']['qr_string']),
-                    'has_qr_url' => isset($responseData['data']['qr_url']),
-                    'has_payment_code' => isset($responseData['data']['pay_code'])
-                ]);
-                
-                return $responseData;
+                if (isset($responseData['success']) && $responseData['success']) {
+                    return $responseData;
+                }
             }
 
-            $errorBody = $response->body();
-            \Log::error('TripayService: Create Transaction HTTP Error', [
-                'status' => $response->status(),
-                'response_body' => $errorBody,
-                'payload_method' => $payload['method'],
-                'payload_amount' => $payload['amount'],
-                'payload_email' => $payload['customer_email'] ?? 'not_set'
-            ]);
-
+            $errorData = $response->json();
             return [
                 'success' => false,
-                'message' => 'Failed to create transaction: ' . $errorBody
+                'message' => $errorData['message'] ?? 'Failed to create transaction',
+                'error_details' => $errorData
             ];
-        } catch (\Illuminate\Http\Client\ConnectionException $e) {
-            $executionTime = microtime(true) - $startTime;
-            \Log::error('TripayService: Connection Exception', [
-                'error' => $e->getMessage(),
-                'execution_time' => round($executionTime, 2) . 's'
-            ]);
             
-            return [
-                'success' => false,
-                'message' => 'Connection error: ' . $e->getMessage()
-            ];
         } catch (\Exception $e) {
-            $executionTime = microtime(true) - $startTime;
-            \Log::error('TripayService: Create Transaction Exception', [
-                'error' => $e->getMessage(),
-                'execution_time' => round($executionTime, 2) . 's',
-                'trace' => $e->getTraceAsString()
-            ]);
-            
             return [
                 'success' => false,
                 'message' => 'Exception: ' . $e->getMessage()
@@ -353,11 +283,11 @@ class TripayService
      */
     private function generateSignature($data)
     {
-        $signature = hash_hmac(
-            'sha256',
-            $this->merchantCode . $data['merchant_ref'] . $data['amount'],
-            $this->privateKey
-        );
+        $amount = (int) $data['amount'];
+        $merchantRef = $data['merchant_ref'];
+        
+        $signatureString = $this->merchantCode . $merchantRef . $amount;
+        $signature = hash_hmac('sha256', $signatureString, $this->privateKey);
 
         return $signature;
     }

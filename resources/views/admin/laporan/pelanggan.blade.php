@@ -198,8 +198,8 @@
                         <td>{{ $pelangganData->firstItem() + $index }}</td>
                         <td>
                             <div class="d-flex flex-column">
-                                <span class="font-weight-bold">{{ $pelanggan->nama }}</span>
-                                <small class="text-muted">@{{ $pelanggan->username }}</small>
+                                <span class="font-weight-bold">{{ $pelanggan->nama }}
+                               <small class="text-muted">({{ $pelanggan->username }})</small></span>
                                 @if($statusAktivitas === 'Aktif')
                                 <small class="text-success">
                                     <i class="fas fa-circle"></i> {{ $statusAktivitas }}

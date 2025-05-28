@@ -28,7 +28,7 @@ class CourierSeeder extends Seeder
             [
                 'code' => 'pos',
                 'name' => 'POS Indonesia',
-                'is_active' => true,
+                'is_active' => false,
                 'services' => json_encode([
                     // Services yang sesuai dengan API RajaOngkir untuk POS Indonesia
                     'Paket Kilat Khusus' => 'Paket Kilat Khusus',

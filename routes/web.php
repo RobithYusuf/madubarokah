@@ -102,8 +102,8 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         // Legacy route - keep for backward compatibility
         Route::post('/tripay/sync-channels', [CartController::class, 'syncTripayChannels'])->name('tripay.sync-channels');
     });
-    
-     // Laporan Management
+
+    // Laporan Management
     Route::prefix('laporan')->name('laporan.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\LaporanController::class, 'index'])->name('index');
         Route::get('/transaksi', [\App\Http\Controllers\Admin\LaporanController::class, 'transaksi'])->name('transaksi');
@@ -111,11 +111,11 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/produk', [\App\Http\Controllers\Admin\LaporanController::class, 'produk'])->name('produk');
         Route::get('/pelanggan', [\App\Http\Controllers\Admin\LaporanController::class, 'pelanggan'])->name('pelanggan');
         Route::get('/pengiriman', [\App\Http\Controllers\Admin\LaporanController::class, 'pengiriman'])->name('pengiriman');
-        
+
         // Export routes
         Route::get('/export/transaksi', [\App\Http\Controllers\Admin\LaporanController::class, 'exportTransaksi'])->name('export.transaksi');
         Route::get('/export/penjualan', [\App\Http\Controllers\Admin\LaporanController::class, 'exportPenjualan'])->name('export.penjualan');
-        
+
         // AJAX routes untuk chart data
         Route::get('/chart/penjualan', [\App\Http\Controllers\Admin\LaporanController::class, 'chartPenjualan'])->name('chart.penjualan');
         Route::get('/chart/status', [\App\Http\Controllers\Admin\LaporanController::class, 'chartStatus'])->name('chart.status');
@@ -126,6 +126,10 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::get('/shop', [\App\Http\Controllers\Admin\ShopSettingsController::class, 'index'])->name('shop');
         Route::post('/shop', [\App\Http\Controllers\Admin\ShopSettingsController::class, 'update'])->name('shop.update');
     });
+
+    // admin.laporan.pdf
+    Route::get('/laporan/pdf', [\App\Http\Controllers\Admin\LaporanController::class, 'pdf'])->name('laporan.pdf');
+
 });
 
 
@@ -183,10 +187,10 @@ Route::middleware(['auth', 'role:pembeli'])->prefix('api')->name('api.')->group(
 // ============================================================================
 // TRIPAY CALLBACK ROUTES (No Auth Required)
 // ============================================================================
-// Route::prefix('api/tripay')->name('api.tripay.')->group(function () {
-//     Route::post('/callback', [\App\Http\Controllers\Api\TripayCallbackController::class, 'callback'])->name('callback');
-//     Route::get('/return', [\App\Http\Controllers\Api\TripayCallbackController::class, 'return'])->name('return');
-// });
+Route::prefix('api/tripay')->name('api.tripay.')->group(function () {
+    Route::post('/callback', [\App\Http\Controllers\Api\TripayCallbackController::class, 'callback'])->name('callback');
+    Route::get('/return', [\App\Http\Controllers\Api\TripayCallbackController::class, 'return'])->name('return');
+});
 
 // ============================================================================
 // SHARED SHIPPING ROUTES (untuk admin dan pembeli)

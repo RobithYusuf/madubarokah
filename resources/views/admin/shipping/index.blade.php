@@ -3,9 +3,22 @@
 @section('title', 'Manajemen Pengiriman')
 
 @section('content')
+
+{{-- AWAL BAGIAN HEADER HALAMAN --}}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="h3 mb-0 text-gray-800">Manajemen Pengiriman</h1>
+        <p class="text-gray-500 mt-2 mb-0">Konfigurasi API, sinkronisasi data wilayah, dan kelola kurir pengiriman.</p>
+    </div>
+    {{-- Opsional: Tombol aksi cepat jika ada --}}
+    {{-- <a href="{{ route('admin.laporan.pengiriman') }}" class="btn btn-sm btn-info shadow-sm">
+    <i class="fas fa-chart-bar fa-sm text-white-50"></i> Laporan Pengiriman
+    </a> --}}
+</div>
+{{-- AKHIR BAGIAN HEADER HALAMAN --}}
+
 <div id="content">
     <div class="row">
-        <!-- Card Statistics -->
         <div class="col-md-6 mb-4">
             <div class="card border-left-primary shadow h-100 py-2">
                 <div class="card-body">
@@ -41,10 +54,10 @@
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="card shadow mb-4">
         <div class="card-header py-3">
-            <h4 class="m-0 font-weight-bold text-primary">Manajemen Pengiriman & Wilayah</h4>
+            {{-- Judul di dalam card dapat disesuaikan jika perlu --}}
+            <h4 class="m-0 font-weight-bold text-primary">Pengaturan Wilayah & Kurir</h4>
         </div>
         <div class="card-body">
             @if (session('success'))
@@ -56,37 +69,35 @@
             </div>
             @endif
 
-            <!-- API & Data Status Alert -->
             @if(!$apiConfigured)
             <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
-                <h5><i class="fas fa-key"></i> API Key Tidak Dikonfigurasi!</h5>
-                <p class="mb-2">Buka file <code>.env</code> dan tambahkan: <code>RAJAONGKIR_API_KEY=your_api_key_here</code></p>
-                <p class="mb-0 small">Dapatkan API key gratis di <a href="https://rajaongkir.com" target="_blank">RajaOngkir.com</a></p>
+                <h5><i class="fas fa-key"></i> API Key Belum Dikonfigurasi!</h5>
+                <p class="mb-1">Harap tambahkan <code>RAJAONGKIR_API_KEY</code> Anda di file <code>.env</code>.</p>
+                <p class="mb-0 small">Kunjungi <a href="https://rajaongkir.com" target="_blank">RajaOngkir.com</a> untuk mendapatkan API key.</p>
                 <button type="button" class="close" data-bs-dismiss="alert" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             @elseif($needsSync)
             <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
-                <h5><i class="fas fa-exclamation-triangle"></i> Data Wilayah Belum Tersedia!</h5>
-                <p class="mb-2">Klik tombol "Sinkronkan Data Wilayah" untuk mengambil data provinsi dan kota.</p>
-                <p class="mb-0 small">Tanpa data wilayah, fitur checkout tidak akan berfungsi.</p>
+                <h5><i class="fas fa-exclamation-triangle"></i> Sinkronisasi Data Wilayah Diperlukan!</h5>
+                <p class="mb-1">Data provinsi dan kota belum tersedia. Lakukan sinkronisasi untuk mengaktifkan fitur pengiriman.</p>
                 <button type="button" class="close" data-bs-dismiss="alert" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             @elseif($isDataLimited)
-            <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
-                <h5><i class="fas fa-info-circle"></i> Data Wilayah Terbatas</h5>
-                <p class="mb-2">Sistem memiliki {{ $totalCities }} kota/kabupaten. Lakukan sinkronisasi ulang untuk data terlengkap.</p>
+            <div class="alert alert-info alert-dismissible fade show mb-4" role="alert"> {{-- Diubah menjadi info --}}
+                <h5><i class="fas fa-info-circle"></i> Data Wilayah Mungkin Belum Lengkap</h5>
+                <p class="mb-1">Terdapat <strong>{{ $totalCities }}</strong> kota/kabupaten. Sinkronisasi ulang dapat memperbarui ke data terlengkap.</p>
                 <button type="button" class="close" data-bs-dismiss="alert" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             @else
             <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
-                <h5><i class="fas fa-check-circle"></i> Data Wilayah Tersedia</h5>
-                <p class="mb-0">Sistem memiliki {{ number_format($totalCities) }} kota/kabupaten dari {{ $provinces->count() }} provinsi. Data siap digunakan!</p>
+                <h5><i class="fas fa-check-circle"></i> Data Wilayah Siap Digunakan</h5>
+                <p class="mb-0"><strong>{{ $provinces->count() }}</strong> provinsi dan <strong>{{ number_format($totalCities) }}</strong> kota/kabupaten telah tersinkronisasi.</p>
                 <button type="button" class="close" data-bs-dismiss="alert" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
@@ -102,35 +113,31 @@
             </div>
             @endif
 
-            <!-- Paket Starter Info -->
             @if(isset($apiType) && $apiType === 'starter')
             <div class="alert alert-info mb-4">
-                <h5><i class="fas fa-info-circle"></i> Paket Starter</h5>
-                <p class="mb-2">Kurir yang didukung: <strong>JNE, POS, TIKI</strong></p>
-                <p class="mb-0 text-muted small">Upgrade ke paket Pro/Basic untuk kurir lain (J&T, SiCepat, dll.)</p>
+                <h5><i class="fas fa-star"></i> Info Paket API: Starter</h5>
+                <p class="mb-1">Kurir yang didukung untuk paket ini: <strong>JNE, POS Indonesia, TIKI</strong>.</p>
+                <p class="mb-0 text-muted small">Untuk kurir lain (J&T, SiCepat, dll.), pertimbangkan upgrade paket API RajaOngkir Anda.</p>
             </div>
             @endif
 
-            <!-- Sync Areas Section -->
             <div class="row mb-4">
                 <div class="col-md-12">
                     <div class="card border-left-info">
                         <div class="card-body">
                             <h5 class="card-title text-info">
-                                <i class="fas fa-sync-alt"></i> Sinkronisasi Data Wilayah
+                                <i class="fas fa-database"></i> Data Wilayah Pengiriman
                             </h5>
-                            <p class="card-text mb-4">
-                                Sinkronkan data provinsi dan kota dari API RajaOngkir untuk memastikan data wilayah pengiriman selalu update.
+                            <p class="card-text mb-3">
+                                Jaga data provinsi dan kota tetap terbaru dengan sinkronisasi dari RajaOngkir.
                             </p>
-                            <div class="d-flex flex-wrap gap-3 align-items-center">
+                            <div class="d-flex flex-wrap gap-2 align-items-center"> {{-- Gap disesuaikan --}}
                                 <button type="button" class="btn btn-info" id="syncAreasBtn">
-                                    <i class="fas fa-sync-alt"></i> Sinkronkan Data Wilayah
+                                    <i class="fas fa-sync-alt"></i> Sinkronkan Wilayah
                                 </button>
-                                
-                                <div class="mx-2">|</div>
-                                
+                                <div class="vr mx-1 d-none d-sm-block"></div> {{-- Pemisah vertikal --}}
                                 <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#testShippingModal">
-                                    <i class="fas fa-calculator"></i> Test Kalkulator Ongkir
+                                    <i class="fas fa-shipping-fast"></i> Test Ongkir
                                 </button>
                             </div>
                         </div>
@@ -567,7 +574,7 @@
         function startSyncProcess() {
             let progress = 0;
             let progressInterval;
-            
+
             Swal.fire({
                 title: 'Sedang Sinkronisasi...',
                 html: `
@@ -595,10 +602,10 @@
                         if (progress < 90) {
                             progress += Math.random() * 10;
                             const currentProgress = Math.min(progress, 90);
-                            
+
                             // Update status messages based on progress
                             let statusMessage = '<i class="fas fa-spinner fa-spin"></i> Memulai sinkronisasi...';
-                            
+
                             if (currentProgress > 20) {
                                 statusMessage = '<i class="fas fa-download"></i> Mengambil data provinsi dari API...';
                             }
@@ -611,11 +618,11 @@
                             if (currentProgress > 80) {
                                 statusMessage = '<i class="fas fa-check-circle"></i> Menyelesaikan sinkronisasi...';
                             }
-                            
+
                             updateProgress(currentProgress, statusMessage);
                         }
                     }, 800);
-                    
+
                     // Start actual sync process
                     performSync(progressInterval);
                 }
@@ -626,11 +633,11 @@
             const progressBar = $('#syncProgressBar');
             const progressText = $('#syncProgressText');
             const statusDiv = $('#syncStatus');
-            
+
             const roundedPercent = Math.round(percent);
             progressBar.css('width', roundedPercent + '%');
             progressText.text(roundedPercent + '%');
-            
+
             if (status) {
                 statusDiv.html(status);
             }
@@ -647,7 +654,7 @@
                 success: function(response) {
                     clearInterval(progressInterval);
                     updateProgress(100, '<i class="fas fa-check text-success"></i> Sinkronisasi selesai!');
-                    
+
                     setTimeout(() => {
                         let resultHtml = `
                             <div class="text-left">
@@ -663,7 +670,7 @@
                                 </div>
                             </div>
                         `;
-                        
+
                         Swal.fire({
                             icon: 'success',
                             title: 'Sinkronisasi Berhasil!',
@@ -677,21 +684,21 @@
                 },
                 error: function(xhr, status, error) {
                     clearInterval(progressInterval);
-                    
+
                     let errorMessage = 'Gagal melakukan sinkronisasi';
                     let debugInfo = '';
-                    
+
                     if (status === 'timeout') {
                         errorMessage = 'Koneksi timeout - Proses sinkronisasi mungkin masih berjalan di background';
                     } else if (xhr.responseJSON) {
                         errorMessage = xhr.responseJSON.message || errorMessage;
-                        
+
                         // Show debug information if available
                         if (xhr.responseJSON.debug) {
                             const debug = xhr.responseJSON.debug;
                             debugInfo = '<div class="alert alert-info text-left mt-2">';
                             debugInfo += '<small><i class="fas fa-bug"></i> <strong>Debug Info:</strong><br>';
-                            
+
                             if (debug.api_key_configured === false) {
                                 debugInfo += '• API key tidak dikonfigurasi<br>';
                             }
@@ -701,15 +708,15 @@
                             if (debug.config_check) {
                                 debugInfo += `• ${debug.config_check}<br>`;
                             }
-                            
+
                             debugInfo += '</small></div>';
                         }
                     } else if (xhr.status === 500) {
                         errorMessage = 'Server error - Coba lagi nanti';
                     }
-                    
+
                     updateProgress(100, '<i class="fas fa-times text-danger"></i> Sinkronisasi gagal!');
-                    
+
                     setTimeout(() => {
                         Swal.fire({
                             icon: 'error',

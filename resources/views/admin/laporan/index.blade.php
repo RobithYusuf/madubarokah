@@ -97,8 +97,8 @@
                     <button type="button" class="btn btn-secondary ml-2" onclick="resetFilter()">
                         <i class="fas fa-undo mr-2"></i>Reset Filter
                     </button>
-                    <button type="button" class="btn btn-success ml-2" onclick="exportData()">
-                        <i class="fas fa-download mr-2"></i>Export Excel
+                    <button type="button" class="btn btn-success ml-2" onclick="showPdfModal()">
+                        <i class="fas fa-file-pdf mr-2"></i>Export PDF
                     </button>
                 </div>
             </div>
@@ -390,6 +390,97 @@
     </div>
 </div>
 
+<!-- Modal Export PDF -->
+<div class="modal fade" id="pdfModal" tabindex="-1" role="dialog" aria-labelledby="pdfModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="pdfModalLabel">
+                    <i class="fas fa-file-pdf mr-2"></i>Export Laporan PDF
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="pdfExportForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="pdf_start_date">Tanggal Mulai</label>
+                                <input type="date" class="form-control" id="pdf_start_date" name="start_date" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="pdf_end_date">Tanggal Akhir</label>
+                                <input type="date" class="form-control" id="pdf_end_date" name="end_date" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="pdf_status">Status Transaksi</label>
+                                <select class="form-control" id="pdf_status" name="status">
+                                    <option value="all">Semua Status</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="dibayar">Dibayar</option>
+                                    <option value="berhasil">Berhasil</option>
+                                    <option value="dikirim">Dikirim</option>
+                                    <option value="selesai">Selesai</option>
+                                    <option value="batal">Batal</option>
+                                    <option value="gagal">Gagal</option>
+                                    <option value="expired">Expired</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="pdf_payment_status">Status Pembayaran</label>
+                                <select class="form-control" id="pdf_payment_status" name="payment_status">
+                                    <option value="all">Semua</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="berhasil">Berhasil</option>
+                                    <option value="dibayar">Dibayar</option>
+                                    <option value="gagal">Gagal</option>
+                                    <option value="expired">Expired</option>
+                                    <option value="refund">Refund</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="pdf_shipping_status">Status Pengiriman</label>
+                                <select class="form-control" id="pdf_shipping_status" name="shipping_status">
+                                    <option value="all">Semua</option>
+                                    <option value="menunggu_pembayaran">Menunggu Pembayaran</option>
+                                    <option value="diproses">Diproses</option>
+                                    <option value="dikirim">Dikirim</option>
+                                    <option value="diterima">Diterima</option>
+                                    <option value="dibatalkan">Dibatalkan</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <strong>Info:</strong> Laporan akan dibuka di tab baru dan dapat langsung dicetak ke PDF menggunakan browser.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times mr-2"></i>Batal
+                </button>
+                <button type="button" class="btn btn-success" onclick="generatePdfReport()">
+                    <i class="fas fa-file-pdf mr-2"></i>Buat Laporan PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @push('styles')
 <style>
 .chart-area {
@@ -483,7 +574,7 @@ function initializeCharts() {
         const salesCtx = document.getElementById('salesChart');
         if (salesCtx && window.chartDataSales && window.chartDataSales.length > 0) {
             const chartData = window.chartDataSales;
-            
+
             new Chart(salesCtx, {
                 type: 'line',
                 data: {
@@ -534,20 +625,25 @@ function initializeCharts() {
             });
         } else {
             console.log('Sales chart data not available or empty');
+            // Tambahkan fallback jika elemen ada tapi data kosong
+            if (salesCtx) {
+                salesCtx.parentNode.innerHTML =
+                    '<div class="text-center py-4"><i class="fas fa-chart-line fa-3x text-gray-300 mb-3"></i><h6 class="text-muted">Tidak ada data untuk Tren Penjualan.</h6></div>';
+            }
         }
 
         // Status Chart
         const statusCtx = document.getElementById('statusChart');
         if (statusCtx && window.statusDistribution && window.statusDistribution.length > 0) {
             const statusData = window.statusDistribution;
-            
+
             const colors = {
                 'pending': '#6c757d',
                 'dibayar': '#ffc107',
-                'berhasil': '#28a745',
+                'berhasil': '#28a745', // Digabung dengan selesai
                 'dikirim': '#17a2b8',
                 'selesai': '#28a745',
-                'batal': '#dc3545',
+                'batal': '#dc3545',  // Digabung dengan gagal
                 'gagal': '#dc3545',
                 'expired': '#fd7e14'
             };
@@ -566,7 +662,7 @@ function initializeCharts() {
                             return parseInt(item.count || 0);
                         }),
                         backgroundColor: statusData.map(function(item) {
-                            return colors[item.status] || '#6c757d';
+                            return colors[item.status] || '#6c757d'; // Default color
                         }),
                         borderWidth: 2,
                         borderColor: '#fff'
@@ -588,23 +684,22 @@ function initializeCharts() {
             });
         } else {
             console.log('Status chart data not available or empty');
+            // Tambahkan fallback jika elemen ada tapi data kosong
+            if (statusCtx) {
+                statusCtx.parentNode.innerHTML =
+                    '<div class="text-center py-4"><i class="fas fa-chart-pie fa-3x text-gray-300 mb-3"></i><h6 class="text-muted">Tidak ada data untuk Distribusi Status.</h6></div>';
+            }
         }
     } catch (error) {
         console.error('Error initializing charts:', error);
-    }
-}
-
-    } catch (error) {
-        console.error('Error initializing charts:', error);
-        
-        // Show fallback message if charts fail
+        // Tampilkan pesan fallback jika charts gagal dimuat karena error
         if (document.getElementById('salesChart')) {
-            document.getElementById('salesChart').parentNode.innerHTML = 
-                '<div class="text-center py-4"><i class="fas fa-chart-line fa-3x text-gray-300 mb-3"></i><h6 class="text-muted">Chart tidak dapat dimuat</h6></div>';
+            document.getElementById('salesChart').parentNode.innerHTML =
+                '<div class="text-center py-4"><i class="fas fa-chart-line fa-3x text-gray-300 mb-3"></i><h6 class="text-muted">Chart Tren Penjualan tidak dapat dimuat.</h6></div>';
         }
         if (document.getElementById('statusChart')) {
-            document.getElementById('statusChart').parentNode.innerHTML = 
-                '<div class="text-center py-4"><i class="fas fa-chart-pie fa-3x text-gray-300 mb-3"></i><h6 class="text-muted">Chart tidak dapat dimuat</h6></div>';
+            document.getElementById('statusChart').parentNode.innerHTML =
+                '<div class="text-center py-4"><i class="fas fa-chart-pie fa-3x text-gray-300 mb-3"></i><h6 class="text-muted">Chart Distribusi Status tidak dapat dimuat.</h6></div>';
         }
     }
 }
@@ -623,31 +718,60 @@ function resetFilter() {
     }
 }
 
-function exportData() {
+function showPdfModal() {
+    // Set default values from current filter
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+    const status = document.getElementById('status').value;
+    const paymentStatus = document.getElementById('payment_status').value;
+    const shippingStatus = document.getElementById('shipping_status').value;
+    
+    // Set values in modal
+    document.getElementById('pdf_start_date').value = startDate;
+    document.getElementById('pdf_end_date').value = endDate;
+    document.getElementById('pdf_status').value = status;
+    document.getElementById('pdf_payment_status').value = paymentStatus;
+    document.getElementById('pdf_shipping_status').value = shippingStatus;
+    
+    // Show modal
+    $('#pdfModal').modal('show');
+}
+
+function generatePdfReport() {
     try {
-        const startDate = document.getElementById('start_date').value;
-        const endDate = document.getElementById('end_date').value;
-        const status = document.getElementById('status').value;
-        const paymentStatus = document.getElementById('payment_status').value;
-        const shippingStatus = document.getElementById('shipping_status').value;
+        const startDate = document.getElementById('pdf_start_date').value;
+        const endDate = document.getElementById('pdf_end_date').value;
+        const status = document.getElementById('pdf_status').value;
+        const paymentStatus = document.getElementById('pdf_payment_status').value;
+        const shippingStatus = document.getElementById('pdf_shipping_status').value;
+        
+        if (!startDate || !endDate) {
+            alert('Harap pilih tanggal mulai dan tanggal akhir');
+            return;
+        }
         
         const params = new URLSearchParams({
+            type: 'transaksi',
             start_date: startDate,
             end_date: endDate,
             status: status,
             payment_status: paymentStatus,
-            shipping_status: shippingStatus
+            shipping_status: shippingStatus,
+            print: '1'
         });
         
-        const exportUrl = '{{ route("admin.laporan.export.transaksi") }}';
-        window.open(exportUrl + '?' + params.toString(), '_blank');
+        const pdfUrl = '{{ route("admin.laporan.pdf") }}';
+        window.open(pdfUrl + '?' + params.toString(), '_blank');
+        
+        // Close modal
+        $('#pdfModal').modal('hide');
         
         // Show notification
         if (typeof Swal !== 'undefined') {
             Swal.fire({
-                icon: 'info',
-                title: 'Export Dimulai',
-                text: 'Export laporan sedang diproses...',
+                icon: 'success',
+                title: 'Laporan PDF Dibuat',
+                text: 'Laporan telah dibuka di tab baru',
                 toast: true,
                 position: 'top-end',
                 showConfirmButton: false,
@@ -656,8 +780,8 @@ function exportData() {
             });
         }
     } catch (error) {
-        console.error('Error exporting data:', error);
-        alert('Terjadi kesalahan saat export data');
+        console.error('Error generating PDF:', error);
+        alert('Terjadi kesalahan saat membuat laporan PDF');
     }
 }
 
@@ -677,6 +801,27 @@ function debugChartData() {
     console.log('Sales Data:', window.chartDataSales);
     console.log('Status Data:', window.statusDistribution);
 }
+
+// Initialize modal events
+$(document).ready(function() {
+    // Set date limits
+    const today = new Date().toISOString().split('T')[0];
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    
+    document.getElementById('pdf_start_date').setAttribute('max', today);
+    document.getElementById('pdf_end_date').setAttribute('max', today);
+    
+    // Validate date range in modal
+    $('#pdf_start_date, #pdf_end_date').on('change', function() {
+        const startDate = document.getElementById('pdf_start_date').value;
+        const endDate = document.getElementById('pdf_end_date').value;
+        
+        if (startDate && endDate && startDate > endDate) {
+            alert('Tanggal mulai tidak boleh lebih besar dari tanggal akhir');
+            this.value = '';
+        }
+    });
+});
 </script>
 @endpush
 
