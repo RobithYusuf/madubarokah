@@ -251,7 +251,7 @@ class CartController extends Controller
         }
     }
 
-    // API untuk menghitung ongkos kirim - OPTIMIZED VERSION
+    // API untuk menghitung ongkos kirim - OPTIMIZED VERSION with better fallback
     public function calculateShipping(Request $request)
     {
         $request->validate([
@@ -261,11 +261,17 @@ class CartController extends Controller
             'courier' => 'required|string'
         ]);
 
-        try {
-            // Quick timeout check - return fallback immediately if needed
-            $startTime = microtime(true);
+        $startTime = microtime(true);
+        
+        \Log::info('CartController: Shipping calculation started', [
+            'origin' => $request->origin,
+            'destination' => $request->destination,
+            'weight' => $request->weight,
+            'courier' => $request->courier
+        ]);
 
-            // Use same method as ShippingController for consistency and speed
+        try {
+            // Try RajaOngkir API first with timeout
             $result = $this->rajaOngkirService->calculateShippingCost(
                 $request->origin,
                 $request->destination,
@@ -274,20 +280,35 @@ class CartController extends Controller
             );
 
             $executionTime = microtime(true) - $startTime;
+            
+            \Log::info('CartController: RajaOngkir result received', [
+                'success' => $result['success'],
+                'execution_time' => round($executionTime, 2) . 's',
+                'has_fallback_suggested' => isset($result['fallback_suggested'])
+            ]);
 
-            // If API is too slow, use fallback for better UX
-            if ($executionTime > 5.0) {
-                return $this->getFallbackShippingRates($request->courier, $request->weight);
-            }
-
-            if ($result['success']) {
+            // Use API result if successful and fast enough
+            if ($result['success'] && $executionTime < 15.0) {
+                \Log::info('CartController: Using RajaOngkir API result');
                 return response()->json($result);
-            } else {
-                // Immediate fallback on API failure
-                return $this->getFallbackShippingRates($request->courier, $request->weight);
             }
+            
+            // Use fallback if API failed or too slow
+            \Log::warning('CartController: Using fallback shipping rates', [
+                'reason' => !$result['success'] ? 'API_FAILED' : 'TOO_SLOW',
+                'execution_time' => round($executionTime, 2) . 's',
+                'api_message' => $result['message'] ?? 'Unknown error'
+            ]);
+            
+            return $this->getFallbackShippingRates($request->courier, $request->weight);
+
         } catch (\Exception $e) {
-            \Log::error('Shipping calculation error: ' . $e->getMessage());
+            $executionTime = microtime(true) - $startTime;
+            \Log::error('CartController: Shipping calculation exception', [
+                'error' => $e->getMessage(),
+                'execution_time' => round($executionTime, 2) . 's',
+                'trace' => $e->getTraceAsString()
+            ]);
 
             // Return fallback data immediately on exception
             return $this->getFallbackShippingRates($request->courier, $request->weight);
@@ -296,71 +317,134 @@ class CartController extends Controller
 
     private function getFallbackShippingRates($courier, $weight)
     {
-        // Use same structure as ShippingController for consistency
-        $baseCost = 10000;
-        $weightCost = ($weight / 1000) * 5000;
-        $distanceCost = 100 * 100; // dummy distance calculation
+        \Log::info('CartController: Using fallback shipping rates', [
+            'courier' => $courier,
+            'weight' => $weight . 'g'
+        ]);
+
+        // More realistic pricing calculation
+        $baseCost = 8000; // Base cost
+        $weightCost = ceil($weight / 1000) * 3000; // Per kg
+        $courierMultiplier = 1.0;
+        
+        // Courier-specific adjustments
+        switch (strtolower($courier)) {
+            case 'jne':
+                $courierMultiplier = 1.0;
+                break;
+            case 'pos':
+                $courierMultiplier = 0.9;
+                break;
+            case 'tiki':
+                $courierMultiplier = 1.1;
+                break;
+        }
 
         $services = [];
 
-        // Define services with consistent structure
+        // Define services with more realistic pricing
         switch (strtolower($courier)) {
             case 'jne':
+                $regCost = intval(($baseCost + $weightCost) * $courierMultiplier);
                 $services = [
                     [
                         'service' => 'REG',
                         'description' => 'Layanan Reguler',
-                        'cost' => [['value' => intval($baseCost + $weightCost + $distanceCost), 'etd' => '2-3', 'note' => 'Estimasi - API tidak tersedia']]
+                        'cost' => [[
+                            'value' => $regCost,
+                            'etd' => '2-3',
+                            'note' => 'Estimasi berdasarkan berat dan jarak'
+                        ]]
                     ],
                     [
                         'service' => 'OKE',
                         'description' => 'Ongkos Kirim Ekonomis',
-                        'cost' => [['value' => intval(($baseCost + $weightCost + $distanceCost) * 0.8), 'etd' => '3-4', 'note' => 'Estimasi - API tidak tersedia']]
+                        'cost' => [[
+                            'value' => intval($regCost * 0.8),
+                            'etd' => '3-5',
+                            'note' => 'Estimasi berdasarkan berat dan jarak'
+                        ]]
                     ],
                     [
                         'service' => 'YES',
                         'description' => 'Yakin Esok Sampai',
-                        'cost' => [['value' => intval(($baseCost + $weightCost + $distanceCost) * 1.5), 'etd' => '1-1', 'note' => 'Estimasi - API tidak tersedia']]
+                        'cost' => [[
+                            'value' => intval($regCost * 1.5),
+                            'etd' => '1-1',
+                            'note' => 'Estimasi berdasarkan berat dan jarak'
+                        ]]
                     ]
                 ];
                 break;
 
             case 'pos':
+                $regCost = intval(($baseCost + $weightCost) * $courierMultiplier);
                 $services = [
                     [
                         'service' => 'Paket Kilat Khusus',
                         'description' => 'Paket Kilat Khusus',
-                        'cost' => [['value' => intval($baseCost + $weightCost + ($distanceCost * 0.9)), 'etd' => '2-4', 'note' => 'Estimasi - API tidak tersedia']]
+                        'cost' => [[
+                            'value' => $regCost,
+                            'etd' => '2-4',
+                            'note' => 'Estimasi berdasarkan berat dan jarak'
+                        ]]
                     ],
                     [
                         'service' => 'Express Next Day',
                         'description' => 'Express Next Day',
-                        'cost' => [['value' => intval(($baseCost + $weightCost + $distanceCost) * 1.3), 'etd' => '1-1', 'note' => 'Estimasi - API tidak tersedia']]
+                        'cost' => [[
+                            'value' => intval($regCost * 1.3),
+                            'etd' => '1-1',
+                            'note' => 'Estimasi berdasarkan berat dan jarak'
+                        ]]
                     ]
                 ];
                 break;
 
             case 'tiki':
+                $regCost = intval(($baseCost + $weightCost) * $courierMultiplier);
                 $services = [
                     [
                         'service' => 'REG',
                         'description' => 'Regular Service',
-                        'cost' => [['value' => intval($baseCost + $weightCost + ($distanceCost * 1.1)), 'etd' => '3-5', 'note' => 'Estimasi - API tidak tersedia']]
+                        'cost' => [[
+                            'value' => $regCost,
+                            'etd' => '3-5',
+                            'note' => 'Estimasi berdasarkan berat dan jarak'
+                        ]]
                     ],
                     [
                         'service' => 'ECO',
                         'description' => 'Economy Service',
-                        'cost' => [['value' => intval(($baseCost + $weightCost + $distanceCost) * 0.7), 'etd' => '4-6', 'note' => 'Estimasi - API tidak tersedia']]
+                        'cost' => [[
+                            'value' => intval($regCost * 0.8),
+                            'etd' => '4-7',
+                            'note' => 'Estimasi berdasarkan berat dan jarak'
+                        ]]
+                    ],
+                    [
+                        'service' => 'ONS',
+                        'description' => 'Over Night Service',
+                        'cost' => [[
+                            'value' => intval($regCost * 1.6),
+                            'etd' => '1-1',
+                            'note' => 'Estimasi berdasarkan berat dan jarak'
+                        ]]
                     ]
                 ];
                 break;
 
             default:
+                $regCost = intval($baseCost + $weightCost);
                 $services = [
                     [
                         'service' => 'REG',
                         'description' => strtoupper($courier) . ' Regular Service',
-                        'cost' => [['value' => intval($baseCost + $weightCost + $distanceCost), 'etd' => '2-4', 'note' => 'Estimasi - Kurir tidak dikenal']]
+                        'cost' => [[
+                            'value' => $regCost,
+                            'etd' => '2-4',
+                            'note' => 'Estimasi untuk kurir ' . strtoupper($courier)
+                        ]]
                     ]
                 ];
                 break;
@@ -373,17 +457,28 @@ class CartController extends Controller
                 'costs' => $services
             ]
         ];
+        
+        \Log::info('CartController: Fallback rates generated', [
+            'courier' => $courier,
+            'services_count' => count($services),
+            'price_range' => [
+                'min' => min(array_column(array_column($services, 'cost'), 0))['value'] ?? 0,
+                'max' => max(array_column(array_column($services, 'cost'), 0))['value'] ?? 0
+            ]
+        ]);
 
         return response()->json([
             'success' => true,
             'data' => $fallbackData,
             'debug' => [
-                'source' => 'fallback_optimized',
-                'message' => 'Tarif estimasi cepat - API tidak tersedia atau timeout',
-                'weight' => $weight,
-                'courier' => $courier,
-                'execution_time' => 'immediate',
-                'note' => 'Gunakan kurir JNE/POS/TIKI untuk data akurat dari API RajaOngkir'
+                'source' => 'fallback_enhanced',
+                'message' => 'Tarif estimasi berdasarkan berat dan jarak - RajaOngkir tidak tersedia',
+                'weight' => $weight . 'g',
+                'courier' => strtoupper($courier),
+                'base_cost' => $baseCost,
+                'weight_cost' => $weightCost,
+                'total_services' => count($services),
+                'note' => 'Tarif dapat berbeda dengan tarif aktual kurir'
             ]
         ]);
     }
@@ -415,9 +510,14 @@ class CartController extends Controller
 
             $shippingCost = (float) $request->shipping_cost;
 
-            // No free shipping check anymore
-            $tax = 0; // No tax calculation anymore
-            $totalHarga = $subtotal + $shippingCost;
+            // Check for free shipping
+            $freeShippingMin = config('shop.free_shipping_minimum', 0);
+            if ($freeShippingMin > 0 && $subtotal >= $freeShippingMin) {
+                $shippingCost = 0;
+            }
+
+            $tax = config('shop.tax_rate', 0) > 0 ? ($subtotal * config('shop.tax_rate') / 100) : 0;
+            $totalHarga = $subtotal + $shippingCost + $tax;
 
             // Generate unique merchant reference
             $merchantRef = 'INV-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -6));
@@ -429,16 +529,15 @@ class CartController extends Controller
                 'tanggal_transaksi' => now(),
                 'total_harga' => $totalHarga,
                 'status' => 'pending',
-                'metode_pembayaran' => $request->metode_pembayaran,
                 'expired_time' => now()->addHours(24),
                 'return_url' => route('frontend.home'),
-                'callback_url' => null,
+                'callback_url' => null, // Will be set later if using Tripay
                 'fee_customer' => 0,
                 'fee_merchant' => 0,
-                'nama_penerima' => auth()->user()->name,
+                'nama_penerima' => auth()->user()->name ?? 'Customer',
                 'telepon_penerima' => auth()->user()->phone ?? '08123456789',
                 'alamat_pengiriman' => $request->alamat_lengkap,
-                'catatan' => null
+                'catatan' => $request->catatan ?? null
             ]);
 
             // Create transaction details
@@ -466,7 +565,6 @@ class CartController extends Controller
             // Create shipping record
             Pengiriman::create([
                 'id_transaksi' => $transaksi->id,
-                'origin_city_id' => config('shop.warehouse_city_id', 209), // Kudus
                 'destination_province_id' => $request->destination_province,
                 'destination_city_id' => $request->destination_city,
                 'weight' => $totalWeight,
@@ -475,25 +573,21 @@ class CartController extends Controller
                 'service_code' => $request->service,
                 'biaya' => $shippingCost,
                 'status' => 'menunggu_pembayaran',
-                'courier_info' => [
+                'courier_info' => json_encode([
                     'courier_name' => strtoupper($request->courier),
                     'service_name' => $request->service,
                     'destination' => $destinationArea ? $destinationArea->city_name : 'Unknown',
                     'weight' => $totalWeight,
                     'alamat_lengkap' => $request->alamat_lengkap
-                ]
+                ])
             ]);
 
-            // Create payment record
-            Pembayaran::create([
-                'id_transaksi' => $transaksi->id,
-                'reference' => $merchantRef,
-                'metode' => $request->metode_pembayaran,
-                'total_bayar' => $totalHarga,
-                'status' => 'pending',
-                'expired_time' => $transaksi->expired_time,
-                'payment_type' => 'manual'
-            ]);
+            // Handle payment processing (Tripay vs Manual)
+            $paymentChannel = PaymentChannel::where('code', $request->metode_pembayaran)
+                ->where('is_active', true)
+                ->first();
+            
+            $this->handlePaymentProcessing($transaksi, $request, $paymentChannel);
 
             // Clear cart
             Cart::where('id_user', Auth::id())->delete();
@@ -512,13 +606,26 @@ class CartController extends Controller
 
     private function handlePaymentProcessing($transaksi, $request, $paymentChannel)
     {
-        // Only process Tripay payment channels (no manual payments)
-        if ($paymentChannel) {
+        if ($paymentChannel && $paymentChannel->is_synced) {
+            // Process Tripay payment channel
             try {
+                \Log::info('Processing Tripay payment', [
+                    'merchant_ref' => $transaksi->merchant_ref,
+                    'payment_method' => $request->metode_pembayaran,
+                    'channel' => $paymentChannel->toArray()
+                ]);
+
                 $tripayTransaction = $this->createTripayTransaction($transaksi, $paymentChannel);
 
-                if ($tripayTransaction && isset($tripayTransaction['data'])) {
-                    // Create separate pembayaran record for Tripay transaction
+                if ($tripayTransaction && isset($tripayTransaction['success']) && $tripayTransaction['success'] && isset($tripayTransaction['data'])) {
+                    // Update transaksi with Tripay reference and callback URL
+                    $transaksi->update([
+                        'tripay_reference' => $tripayTransaction['data']['reference'],
+                        'callback_url' => url('/api/tripay/callback'), // Use direct URL for now
+                        'return_url' => route('frontend.confirmation.show', $transaksi->id)
+                    ]);
+
+                    // Create Tripay pembayaran record
                     Pembayaran::create([
                         'id_transaksi' => $transaksi->id,
                         'reference' => $tripayTransaction['data']['reference'],
@@ -529,40 +636,96 @@ class CartController extends Controller
                         'payment_url' => $tripayTransaction['data']['pay_url'] ?? null,
                         'checkout_url' => $tripayTransaction['data']['checkout_url'] ?? null,
                         'expired_time' => $transaksi->expired_time,
-                        'payment_instructions' => $tripayTransaction['data']['instructions'] ?? null,
-                        'payment_type' => $tripayTransaction['data']['is_closed_payment'] ? 'direct' : 'redirect',
+                        'payment_instructions' => isset($tripayTransaction['data']['instructions']) ? json_encode($tripayTransaction['data']['instructions']) : null,
+                        'payment_type' => 'tripay',
+                        'qr_string' => $tripayTransaction['data']['qr_string'] ?? null,
+                        'qr_url' => $tripayTransaction['data']['qr_url'] ?? null
                     ]);
 
-                    \Log::info('Tripay transaction created', [
+                    \Log::info('Tripay transaction created successfully', [
                         'merchant_ref' => $transaksi->merchant_ref,
                         'tripay_reference' => $tripayTransaction['data']['reference']
                     ]);
                 } else {
                     \Log::error('Failed to create Tripay transaction', [
                         'merchant_ref' => $transaksi->merchant_ref,
-                        'payment_method' => $request->metode_pembayaran
+                        'payment_method' => $request->metode_pembayaran,
+                        'tripay_response' => $tripayTransaction
                     ]);
+                    
+                    // Fallback to manual payment
+                    $this->createManualPayment($transaksi, $request);
                 }
             } catch (\Exception $e) {
                 \Log::error('Tripay transaction creation failed: ' . $e->getMessage());
-                // Don't throw exception, just log it
+                
+                // Fallback to manual payment
+                $this->createManualPayment($transaksi, $request);
             }
         } else {
-            \Log::warning('Payment channel not found', [
+            // Create manual payment for non-Tripay channels
+            \Log::info('Creating manual payment', [
+                'merchant_ref' => $transaksi->merchant_ref,
                 'payment_method' => $request->metode_pembayaran
             ]);
+            
+            $this->createManualPayment($transaksi, $request);
         }
+    }
+
+    private function createManualPayment($transaksi, $request)
+    {
+        Pembayaran::create([
+            'id_transaksi' => $transaksi->id,
+            'reference' => $transaksi->merchant_ref,
+            'metode' => $request->metode_pembayaran,
+            'total_bayar' => $transaksi->total_harga,
+            'status' => 'pending',
+            'expired_time' => $transaksi->expired_time,
+            'payment_type' => 'manual'
+        ]);
     }
 
     private function createTripayTransaction($transaksi, $paymentChannel)
     {
         $user = Auth::user();
+        
+        \Log::info('Creating Tripay transaction for user', [
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+            'user_email' => $user->email,
+            'payment_channel' => $paymentChannel->code
+        ]);
+
+        // Validate and fix email format
+        $customerEmail = $user->email;
+        if (!filter_var($customerEmail, FILTER_VALIDATE_EMAIL)) {
+            // Generate a valid email if user email is invalid
+            $domain = parse_url(config('app.url', 'http://localhost'), PHP_URL_HOST) ?: 'localhost';
+            $customerEmail = 'customer' . $user->id . '@' . $domain;
+            
+            \Log::warning('User email invalid, using generated email', [
+                'original_email' => $user->email,
+                'generated_email' => $customerEmail
+            ]);
+        }
+        
+        // Validate and format phone number properly
+        $customerPhone = $user->phone ?? '08123456789';
+        // Clean phone number - remove any non-numeric characters except +
+        $customerPhone = preg_replace('/[^0-9+]/', '', $customerPhone);
+        // Ensure it starts with 08 or +62 and has proper length
+        if (!preg_match('/^(08\d{8,11}|\+628\d{8,11})$/', $customerPhone)) {
+            $customerPhone = '08123456789';
+        }
 
         $customerDetails = [
-            'email' => $user->email,
-            'name' => $user->name,
-            'phone' => $user->phone ?? '08123456789'
+            'email' => $customerEmail,
+            'name' => $user->name ?? 'Customer',
+            'phone' => $customerPhone
         ];
+        
+        \Log::info('Customer details for Tripay', $customerDetails);
 
         $orderItems = $transaksi->detailTransaksi->map(function ($detail) {
             return [
@@ -574,6 +737,8 @@ class CartController extends Controller
                 'image_url' => $detail->produk->gambar ? asset('storage/' . $detail->produk->gambar) : null
             ];
         })->toArray();
+        
+        \Log::info('Order items for Tripay', ['items_count' => count($orderItems)]);
 
         $requestData = [
             'method' => $paymentChannel->code,
@@ -583,91 +748,31 @@ class CartController extends Controller
             'customer_email' => $customerDetails['email'],
             'customer_phone' => $customerDetails['phone'],
             'order_items' => $orderItems,
-            'return_url' => route('frontend.cart.index'),
+            'return_url' => route('frontend.confirmation.show', $transaksi->id),
             'expired_time' => (int) $transaksi->expired_time->timestamp,
             'signature' => ''
         ];
-
-        return $this->tripayService->createTransaction($requestData);
-    }
-
-    public function confirmation($transaksiId)
-    {
-        $transaksi = Transaksi::with(['detailTransaksi.produk', 'pengiriman', 'pembayaran'])
-            ->where('id', $transaksiId)
-            ->where('id_user', Auth::id())
-            ->firstOrFail();
-
-        // LOG DETAIL UNTUK DEBUGGING
-        \Log::info('=== CONFIRMATION PAGE DATA ===', [
-            'transaksi_id' => $transaksi->id,
-            'merchant_ref' => $transaksi->merchant_ref,
-            'user_id' => $transaksi->id_user,
-            'total_harga' => $transaksi->total_harga,
-            'status' => $transaksi->status,
-            'metode_pembayaran' => $transaksi->metode_pembayaran,
-            'expired_time' => $transaksi->expired_time,
-            'detail_produk' => $transaksi->detailTransaksi->map(function($detail) {
-                return [
-                    'produk' => $detail->produk->nama_produk ?? 'Unknown',
-                    'jumlah' => $detail->jumlah,
-                    'harga_satuan' => $detail->harga_satuan,
-                    'subtotal' => $detail->subtotal
-                ];
-            }),
-            'pengiriman' => [
-                'kurir' => $transaksi->pengiriman->kurir ?? 'N/A',
-                'layanan' => $transaksi->pengiriman->layanan ?? 'N/A',
-                'biaya' => $transaksi->pengiriman->biaya ?? 0,
-                'status' => $transaksi->pengiriman->status ?? 'N/A',
-                'weight' => $transaksi->pengiriman->weight ?? 0
-            ],
-            'pembayaran' => [
-                'reference' => $transaksi->pembayaran->reference ?? 'N/A',
-                'metode' => $transaksi->pembayaran->metode ?? 'N/A',
-                'status' => $transaksi->pembayaran->status ?? 'N/A',
-                'payment_type' => $transaksi->pembayaran->payment_type ?? 'N/A',
-                'payment_code' => $transaksi->pembayaran->payment_code ?? 'N/A',
-                'payment_url' => $transaksi->pembayaran->payment_url ?? 'N/A'
-            ]
+        
+        \Log::info('Tripay request data prepared', [
+            'method' => $requestData['method'],
+            'merchant_ref' => $requestData['merchant_ref'],
+            'amount' => $requestData['amount'],
+            'customer_email' => $requestData['customer_email'],
+            'return_url' => $requestData['return_url']
         ]);
 
-        $whatsappNumber = config('shop.whatsapp');
-        $whatsappMessage = "Halo, saya ingin konfirmasi pembayaran untuk pesanan {$transaksi->merchant_ref} dengan total Rp " . number_format($transaksi->total_harga, 0, ',', '.');
-        $whatsappUrl = "https://wa.me/{$whatsappNumber}?text=" . urlencode($whatsappMessage);
-
-        return view('frontend.cart.confirmation', compact('transaksi', 'whatsappUrl'));
-    }
-
-    public function history()
-    {
-        $transaksi = Transaksi::with(['detailTransaksi.produk', 'pengiriman', 'pembayaran'])
-            ->where('id_user', Auth::id())
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-
-        \Log::info('User accessing transaction history', [
-            'user_id' => Auth::id(),
-            'total_transactions' => $transaksi->total(),
-            'current_page' => $transaksi->currentPage()
+        $result = $this->tripayService->createTransaction($requestData);
+        
+        \Log::info('Tripay service createTransaction result', [
+            'success' => $result['success'] ?? false,
+            'has_data' => isset($result['data']),
+            'message' => $result['message'] ?? 'No message'
         ]);
-
-        return view('frontend.cart.history', compact('transaksi'));
+        
+        return $result;
     }
 
-    public function historyDetail($transaksiId)
-    {
-        $transaksi = Transaksi::with(['detailTransaksi.produk', 'pengiriman', 'pembayaran'])
-            ->where('id', $transaksiId)
-            ->where('id_user', Auth::id())
-            ->firstOrFail();
 
-        $whatsappNumber = config('shop.whatsapp');
-        $whatsappMessage = "Halo, saya ingin menanyakan status pesanan {$transaksi->merchant_ref}";
-        $whatsappUrl = "https://wa.me/{$whatsappNumber}?text=" . urlencode($whatsappMessage);
-
-        return view('frontend.cart.history-detail', compact('transaksi', 'whatsappUrl'));
-    }
 
     public function clearCart()
     {
@@ -695,77 +800,6 @@ class CartController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal sinkronisasi payment channels: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    public function syncCartToDatabase(Request $request)
-    {
-        try {
-            // Validate request
-            $request->validate([
-                'cart' => 'required|array',
-                'cart.*.id_produk' => 'required|exists:produk,id',
-                'cart.*.quantity' => 'required|integer|min:1'
-            ]);
-
-            $cart = $request->cart;
-            $userId = Auth::id();
-            $syncedItems = 0;
-
-            // Begin transaction
-            DB::beginTransaction();
-
-            foreach ($cart as $item) {
-                // Check product stock
-                $produk = Produk::findOrFail($item['id_produk']);
-                if ($produk->stok < $item['quantity']) {
-                    continue; // Skip items with insufficient stock
-                }
-
-                // Check if item already exists in cart
-                $cartItem = Cart::where('id_user', $userId)
-                    ->where('id_produk', $item['id_produk'])
-                    ->first();
-
-                if ($cartItem) {
-                    // Update existing cart item
-                    $cartItem->update([
-                        'quantity' => $cartItem->quantity + $item['quantity']
-                    ]);
-                } else {
-                    // Create new cart item
-                    Cart::create([
-                        'id_user' => $userId,
-                        'id_produk' => $item['id_produk'],
-                        'quantity' => $item['quantity']
-                    ]);
-                }
-
-                $syncedItems++;
-            }
-
-            // Commit transaction
-            DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => "Berhasil menyinkronkan $syncedItems item ke keranjang",
-                'synced_items' => $syncedItems
-            ]);
-        } catch (\Exception $e) {
-            // Rollback transaction on error
-            DB::rollBack();
-
-            \Log::error('Cart sync error: ' . $e->getMessage(), [
-                'user_id' => Auth::id(),
-                'cart_data' => $request->cart ?? 'No cart data',
-                'trace' => $e->getTraceAsString()
-            ]);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal menyinkronkan keranjang: ' . $e->getMessage()
             ], 500);
         }
     }

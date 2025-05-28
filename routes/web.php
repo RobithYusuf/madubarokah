@@ -1,14 +1,14 @@
 <?php
 
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\KategoriController;
+use App\Http\Controllers\Admin\ProdukController;
+use App\Http\Controllers\Admin\PesananController;
+use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CartController;
-use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\LandingpageController;
-use App\Http\Controllers\PesananController;
-use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\ShippingController;
-use App\Http\Controllers\UserController;
-use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -92,6 +92,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
     Route::prefix('payment')->name('payment.')->group(function () {
         Route::get('/', [\App\Http\Controllers\Admin\PaymentController::class, 'index'])->name('index');
         Route::post('/sync', [\App\Http\Controllers\Admin\PaymentController::class, 'syncChannels'])->name('sync');
+        Route::post('/reset', [\App\Http\Controllers\Admin\PaymentController::class, 'resetChannels'])->name('reset');
         Route::post('/channel/{id}/status', [\App\Http\Controllers\Admin\PaymentController::class, 'updateStatus'])->name('channel.status');
         Route::post('/channel/{id}/fee', [\App\Http\Controllers\Admin\PaymentController::class, 'updateFee'])->name('channel.fee');
         Route::delete('/channel/{id}', [\App\Http\Controllers\Admin\PaymentController::class, 'destroy'])->name('channel.destroy');
@@ -129,13 +130,17 @@ Route::middleware(['auth', 'role:pembeli'])->name('frontend.')->group(function (
     Route::prefix('checkout')->name('checkout.')->group(function () {
         Route::get('/', [CartController::class, 'checkout'])->name('index');
         Route::post('/process', [CartController::class, 'processCheckout'])->name('process');
-        Route::get('/confirmation/{transaksi}', [CartController::class, 'confirmation'])->name('confirmation');
     });
 
-    // Transaction History
+    // Confirmation Process (Separated from Cart)
+    Route::prefix('confirmation')->name('confirmation.')->group(function () {
+        Route::get('/{transaksi}', [\App\Http\Controllers\ConfirmationController::class, 'show'])->name('show');
+    });
+
+    // Transaction History (Separated from Cart)
     Route::prefix('history')->name('history.')->group(function () {
-        Route::get('/', [CartController::class, 'history'])->name('index');
-        Route::get('/{transaksi}', [CartController::class, 'historyDetail'])->name('detail');
+        Route::get('/', [\App\Http\Controllers\HistoryController::class, 'index'])->name('index');
+        Route::get('/{transaksi}', [\App\Http\Controllers\HistoryController::class, 'detail'])->name('detail');
     });
 
     // Shipping calculation for frontend
@@ -156,6 +161,14 @@ Route::middleware(['auth', 'role:pembeli'])->prefix('api')->name('api.')->group(
 });
 
 // ============================================================================
+// TRIPAY CALLBACK ROUTES (No Auth Required)
+// ============================================================================
+Route::prefix('api/tripay')->name('api.tripay.')->group(function () {
+    Route::post('/callback', [\App\Http\Controllers\Api\TripayCallbackController::class, 'callback'])->name('callback');
+    Route::get('/return', [\App\Http\Controllers\Api\TripayCallbackController::class, 'return'])->name('return');
+});
+
+// ============================================================================
 // SHARED SHIPPING ROUTES (untuk admin dan pembeli)
 // ============================================================================
 Route::middleware('auth')->prefix('shipping')->name('shipping.')->group(function () {
@@ -172,6 +185,11 @@ Route::middleware(['auth', 'role:pembeli'])->name('frontend.')->group(function (
     // Direct checkout routes for backward compatibility
     Route::get('/checkout', [CartController::class, 'checkout'])->name('checkout');
     Route::post('/checkout/process', [CartController::class, 'processCheckout'])->name('checkout.process');
+    
+    // Legacy confirmation route - redirect to new route
+    Route::get('/checkout/confirmation/{transaksi}', function($transaksi) {
+        return redirect()->route('frontend.confirmation.show', $transaksi);
+    })->name('checkout.confirmation');
 
     // Direct cart routes for backward compatibility  
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');

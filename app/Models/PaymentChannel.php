@@ -19,6 +19,8 @@ class PaymentChannel extends Model
         'minimum_fee',
         'maximum_fee',
         'is_active',
+        'is_synced',
+        'last_synced_at',
         'instructions'
     ];
 
@@ -28,7 +30,9 @@ class PaymentChannel extends Model
         'minimum_fee' => 'integer',
         'maximum_fee' => 'integer',
         'is_active' => 'boolean',
-        'instructions' => 'array'
+        'is_synced' => 'boolean',
+        'last_synced_at' => 'datetime',
+        'instructions' => 'array' // Pastikan casting ke array untuk JSON storage
     ];
 
     // Scope untuk channel aktif
@@ -41,6 +45,25 @@ class PaymentChannel extends Model
     public function scopeByGroup($query, $group)
     {
         return $query->where('group', $group);
+    }
+    
+    // Scope untuk channel yang disinkronisasi
+    public function scopeSynced($query)
+    {
+        return $query->where('is_synced', true);
+    }
+    
+    // Scope untuk channel manual/tidak disinkronisasi
+    public function scopeManual($query)
+    {
+        return $query->where('is_synced', false);
+    }
+    
+    // Scope untuk channel yang disinkronisasi hari ini
+    public function scopeSyncedToday($query)
+    {
+        return $query->where('is_synced', true)
+                    ->whereDate('last_synced_at', today());
     }
 
     // Method untuk menghitung fee

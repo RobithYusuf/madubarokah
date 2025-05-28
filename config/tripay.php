@@ -5,6 +5,6 @@ return [
     'private_key' => env('TRIPAY_PRIVATE_KEY', 'pV4xm-d3t5T-d0GfU-qU3PA-WSsYI'),
     'merchant_code' => env('TRIPAY_MERCHANT_CODE', 'T34697'),
     'base_url' => env('TRIPAY_BASE_URL', 'https://tripay.co.id/api-sandbox'),
-    'callback_url' => env('TRIPAY_CALLBACK_URL', null),
-    'return_url' => env('TRIPAY_RETURN_URL', null),
+    'callback_url' => env('TRIPAY_CALLBACK_URL', env('APP_URL', 'http://localhost:8000') . '/api/tripay/callback'),
+    'return_url' => env('TRIPAY_RETURN_URL', env('APP_URL', 'http://localhost:8000') . '/api/tripay/return'),
 ];

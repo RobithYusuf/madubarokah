@@ -17,7 +17,6 @@ class Transaksi extends Model
         'tanggal_transaksi',
         'total_harga',
         'status',
-        'metode_pembayaran',
         'nama_penerima',
         'telepon_penerima',
         'alamat_pengiriman',
@@ -28,6 +27,7 @@ class Transaksi extends Model
         'fee_merchant',
         'fee_customer',
         'callback_data',
+        'tripay_reference',
     ];
 
     protected $casts = [

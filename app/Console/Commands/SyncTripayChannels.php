@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Services\TripayService;
 use Illuminate\Console\Command;
+use App\Services\TripayService;
 
 class SyncTripayChannels extends Command
 {
@@ -12,9 +12,7 @@ class SyncTripayChannels extends Command
      *
      * @var string
      */
-    protected $signature = 'tripay:sync-channels 
-                            {--force : Force sync even if channels exist}
-                            {--active-only : Only sync active channels}';
+    protected $signature = 'tripay:sync-channels {--force : Force sync even if recently synced}';
 
     /**
      * The console command description.
@@ -39,98 +37,60 @@ class SyncTripayChannels extends Command
      */
     public function handle()
     {
-        $this->info('🚀 Starting Tripay payment channels synchronization...');
-        $this->newLine();
-
+        $this->info('Starting Tripay payment channels synchronization...');
+        
         try {
             // Show current config
-            $this->line('📋 Current Tripay Configuration:');
-            $this->line('   Base URL: ' . config('tripay.base_url'));
-            $this->line('   Merchant Code: ' . config('tripay.merchant_code'));
-            $this->line('   API Key: ' . (config('tripay.api_key') ? '✓ Set' : '✗ Not set'));
-            $this->line('   Private Key: ' . (config('tripay.private_key') ? '✓ Set' : '✗ Not set'));
-            $this->newLine();
+            $this->info('Tripay Config:');
+            $this->line('- Base URL: ' . config('tripay.base_url'));
+            $this->line('- Merchant Code: ' . config('tripay.merchant_code'));
+            $this->line('- Callback URL: ' . config('tripay.callback_url'));
+            $this->line('');
 
-            // Check API configuration
-            if (!config('tripay.api_key') || !config('tripay.private_key')) {
-                $this->error('❌ Tripay API configuration incomplete!');
-                $this->line('Please check your .env file for:');
-                $this->line('- TRIPAY_API_KEY');
-                $this->line('- TRIPAY_PRIVATE_KEY');
-                $this->line('- TRIPAY_MERCHANT_CODE');
-                return Command::FAILURE;
-            }
-
-            // Start sync process
-            $this->info('📡 Fetching payment channels from Tripay API...');
-            
-            $bar = $this->output->createProgressBar(3);
-            $bar->setFormat('verbose');
-            
-            $bar->start();
-            $bar->setMessage('Connecting to Tripay API...');
-            $bar->advance();
-
+            // Sync channels
             $result = $this->tripayService->syncPaymentChannels();
-            
-            $bar->setMessage('Processing channels...');
-            $bar->advance();
-            
-            $bar->setMessage('Saving to database...');
-            $bar->advance();
-            
-            $bar->finish();
-            $this->newLine(2);
 
             if ($result['success']) {
-                $this->info("✅ {$result['message']}");
+                $this->info('✅ ' . $result['message']);
+                $this->info('📊 Synced channels: ' . $result['count']);
                 
-                // Show summary
-                $this->displaySummary();
+                // Show synced channels
+                $channels = \App\Models\PaymentChannel::where('is_synced', true)->get();
                 
-                return Command::SUCCESS;
+                if ($channels->count() > 0) {
+                    $this->info('');
+                    $this->info('Synced Payment Channels:');
+                    
+                    $tableData = [];
+                    foreach ($channels as $channel) {
+                        $tableData[] = [
+                            $channel->code,
+                            $channel->name,
+                            $channel->group,
+                            $channel->is_active ? '✅' : '❌',
+                            'Rp ' . number_format($channel->fee_flat) . ' + ' . $channel->fee_percent . '%'
+                        ];
+                    }
+                    
+                    $this->table([
+                        'Code',
+                        'Name', 
+                        'Group',
+                        'Active',
+                        'Fee'
+                    ], $tableData);
+                }
+                
+                return self::SUCCESS;
             } else {
-                $this->error("❌ Sync failed: {$result['message']}");
-                return Command::FAILURE;
+                $this->error('❌ ' . $result['message']);
+                return self::FAILURE;
             }
 
         } catch (\Exception $e) {
-            $this->error("❌ Exception occurred: {$e->getMessage()}");
-            $this->line("Stack trace: {$e->getTraceAsString()}");
-            return Command::FAILURE;
+            $this->error('❌ Exception occurred: ' . $e->getMessage());
+            $this->error($e->getTraceAsString());
+            return self::FAILURE;
         }
-    }
-
-    private function displaySummary()
-    {
-        $this->newLine();
-        $this->info('📊 Payment Channels Summary:');
-        
-        $channels = \App\Models\PaymentChannel::selectRaw('
-            `group`,
-            COUNT(*) as total,
-            SUM(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) as active
-        ')
-        ->groupBy('group')
-        ->orderBy('group')
-        ->get();
-        
-        $this->table(
-            ['Group', 'Total', 'Active'],
-            $channels->map(function($channel) {
-                return [
-                    $channel->group,
-                    $channel->total,
-                    $channel->active . ($channel->active > 0 ? ' ✓' : ' ✗')
-                ];
-            })->toArray()
-        );
-
-        $this->newLine();
-        $this->line('💡 Tips:');
-        $this->line('- Use php artisan tinker to test payment channel methods');
-        $this->line('- Check admin panel to enable/disable specific channels');
-        $this->line('- Test checkout process with different payment methods');
-        $this->newLine();
     }
 }

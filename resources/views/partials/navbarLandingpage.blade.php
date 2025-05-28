@@ -28,8 +28,13 @@
                 @auth
                 <li class="nav-item">
                     <a class="nav-link text-gelap position-relative" href="{{ route('frontend.cart.index') }}" id="cartLink">
-                        <i class="fas fa-shopping-cart"></i> Keranjang
+                        <i class="fas fa-shopping-cart"></i>
                         <span class="cart-badge" id="cartBadge" style="display: none;">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-gelap" href="{{ route('frontend.history.index') }}">
+                        <i class="fas fa-history"></i> Riwayat Transaksi
                     </a>
                 </li>
                 <li class="nav-item">
@@ -43,7 +48,7 @@
                 @else
                 <li class="nav-item">
                     <a class="nav-link text-gelap cart-guest" href="#" onclick="showLoginPrompt()">
-                        <i class="fas fa-shopping-cart position-relative"></i> Keranjang
+                        <i class="fas fa-shopping-cart position-relative"></i>
                         <span class="cart-badge" id="cartBadgeGuest" style="display: none;">0</span>
                     </a>
                 </li>

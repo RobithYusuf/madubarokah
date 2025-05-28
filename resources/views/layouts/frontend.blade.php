@@ -361,12 +361,7 @@
     <nav class="navbar fixed-top navbar-expand-lg" id="mainNavbar">
         <div class="container">
             <a class="navbar-brand text-gelap font-weight-bold" href="{{ route('frontend.home') }}">
-                @if(shop_setting('logo'))
-                <img src="{{ asset('storage/' . shop_setting('logo')) }}" alt="{{ shop_setting('name') }}" style="height: 30px; width: auto;" class="mr-2">
-                @else
-                <i class="fas fa-spa"></i>
-                @endif
-                {{ shop_setting('name', 'Toko Madu Barokah') }}
+                <i class="fas fa-spa"></i> Toko Madu Barokah
             </a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -387,8 +382,13 @@
                     @auth
                     <li class="nav-item">
                         <a class="nav-link text-gelap position-relative" href="{{ route('frontend.cart.index') }}" id="cartLink">
-                            <i class="fas fa-shopping-cart"></i> Keranjang
+                            <i class="fas fa-shopping-cart"></i>
                             <span class="cart-badge" id="cartBadge" style="display: none;">0</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-gelap" href="{{ route('frontend.history.index') }}">
+                            <i class="fas fa-history"></i> Riwayat Transaksi
                         </a>
                     </li>
                     <li class="nav-item">
@@ -402,7 +402,7 @@
                     @else
                     <li class="nav-item">
                         <a class="nav-link text-gelap cart-guest" href="#" onclick="showLoginPrompt()">
-                            <i class="fas fa-shopping-cart position-relative"></i> Keranjang
+                            <i class="fas fa-shopping-cart position-relative"></i>
                             <span class="cart-badge" id="cartBadgeGuest" style="display: none;">0</span>
                         </a>
                     </li>
@@ -425,25 +425,25 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-6">
-                    <h5 class="text-white">{{ shop_setting('name', 'Toko Madu Barokah') }}</h5>
-                    <p class="text-white-50">{{ shop_setting('tagline', 'Madu asli berkualitas tinggi langsung dari peternak terpercaya.') }}</p>
+                    <h5 class="text-white">Toko Madu Barokah</h5>
+                    <p class="text-white-50">Madu asli berkualitas tinggi langsung dari peternak terpercaya.</p>
                 </div>
                 <div class="col-md-6">
                     <h6 class="text-white">Kontak Kami</h6>
                     <p class="text-white-50 mb-1">
-                        <i class="fas fa-map-marker-alt"></i> {{ shop_setting('address', 'Jl. Cut Nyak Dien, Mlati Kidul, Kota Kudus') }}
+                        <i class="fas fa-map-marker-alt"></i> Jl. Cut Nyak Dien, Mlati Kidul, Kota Kudus
                     </p>
                     <p class="text-white-50 mb-1">
-                        <i class="fas fa-phone"></i> <a href="https://wa.me/{{ shop_setting('whatsapp', '628977136172') }}" class="text-white-50">{{ shop_setting('phone', '08977136172') }}</a>
+                        <i class="fas fa-phone"></i> <a href="https://wa.me/628977136172" class="text-white-50">08977136172</a>
                     </p>
                     <p class="text-white-50">
-                        <i class="fas fa-envelope"></i> {{ shop_setting('email', 'info@tokomadubarokah.com') }}
+                        <i class="fas fa-envelope"></i> info@tokomadubarokah.com
                     </p>
                 </div>
             </div>
             <hr class="border-light">
             <div class="text-center">
-                <p class="mb-0 text-white-50">&copy; {{ date('Y') }} {{ shop_setting('name', 'Toko Madu Barokah') }}. All rights reserved.</p>
+                <p class="mb-0 text-white-50">&copy; {{ date('Y') }} Toko Madu Barokah. All rights reserved.</p>
             </div>
         </div>
     </footer>
@@ -587,25 +587,17 @@
                     $.ajax({
                         url: '{{ route("frontend.cart.sync") }}',
                         method: 'POST',
-                        headers: {
-                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                        },
                         data: {
-                            cart: cart.map(item => ({
-                                id_produk: item.id,
-                                quantity: item.quantity
-                            }))
+                            cart: cart
                         },
                         success: (response) => {
                             if (response.success) {
                                 this.clearCart();
                                 console.log('Cart synced to database');
-                                this.showNotification('success', 'Keranjang berhasil disinkronkan');
                             }
                         },
                         error: (xhr) => {
                             console.error('Failed to sync cart:', xhr);
-                            this.showNotification('error', 'Gagal menyinkronkan keranjang');
                         }
                     });
                 }
@@ -617,20 +609,9 @@
 
         // Show login prompt for guests
         function showLoginPrompt() {
-            Swal.fire({
-                title: 'Login Diperlukan',
-                text: 'Anda perlu login untuk melihat keranjang.',
-                icon: 'info',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Login Sekarang',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    window.location.href = '{{ route("login") }}';
-                }
-            });
+            if (confirm('Anda perlu login untuk melihat keranjang. Login sekarang?')) {
+                window.location.href = '{{ route("login") }}';
+            }
         }
 
         // Loading overlay functions

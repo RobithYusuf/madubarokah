@@ -65,7 +65,6 @@
             </div>
             @endif
 
-            <!-- Tripay API Info -->
             <!-- Info Card -->
             <div class="card shadow mb-4">
                 <div class="card-body py-2">
@@ -74,10 +73,56 @@
                             <h6 class="card-title text-info mb-0">
                                 <i class="fas fa-info-circle"></i> Metode Pembayaran
                             </h6>
+                            <small class="text-muted">Kelola sinkronisasi dengan Tripay API</small>
                         </div>
-                        <button type="button" id="syncButton" class="btn btn-info btn-sm">
-                            <i class="fas fa-sync-alt"></i> Sinkron Metode Pembayaran
-                        </button>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-info btn-sm dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-sync-alt"></i> Kelola Sinkronisasi
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="#" id="syncOnlyBtn">
+                                        <i class="fas fa-download text-primary"></i> Sinkron Saja
+                                        <small class="d-block text-muted">Tambah/update channel tanpa hapus data lama</small>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" id="syncAndCleanBtn">
+                                        <i class="fas fa-sync-alt text-warning"></i> Sinkron + Bersihkan
+                                        <small class="d-block text-muted">Hapus data lama, hanya simpan data dari Tripay</small>
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="#" id="resetAllBtn">
+                                        <i class="fas fa-trash text-danger"></i> Reset Semua
+                                        <small class="d-block text-muted">Hapus semua payment channel</small>
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Sync Status Info -->
+                    <div class="mt-2 pt-2 border-top">
+                        <div class="row text-center">
+                            <div class="col-md-3">
+                                <div class="text-xs text-uppercase text-muted">Total Channel</div>
+                                <div class="h6 mb-0 text-primary">{{ $totalChannels }}</div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-xs text-uppercase text-muted">Channel Aktif</div>
+                                <div class="h6 mb-0 text-success">{{ $activeChannels }}</div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-xs text-uppercase text-muted">Dari Sinkron</div>
+                                <div class="h6 mb-0 text-info">{{ $paymentChannels->flatten()->where('is_synced', true)->count() }}</div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-xs text-uppercase text-muted">Manual/Lama</div>
+                                <div class="h6 mb-0 text-warning">{{ $paymentChannels->flatten()->where('is_synced', false)->count() }}</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -97,11 +142,12 @@
                             <thead class="thead-light">
                                 <tr>
                                     <th width="5%" class="text-center">No</th>
-                                    <th width="10%">Kode</th>
-                                    <th width="25%">Nama</th>
-                                    <th width="25%">Fee</th>
-                                    <th width="10%" class="text-center">Status</th>
-                                    <th width="25%" class="text-center">Aksi</th>
+                                    <th width="8%">Kode</th>
+                                    <th width="18%">Nama</th>
+                                    <th width="18%">Fee</th>
+                                    <th width="8%" class="text-center">Status</th>
+                                    <th width="12%">Instructions</th>
+                                    <th width="31%" class="text-center">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -120,7 +166,21 @@
                                                 <i class="fas fa-credit-card text-white" style="font-size: 10px;"></i>
                                             </div>
                                             @endif
-                                            <span>{{ $channel->name }}</span>
+                                            <div>
+                                                <span>{{ $channel->name }}</span>
+                                                @if($channel->is_synced)
+                                                    <span class="badge badge-info badge-sm ml-1" title="Data dari sinkronisasi Tripay">
+                                                        <i class="fas fa-sync-alt"></i> Synced
+                                                    </span>
+                                                @else
+                                                    <span class="badge badge-warning badge-sm ml-1" title="Data manual atau belum disinkronisasi">
+                                                        <i class="fas fa-edit"></i> Manual
+                                                    </span>
+                                                @endif
+                                                @if($channel->last_synced_at)
+                                                    <div class="small text-muted">Sync: {{ $channel->last_synced_at->format('d/m/Y H:i') }}</div>
+                                                @endif
+                                            </div>
                                         </div>
                                     </td>
                                     <td>
@@ -149,6 +209,49 @@
                                                 {{ $channel->is_active ? 'Aktif' : 'Nonaktif' }}
                                             </label>
                                         </div>
+                                    </td>
+                                    <td>
+                                        @if($channel->instructions && is_array($channel->instructions) && count($channel->instructions) > 0)
+                                            @php
+                                                $totalSteps = 0;
+                                                $instructionMethods = 0;
+                                                
+                                                // Safely process instructions without evaluating content
+                                                foreach($channel->instructions as $instruction) {
+                                                    if(is_array($instruction) && isset($instruction['steps']) && is_array($instruction['steps'])) {
+                                                        $totalSteps += count($instruction['steps']);
+                                                        $instructionMethods++;
+                                                    } else {
+                                                        $totalSteps += 1;
+                                                        $instructionMethods++;
+                                                    }
+                                                }
+                                            @endphp
+                                            <button type="button" class="btn btn-sm btn-outline-info" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#instructionsModal"
+                                                    data-channel="{{ $channel->name }}"
+                                                    data-instructions='{{ json_encode($channel->instructions, JSON_HEX_APOS | JSON_HEX_QUOT) }}'>
+                                                <i class="fas fa-list"></i> 
+                                                @if($instructionMethods > 1)
+                                                    {{ $instructionMethods }} metode ({{ $totalSteps }} langkah)
+                                                @else
+                                                    {{ $totalSteps }} langkah
+                                                @endif
+                                            </button>
+                                        @elseif($channel->instructions && is_string($channel->instructions))
+                                            <button type="button" class="btn btn-sm btn-outline-info" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#instructionsModal"
+                                                    data-channel="{{ $channel->name }}"
+                                                    data-instructions='{{ json_encode([$channel->instructions], JSON_HEX_APOS | JSON_HEX_QUOT) }}'>
+                                                <i class="fas fa-file-text"></i> Lihat
+                                            </button>
+                                        @else
+                                            <span class="text-muted small">
+                                                <i class="fas fa-minus-circle"></i> Tidak ada
+                                            </span>
+                                        @endif
                                     </td>
                                     <td class="text-center">
                                         <div class="btn-group" role="group">
@@ -187,6 +290,35 @@
                 </div>
             </div>
             @endforeach
+        </div>
+    </div>
+</div>
+
+<!-- Instructions Modal -->
+<div class="modal fade" id="instructionsModal" tabindex="-1" aria-labelledby="instructionsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="instructionsModalLabel">Payment Instructions</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label"><strong>Payment Channel:</strong></label>
+                    <p id="instructions-channel-name" class="text-primary"></p>
+                </div>
+                <div>
+                    <label class="form-label"><strong>Instructions:</strong></label>
+                    <div id="instructions-content" class="border rounded p-3 bg-light">
+                        <!-- Instructions will be loaded here -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
         </div>
     </div>
 </div>
@@ -289,71 +421,294 @@
 @push('scripts')
 <script>
     $(document).ready(function() {
-        // Sinkronisasi Payment Channel dengan SweetAlert
-        $('#syncButton').click(function() {
-            Swal.fire({
-                title: 'Sinkronisasi Metode Pembayaran?',
-                text: 'Proses sinkronisasi akan memperbarui data metode pembayaran dari Tripay API. Lanjutkan?',
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#3085d6',
-                cancelButtonColor: '#d33',
-                confirmButtonText: 'Ya, Sinkronkan!',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    // Tampilkan loading state
-                    Swal.fire({
-                        title: 'Sedang Sinkronisasi...',
-                        html: 'Mohon tunggu, sedang mengambil data dari Tripay API',
-                        allowOutsideClick: false,
-                        didOpen: () => {
-                            Swal.showLoading();
+        // Instructions Modal Handler
+        $('#instructionsModal').on('show.bs.modal', function(event) {
+            const button = $(event.relatedTarget);
+            const channelName = button.data('channel');
+            const instructions = button.data('instructions');
+            
+            $('#instructions-channel-name').text(channelName);
+            
+            try {
+                let instructionsArray = [];
+                
+                // Parse instructions data
+                if (typeof instructions === 'string') {
+                    instructionsArray = JSON.parse(instructions);
+                } else if (Array.isArray(instructions)) {
+                    instructionsArray = instructions;
+                } else if (typeof instructions === 'object' && instructions !== null) {
+                    instructionsArray = [instructions];
+                }
+                
+                let html = '';
+                
+                if (instructionsArray.length > 0) {
+                    instructionsArray.forEach((instruction, index) => {
+                        // Handle complex structure with title and steps
+                        if (typeof instruction === 'object' && instruction.title && instruction.steps) {
+                            html += '<div class="instruction-section mb-4">';
+                            html += '<h6 class="text-primary mb-2"><i class="fas fa-credit-card me-2"></i>' + instruction.title + '</h6>';
+                            html += '<ol class="mb-0">';
+                            
+                            instruction.steps.forEach((step, stepIndex) => {
+                                let cleanStep = step.replace(/\{\{pay_code\}\}/g, '[Kode Pembayaran]')
+                                                   .replace(/\{\{amount\}\}/g, '[Jumlah Pembayaran]');
+                                html += '<li class="mb-1">' + cleanStep + '</li>';
+                            });
+                            
+                            html += '</ol>';
+                            html += '</div>';
+                        }
+                        // Handle simple array of strings
+                        else if (typeof instruction === 'string') {
+                            if (index === 0) {
+                                html += '<ol class="mb-0">';
+                            }
+                            let cleanStep = instruction.replace(/\{\{pay_code\}\}/g, '[Kode Pembayaran]')
+                                                     .replace(/\{\{amount\}\}/g, '[Jumlah Pembayaran]');
+                            html += '<li class="mb-2">' + cleanStep + '</li>';
+                            
+                            if (index === instructionsArray.length - 1) {
+                                html += '</ol>';
+                            }
+                        }
+                        // Handle other object types
+                        else {
+                            html += '<div class="instruction-item mb-2">';
+                            html += '<pre class="bg-light p-2 rounded">' + JSON.stringify(instruction, null, 2) + '</pre>';
+                            html += '</div>';
                         }
                     });
+                } else {
+                    html = '<p class="text-muted mb-0">Tidak ada instruksi tersedia</p>';
+                }
+                
+                $('#instructions-content').html(html);
+                
+            } catch (e) {
+                console.error('Error parsing instructions:', e, instructions);
+                $('#instructions-content').html(
+                    '<div class="alert alert-danger mb-0">' +
+                    '<strong>Error:</strong> Tidak dapat memuat instruksi. Format data tidak valid.' +
+                    '</div>'
+                );
+            }
+        });
 
-                    // Kirim request AJAX
-                    $.ajax({
-                        url: '{{ route("admin.payment.sync") }}',
-                        type: 'POST',
-                        data: {
-                            _token: '{{ csrf_token() }}'
-                        },
-                        success: function(response) {
-                            if (response.success) {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Berhasil!',
-                                    text: response.message,
-                                    timer: 2000,
-                                    showConfirmButton: false
-                                }).then(() => {
-                                    location.reload();
-                                });
-                            } else {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Gagal!',
-                                    text: response.message
-                                });
-                            }
-                        },
-                        error: function(xhr) {
-                            let errorMessage = 'Terjadi kesalahan saat sinkronisasi';
-                            if (xhr.responseJSON && xhr.responseJSON.message) {
-                                errorMessage = xhr.responseJSON.message;
-                            }
+        // Function untuk melakukan sinkronisasi
+        function performSync(removeOldData, actionName) {
+            // Tampilkan loading state
+            Swal.fire({
+                title: `Sedang ${actionName}...`,
+                html: 'Mohon tunggu, sedang mengambil data dari Tripay API',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
 
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error!',
-                                text: errorMessage
-                            });
+            // Kirim request AJAX
+            $.ajax({
+                url: '{{ route("admin.payment.sync") }}',
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    remove_old_data: removeOldData
+                },
+                timeout: 30000, // 30 seconds timeout
+                success: function(response) {
+                    if (response.success) {
+                        let message = response.message;
+                        if (response.data) {
+                            message += `<br><br><strong>Detail:</strong><br>`;
+                            message += `• Channel disinkronisasi: ${response.data.synced}<br>`;
+                            message += `• Channel dihapus: ${response.data.removed}<br>`;
+                            message += `• Total channel sekarang: ${response.data.total_after}`;
                         }
+                        
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            html: message,
+                            timer: 4000,
+                            showConfirmButton: true,
+                            confirmButtonText: 'OK'
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal!',
+                            text: response.message
+                        });
+                    }
+                },
+                error: function(xhr, status, error) {
+                    let errorMessage = 'Terjadi kesalahan saat sinkronisasi';
+                    
+                    if (status === 'timeout') {
+                        errorMessage = 'Request timeout. Proses mungkin memerlukan waktu lebih lama.';
+                    } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: errorMessage
                     });
                 }
             });
+        }
+
+        // Sinkron Saja (tanpa hapus data lama)
+        $('#syncOnlyBtn').click(function() {
+            Swal.fire({
+                title: 'Sinkronisasi Metode Pembayaran?',
+                html: `<div class="text-left">
+                       <p><strong>Mode:</strong> Sinkron Saja</p>
+                       <p>Proses ini akan:</p>
+                       <ul class="text-left">
+                         <li>✅ Menambah channel baru dari Tripay</li>
+                         <li>✅ Update data channel yang sudah ada</li>
+                         <li>❌ <strong>TIDAK</strong> menghapus data lama</li>
+                       </ul>
+                       <p class="text-info"><small><i class="fas fa-info-circle"></i> Data manual/lama akan tetap tersimpan</small></p>
+                       </div>`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#17a2b8',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="fas fa-download"></i> Ya, Sinkron Saja!',
+                cancelButtonText: 'Batal',
+                allowOutsideClick: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    performSync(false, 'Sinkronisasi');
+                }
+            });
         });
+
+        // Sinkron + Bersihkan (hapus data lama)
+        $('#syncAndCleanBtn').click(function() {
+            Swal.fire({
+                title: 'Sinkron + Bersihkan Data?',
+                html: `<div class="text-left">
+                       <p><strong>Mode:</strong> Sinkron + Bersihkan</p>
+                       <p>Proses ini akan:</p>
+                       <ul class="text-left">
+                         <li>✅ Menambah channel baru dari Tripay</li>
+                         <li>✅ Update data channel yang sudah ada</li>
+                         <li>⚠️ <strong>MENGHAPUS</strong> semua data manual/lama</li>
+                       </ul>
+                       <p class="text-warning"><small><i class="fas fa-exclamation-triangle"></i> Hanya data dari Tripay yang akan tersisa!</small></p>
+                       </div>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ffc107',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="fas fa-sync-alt"></i> Ya, Sinkron + Bersihkan!',
+                cancelButtonText: 'Batal',
+                allowOutsideClick: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    performSync(true, 'Sinkronisasi + Pembersihan');
+                }
+            });
+        });
+
+        // Reset Semua Data
+        $('#resetAllBtn').click(function() {
+            Swal.fire({
+                title: 'Reset Semua Payment Channel?',
+                html: `<div class="text-left">
+                       <p><strong>Mode:</strong> Reset Total</p>
+                       <p>Proses ini akan:</p>
+                       <ul class="text-left">
+                         <li>❌ <strong>MENGHAPUS SEMUA</strong> payment channel</li>
+                         <li>❌ Data dari Tripay</li>
+                         <li>❌ Data manual/lama</li>
+                       </ul>
+                       <p class="text-danger"><small><i class="fas fa-skull-crossbones"></i> <strong>TIDAK DAPAT DIBATALKAN!</strong> Database akan kosong total.</small></p>
+                       </div>`,
+                icon: 'error',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="fas fa-trash"></i> Ya, Reset Semua!',
+                cancelButtonText: 'Batal',
+                allowOutsideClick: false,
+                input: 'text',
+                inputPlaceholder: 'Ketik "RESET" untuk konfirmasi',
+                inputValidator: (value) => {
+                    if (value !== 'RESET') {
+                        return 'Harus mengetik "RESET" untuk melanjutkan!'
+                    }
+                },
+                preConfirm: (inputValue) => {
+                    return inputValue === 'RESET';
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    performReset();
+                }
+            });
+        });
+
+        // Function untuk reset semua data
+        function performReset() {
+            Swal.fire({
+                title: 'Sedang Reset...',
+                html: 'Mohon tunggu, sedang menghapus semua payment channel',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            $.ajax({
+                url: '{{ route("admin.payment.reset") }}',
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}'
+                },
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Reset Berhasil!',
+                            text: response.message,
+                            timer: 3000,
+                            showConfirmButton: true
+                        }).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal!',
+                            text: response.message
+                        });
+                    }
+                },
+                error: function(xhr) {
+                    let errorMessage = 'Terjadi kesalahan saat reset';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    }
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: errorMessage
+                    });
+                }
+            });
+        }
 
         // Toggle status payment channel
         $('.channel-status-toggle').change(function() {
@@ -384,7 +739,6 @@
                             title: 'Gagal!',
                             text: response.message
                         });
-                        // Revert toggle if failed
                         $(this).prop('checked', !isActive);
                     }
                 },
@@ -394,7 +748,6 @@
                         title: 'Error!',
                         text: 'Terjadi kesalahan saat mengubah status'
                     });
-                    // Revert toggle if error
                     $(this).prop('checked', !isActive);
                 }
             });
@@ -478,17 +831,14 @@
 
             $('#calc_channel_name').val(name);
 
-            // Store fee data as data attributes
             $('#calculateFeeBtn').data('fee-flat', feeFlat);
             $('#calculateFeeBtn').data('fee-percent', feePercent);
             $('#calculateFeeBtn').data('min-fee', minFee);
             $('#calculateFeeBtn').data('max-fee', maxFee);
 
-            // Calculate initial values
             calculateFee();
         });
 
-        // Calculate Fee
         $('#calculateFeeBtn').click(function() {
             calculateFee();
         });
@@ -507,7 +857,6 @@
             const percentFee = amount * (feePercent / 100);
             let totalFee = feeFlat + percentFee;
 
-            // Apply min/max constraints
             if (minFee > 0 && totalFee < minFee) {
                 totalFee = minFee;
             }
@@ -518,7 +867,6 @@
 
             const totalAmount = amount + totalFee;
 
-            // Update UI
             $('#calc_fee_flat').text('Rp ' + formatNumber(feeFlat));
             $('#calc_fee_percent').text('Rp ' + formatNumber(percentFee));
             $('#calc_total_fee').text('Rp ' + formatNumber(totalFee));
@@ -529,7 +877,7 @@
             return number.toFixed(0).replace(/\d(?=(\d{3})+$)/g, '$&,');
         }
 
-        // Delete Payment Channel with SweetAlert
+        // Delete Payment Channel
         $('.delete-channel-btn').click(function() {
             const id = $(this).data('id');
             const name = $(this).data('name');

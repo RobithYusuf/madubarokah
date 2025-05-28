@@ -491,24 +491,15 @@
         border-color: #b8790a;
     }
 
-    .loading-spinner {
-        display: inline-block;
-        width: 16px;
-        height: 16px;
-        border: 2px solid #f3f3f3;
-        border-top: 2px solid #cc8400;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
+    /* Minimalist alert styles */
+    .alert-sm {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        border-radius: 6px;
     }
 
-    @keyframes spin {
-        0% {
-            transform: rotate(0deg);
-        }
-
-        100% {
-            transform: rotate(360deg);
-        }
+    .alert-sm i {
+        font-size: 0.8rem;
     }
 
     /* Payment Channel Styles */
@@ -751,6 +742,9 @@
         initializeCheckout();
 
         function initializeCheckout() {
+            console.log('=== CHECKOUT INITIALIZED ===');
+            console.log('Config:', checkoutConfig);
+
             // Setup event handlers
             setupEventHandlers();
 
@@ -840,7 +834,7 @@
 
         function handleFormSubmit(e) {
             console.log('Form submitting...');
-            elements.checkoutBtn.html('<i class="loading-spinner"></i> Memproses...').prop('disabled', true);
+            elements.checkoutBtn.html('<span class="spinner-border spinner-border-sm me-2" role="status" style="width: 1rem; height: 1rem;"></span>Memproses...').prop('disabled', true);
             // Form will submit normally
         }
 
@@ -902,16 +896,18 @@
                 _token: checkoutConfig.csrf
             };
 
+            console.log('Calculating shipping:', requestData);
             elements.shippingServices.html(createLoadingHTML());
             elements.shippingSection.show();
 
             $.ajax({
-                url: '/api/checkout/calculate',
+                url: '/shipping/calculate',
                 method: 'POST',
                 data: requestData,
                 timeout: 15000,
                 cache: false,
                 success: function(response) {
+                    console.log('Shipping calculation response:', response);
                     if (response.success && response.data && response.data.length > 0) {
                         renderShippingServices(response.data, response.debug);
                     } else {
@@ -919,7 +915,11 @@
                     }
                 },
                 error: function(xhr, status, error) {
-                    console.error('Error calculating shipping:', error);
+                    console.error('Error calculating shipping:', {
+                        xhr,
+                        status,
+                        error
+                    });
                     let errorMessage = 'Gagal menghitung ongkos kirim';
                     if (xhr.status === 422) {
                         errorMessage = 'Data tidak valid. Periksa kembali pilihan Anda.';
@@ -939,8 +939,8 @@
             // Add debug info if exists
             if (debugInfo && debugInfo.source === 'fallback_dummy_data') {
                 html += `
-                <div class="alert alert-info alert-sm mb-3">
-                    <i class="fas fa-info-circle"></i> 
+                <div class="alert alert-info alert-sm py-2 px-3 mb-2">
+                    <i class="fas fa-info-circle me-2"></i> 
                     <small><strong>Info:</strong> ${debugInfo.message}</small>
                     ${debugInfo.note ? `<br><small class="text-muted">${debugInfo.note}</small>` : ''}
                 </div>
@@ -1020,18 +1020,20 @@
 
         function createLoadingHTML() {
             return `
-            <div class="text-center py-4">
-                <div class="loading-spinner mx-auto mb-3"></div>
-                <p class="mb-1 text-muted">Menghitung ongkos kirim...</p>
-                <small class="text-muted d-block">Proses ini mungkin memakan waktu beberapa detik</small>
+            <div class="text-center py-3">
+                <div class="spinner-border spinner-border-sm text-primary mb-2" role="status" style="width: 1.5rem; height: 1.5rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mb-0 text-muted small">Menghitung ongkos kirim...</p>
             </div>
         `;
         }
 
         function createErrorHTML(message) {
             return `
-            <div class="alert alert-warning">
-                <i class="fas fa-exclamation-triangle"></i> ${message}
+            <div class="alert alert-warning alert-sm py-2 px-3 mb-0">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <small>${message}</small>
             </div>
         `;
         }

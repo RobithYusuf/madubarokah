@@ -69,10 +69,10 @@ class DatabaseSeeder extends Seeder
 
         // Seeder untuk transaksi
         DB::table('transaksi')->insert([
-            ['id_user' => 2, 'tanggal_transaksi' => Carbon::now()->subDays(5), 'total_harga' => 205000, 'status' => 'selesai', 'metode_pembayaran' => 'Transfer Bank', 'created_at' => Carbon::now()->subDays(5), 'updated_at' => Carbon::now()->subDays(3)],
-            ['id_user' => 3, 'tanggal_transaksi' => Carbon::now()->subDays(3), 'total_harga' => 150000, 'status' => 'dikirim', 'metode_pembayaran' => 'E-Wallet', 'created_at' => Carbon::now()->subDays(3), 'updated_at' => Carbon::now()->subDays(2)],
-            ['id_user' => 4, 'tanggal_transaksi' => Carbon::now()->subDays(2), 'total_harga' => 95000, 'status' => 'dibayar', 'metode_pembayaran' => 'Transfer Bank', 'created_at' => Carbon::now()->subDays(2), 'updated_at' => Carbon::now()->subDays(1)],
-            ['id_user' => 5, 'tanggal_transaksi' => Carbon::now()->subDay(), 'total_harga' => 135000, 'status' => 'pending', 'metode_pembayaran' => 'COD', 'created_at' => Carbon::now()->subDay(), 'updated_at' => Carbon::now()->subDay()],
+            ['id_user' => 2, 'tanggal_transaksi' => Carbon::now()->subDays(5), 'total_harga' => 205000, 'status' => 'selesai',  'created_at' => Carbon::now()->subDays(5), 'updated_at' => Carbon::now()->subDays(3)],
+            ['id_user' => 3, 'tanggal_transaksi' => Carbon::now()->subDays(3), 'total_harga' => 150000, 'status' => 'dikirim',  'created_at' => Carbon::now()->subDays(3), 'updated_at' => Carbon::now()->subDays(2)],
+            ['id_user' => 4, 'tanggal_transaksi' => Carbon::now()->subDays(2), 'total_harga' => 95000, 'status' => 'dibayar',  'created_at' => Carbon::now()->subDays(2), 'updated_at' => Carbon::now()->subDays(1)],
+            ['id_user' => 5, 'tanggal_transaksi' => Carbon::now()->subDay(), 'total_harga' => 135000, 'status' => 'pending',  'created_at' => Carbon::now()->subDay(), 'updated_at' => Carbon::now()->subDay()],
         ]);
         $this->command->info('Seeder Transaksi berhasil dijalankan!');
 
@@ -99,6 +99,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PaymentChannelSeeder::class,
             CourierSeeder::class,
+            ShippingAreasSeeder::class,
         ]);
 
         $this->command->info('Semua seeder berhasil dijalankan!');
