@@ -1,66 +1,181 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Proyek Sistem Informasi Manajemen Bisnis - Toko Madu Barokah
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Selamat datang di proyek Sistem Informasi Manajemen Bisnis Toko Madu Barokah. Aplikasi web ini dibangun untuk membantu mengelola berbagai aspek operasional dan penjualan Toko Madu Barokah, mulai dari manajemen produk, transaksi, pelanggan, hingga pelaporan.
 
-## About Laravel
+## Daftar Isi
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+1.  [Fitur Utama](#fitur-utama)
+2.  [Teknologi yang Digunakan](#teknologi-yang-digunakan)
+3.  [Struktur Direktori Proyek (Umum)](#struktur-direktori-proyek-umum)
+4.  [Instalasi & Setup](#instalasi--setup)
+5.  [Modul Utama](#modul-utama)
+    * [Autentikasi](#autentikasi)
+    * [Manajemen Produk & Kategori](#manajemen-produk--kategori)
+    * [Manajemen Transaksi](#manajemen-transaksi)
+    * [Manajemen Pelanggan](#manajemen-pelanggan)
+    * [Manajemen Pengiriman](#manajemen-pengiriman)
+    * [Manajemen Pembayaran](#manajemen-pembayaran)
+    * [Sistem Pelaporan (PDF)](#sistem-pelaporan-pdf)
+6.  [Konfigurasi Penting](#konfigurasi-penting)
+7.  [Kontribusi](#kontribusi)
+8.  [Masalah Umum & Solusi](#masalah-umum--solusi)
+9.  [Rencana Pengembangan](#rencana-pengembangan)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Fitur Utama
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+* **Dashboard Admin**: Tampilan ringkasan dan statistik penting bisnis.
+* **Manajemen Produk**: CRUD (Create, Read, Update, Delete) untuk produk, termasuk detail, harga, stok, dan gambar.
+* **Manajemen Kategori Produk**: Pengelompokan produk berdasarkan kategori.
+* **Manajemen Transaksi**: Pencatatan transaksi penjualan, pembaruan status, dan detail item.
+* **Manajemen Pelanggan (Pembeli)**: Informasi pelanggan dan riwayat transaksi.
+* **Integrasi Pembayaran (Diasumsikan)**: Proses pembayaran transaksi (misalnya, integrasi dengan payment gateway jika ada).
+* **Manajemen Pengiriman**: Pelacakan status pengiriman dan informasi kurir.
+* **Sistem Pelaporan Dinamis**: Pembuatan laporan PDF untuk transaksi, penjualan, pelanggan, dll., dengan filter periode dan status. [cite: 1, 2]
+* **Autentikasi & Otorisasi**: Sistem login untuk admin dan (jika ada) pelanggan, dengan pembatasan akses berdasarkan peran.
 
-## Learning Laravel
+## Teknologi yang Digunakan
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+* **Backend**:
+    * PHP
+    * Laravel Framework
+* **Frontend**:
+    * Blade Templating Engine
+    * HTML5 & CSS3
+    * JavaScript (mungkin dengan jQuery atau framework JS ringan lainnya)
+    * (Opsional) Bootstrap atau Tailwind CSS untuk styling UI
+* **Database**: MySQL / MariaDB (atau database lain yang didukung Laravel)
+* **Web Server**: Apache / Nginx
+* **Lainnya**:
+    * Composer untuk manajemen dependensi PHP
+    * Payment gateway : Tripay 
+    * Cek Ongkir : Raja Ongkir 
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Struktur Direktori Proyek (Umum)
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Distrukturkan mengikuti standar framework Laravel:
 
-## Laravel Sponsors
+* `app/`: Logika inti aplikasi (Models, Controllers, Http, Providers, dll.)
+    * `Http/Controllers/Admin/LaporanController.php`: Mengelola logika pelaporan. [cite: 1]
+    * `Models/`: Model Eloquent (Transaksi, Produk, User, Kategori, Pembayaran, Pengiriman, DetailTransaksi). [cite: 1]
+* `config/`: File konfigurasi aplikasi.
+    * `config/app.php`: Konfigurasi aplikasi dasar. [cite: 1]
+    * `config/shop.php`: Konfigurasi spesifik toko (nama, alamat, kontak). [cite: 1]
+* `database/`: Migrations, seeders, dan factories.
+* `public/`: Assets publik (CSS, JS, gambar) dan `index.php`.
+* `resources/`:
+    * `views/`: File Blade templates.
+        * `admin/laporan/`: View untuk modul laporan.
+            * `index.blade.php`: Halaman utama laporan dengan filter dan tabel. [cite: 1]
+            * `pdf.blade.php`: Template utama untuk PDF. [cite: 1]
+            * `pdf/transaksi.blade.php` (dan partials lainnya): Konten detail untuk masing-masing jenis laporan PDF. [cite: 1]
+    * `css/`, `js/`, `sass/`: Assets frontend.
+* `routes/`: Definisi rute aplikasi (`web.php`, `api.php`).
+* `.env`: File konfigurasi environment (database, API keys, dll.).
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## Instalasi & Setup
 
-### Premium Partners
+1.  **Clone Repository**:
+    ```bash
+    git clone [URL_REPOSITORY_ANDA]
+    cd [NAMA_DIREKTORI_PROYEK]
+    ```
+2.  **Install Dependensi PHP**:
+    ```bash
+    composer install
+    ```
+3.  **Buat File `.env`**: Salin `.env.example` menjadi `.env`.
+    ```bash
+    cp .env.example .env
+    ```
+4.  **Generate Application Key**:
+    ```bash
+    php artisan key:generate
+    ```
+5.  **Konfigurasi Database**: Atur koneksi database Anda di file `.env` (DB_DATABASE, DB_USERNAME, DB_PASSWORD, dll.).
+6.  **Jalankan Migrasi Database**: Untuk membuat tabel-tabel di database.
+    ```bash
+    php artisan migrate
+    ```
+7.  **(Opsional) Jalankan Seeder**: Jika Anda memiliki data awal.
+    ```bash
+    php artisan db:seed
+    ```
+8.  **(Opsional) Install Dependensi Frontend**: Jika menggunakan NPM/Yarn.
+    ```bash
+    npm install
+    npm run dev # atau build
+    ```
+9.  **Atur Web Server**: Arahkan document root web server Anda ke direktori `public/` proyek.
+10. **Akses Aplikasi**: Buka aplikasi melalui browser.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+## Modul Utama
 
-## Contributing
+### Autentikasi
+* Login untuk pengguna (admin).
+* (Opsional) Registrasi dan login untuk pelanggan jika ada fitur e-commerce.
+* Middleware untuk proteksi rute berdasarkan peran.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Manajemen Produk & Kategori
+* Admin dapat menambah, melihat, mengubah, dan menghapus produk.
+* Setiap produk memiliki detail seperti nama, deskripsi, harga, stok, gambar.
+* Admin dapat mengelola kategori produk.
 
-## Code of Conduct
+### Manajemen Transaksi
+* Sistem mencatat setiap transaksi yang masuk.
+* Admin dapat melihat daftar transaksi, detail per transaksi (item, jumlah, subtotal, total harga, ongkir).
+* Admin dapat memperbarui status transaksi (misalnya: pending, dibayar, diproses, dikirim, selesai, batal). [cite: 1]
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Manajemen Pelanggan
+* Data pelanggan (pembeli) tersimpan.
+* Admin dapat melihat daftar pelanggan dan riwayat transaksi mereka. [cite: 1]
 
-## Security Vulnerabilities
+### Manajemen Pengiriman
+* Informasi pengiriman per transaksi (kurir, layanan, biaya, nomor resi).
+* Admin dapat memperbarui status pengiriman (misalnya: menunggu pembayaran, diproses, dikirim, diterima). [cite: 1]
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Manajemen Pembayaran
+* Informasi pembayaran per transaksi (metode, status, waktu bayar).
+* Admin dapat memperbarui status pembayaran (misalnya: pending, berhasil, gagal). [cite: 1]
 
-## License
+### Sistem Pelaporan (PDF)
+* Menghasilkan laporan PDF untuk berbagai aspek bisnis.
+* **Jenis Laporan**: Transaksi, Penjualan, Pelanggan, Pengiriman, Produk. [cite: 1]
+* **Fitur**:
+    * Filter berdasarkan rentang tanggal. [cite: 1]
+    * Filter berdasarkan status transaksi, pembayaran, dan pengiriman. [cite: 1]
+    * Ringkasan data (total transaksi, total pendapatan, rata-rata, dll.). [cite: 1]
+    * Tabel data detail. [cite: 1]
+    * Tombol cetak ke PDF dan tutup.
+    * Kop surat dan footer standar. [cite: 1]
+    * Desain optimal untuk A4.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Konfigurasi Penting
+
+* **`.env`**:
+    * `APP_NAME`: Nama aplikasi.
+    * `APP_URL`: URL dasar aplikasi.
+    * `DB_*`: Detail koneksi database.
+    * (Jika ada) Kunci API untuk layanan eksternal (payment gateway, kurir, dll.).
+* **`config/shop.php`**:
+    * Informasi detail toko (nama, tagline, alamat, email, telepon, logo, sosial media, lokasi gudang, jam operasional). [cite: 1]
+
+## Kontribusi
+
+Saat ini proyek dikelola secara internal. Untuk kontribusi, silakan diskusikan terlebih dahulu dengan tim pengembang utama.
+(Atau, jika ini proyek open source, Anda bisa menambahkan panduan kontribusi yang lebih detail: fork, branch, pull request, coding standards, dll.)
+
+## Masalah Umum & Solusi
+
+* **Halaman Error / Tidak Tampil**:
+    * Pastikan konfigurasi `.env` sudah benar.
+    * Cek log error Laravel di `storage/logs/laravel.log`.
+    * Pastikan dependensi sudah terinstall (`composer install`).
+    * Pastikan migrasi database sudah dijalankan (`php artisan migrate`).
+* **Laporan PDF Tidak Sesuai / Error**:
+    * **Summary Cards Dobel/Bertumpuk**: Pastikan HTML summary cards HANYA ada di template PDF utama (`admin/laporan/pdf.blade.php`) dan telah dihapus dari file partial (`admin/laporan/pdf/*.blade.php`). Cek juga CSS `@media print`.
+    * **Data Tidak Tampil**: Periksa query di `LaporanController.php` dan pastikan variabel dikirim dengan benar ke view.
+
+
+---
+
+Silakan sesuaikan dan lengkapi README ini sesuai dengan detail spesifik proyek Anda. Bagian seperti "Instalasi & Setup" mungkin perlu disesuaikan jika Anda memiliki langkah-langkah yang lebih spesifik.
