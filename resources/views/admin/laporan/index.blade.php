@@ -252,7 +252,7 @@
                 <tbody>
                     @foreach($transaksi as $index => $item)
                     <tr>
-                        <td>{{ $transaksi->firstItem() + $index }}</td>
+                        <td>{{ $index + 1 }}</td>
                         <td>
                             <div class="d-flex flex-column">
                                 <small class="text-muted">ID: #{{ str_pad($item->id, 5, '0', STR_PAD_LEFT) }}</small>
@@ -360,21 +360,7 @@
                 </tbody>
             </table>
         </div>
-        
-        <!-- Pagination -->
-        <div class="row mt-3">
-            <div class="col-md-6">
-                <div class="dataTables_info">
-                    Menampilkan {{ $transaksi->firstItem() }} sampai {{ $transaksi->lastItem() }} 
-                    dari {{ $transaksi->total() }} data
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="dataTables_paginate">
-                    {{ $transaksi->links() }}
-                </div>
-            </div>
-        </div>
+
         @else
         <div class="text-center py-5">
             <div class="text-muted">
@@ -543,11 +529,13 @@ $(document).ready(function() {
     if ($('#tabelLaporan').length && $('#tabelLaporan tbody tr').length > 0) {
         $('#tabelLaporan').DataTable({
             responsive: true,
-            paging: false,
+            paging: true,
             searching: true,
             ordering: true,
-            info: false,
+            info: true,
             autoWidth: false,
+            pageLength: 10,
+            lengthMenu: [5, 10, 25, 50],
             columnDefs: [
                 { 
                     targets: [0, 9], // No dan Aksi
@@ -555,9 +543,18 @@ $(document).ready(function() {
                 }
             ],
             language: {
-                "search": "Cari:",
+                "lengthMenu": "Tampilkan _MENU_ data per halaman",
                 "zeroRecords": "Tidak ada data yang ditemukan",
-                "emptyTable": "Tidak ada data tersedia"
+                "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+                "infoEmpty": "Tidak ada data tersedia",
+                "infoFiltered": "(difilter dari _MAX_ total data)",
+                "search": "Cari:",
+                "paginate": {
+                    "first": "Awal",
+                    "last": "Akhir",
+                    "next": "Berikutnya",
+                    "previous": "Sebelumnya"
+                }
             }
         });
     }

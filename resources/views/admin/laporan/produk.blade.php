@@ -191,7 +191,7 @@
                         $statusPenjualan = $produk->total_terjual > 0 ? 'success' : 'secondary';
                     @endphp
                     <tr>
-                        <td>{{ $produkData->firstItem() + $index }}</td>
+                        <td>{{ $index + 1 }}</td>
                         <td>
                             <div class="d-flex flex-column">
                                 <span class="font-weight-bold">{{ $produk->nama_produk }}</span>
@@ -269,21 +269,7 @@
                 </tbody>
             </table>
         </div>
-        
-        <!-- Pagination -->
-        <div class="row mt-3">
-            <div class="col-md-6">
-                <div class="dataTables_info">
-                    Menampilkan {{ $produkData->firstItem() }} sampai {{ $produkData->lastItem() }} 
-                    dari {{ $produkData->total() }} produk
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="dataTables_paginate">
-                    {{ $produkData->appends(request()->query())->links() }}
-                </div>
-            </div>
-        </div>
+
         @else
         <div class="text-center py-5">
             <div class="text-muted">
@@ -343,11 +329,13 @@ $(document).ready(function() {
     if ($('#tabelProduk').length && $('#tabelProduk tbody tr').length > 0) {
         $('#tabelProduk').DataTable({
             responsive: true,
-            paging: false,
+            paging: true,
             searching: true,
             ordering: true,
-            info: false,
+            info: true,
             autoWidth: false,
+            pageLength: 10,
+            lengthMenu: [5, 10, 25, 50],
             columnDefs: [
                 { 
                     targets: [0], // No
@@ -360,9 +348,18 @@ $(document).ready(function() {
             ],
             order: [[5, 'desc']], // Sort by total terjual
             language: {
-                "search": "Cari Produk:",
+                "lengthMenu": "Tampilkan _MENU_ data per halaman",
                 "zeroRecords": "Tidak ada produk yang ditemukan",
-                "emptyTable": "Tidak ada data tersedia"
+                "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+                "infoEmpty": "Tidak ada data tersedia",
+                "infoFiltered": "(difilter dari _MAX_ total data)",
+                "search": "Cari Produk:",
+                "paginate": {
+                    "first": "Awal",
+                    "last": "Akhir",
+                    "next": "Berikutnya",
+                    "previous": "Sebelumnya"
+                }
             }
         });
     }

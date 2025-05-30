@@ -195,7 +195,7 @@
                             'Belum Transaksi';
                     @endphp
                     <tr>
-                        <td>{{ $pelangganData->firstItem() + $index }}</td>
+                        <td>{{ $index + 1 }}</td>
                         <td>
                             <div class="d-flex flex-column">
                                 <span class="font-weight-bold">{{ $pelanggan->nama }}
@@ -281,21 +281,7 @@
                 </tbody>
             </table>
         </div>
-        
-        <!-- Pagination -->
-        <div class="row mt-3">
-            <div class="col-md-6">
-                <div class="dataTables_info">
-                    Menampilkan {{ $pelangganData->firstItem() }} sampai {{ $pelangganData->lastItem() }} 
-                    dari {{ $pelangganData->total() }} pelanggan
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="dataTables_paginate">
-                    {{ $pelangganData->appends(request()->query())->links() }}
-                </div>
-            </div>
-        </div>
+
         @else
         <div class="text-center py-5">
             <div class="text-muted">
@@ -413,11 +399,13 @@ $(document).ready(function() {
     if ($('#tabelPelanggan').length && $('#tabelPelanggan tbody tr').length > 0) {
         $('#tabelPelanggan').DataTable({
             responsive: true,
-            paging: false,
+            paging: true,
             searching: true,
             ordering: true,
-            info: false,
+            info: true,
             autoWidth: false,
+            pageLength: 10,
+            lengthMenu: [5, 10, 25, 50],
             columnDefs: [
                 { 
                     targets: [0], // No
@@ -426,9 +414,18 @@ $(document).ready(function() {
             ],
             order: [[4, 'desc']], // Sort by total belanja
             language: {
-                "search": "Cari Pelanggan:",
+                "lengthMenu": "Tampilkan _MENU_ data per halaman",
                 "zeroRecords": "Tidak ada pelanggan yang ditemukan",
-                "emptyTable": "Tidak ada data tersedia"
+                "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+                "infoEmpty": "Tidak ada data tersedia",
+                "infoFiltered": "(difilter dari _MAX_ total data)",
+                "search": "Cari Pelanggan:",
+                "paginate": {
+                    "first": "Awal",
+                    "last": "Akhir",
+                    "next": "Berikutnya",
+                    "previous": "Sebelumnya"
+                }
             }
         });
     }

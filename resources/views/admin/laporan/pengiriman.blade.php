@@ -374,15 +374,15 @@ $(document).ready(function() {
             ordering: true,
             info: true,
             autoWidth: false,
-            lengthMenu: [10, 25, 50],
+            lengthMenu: [5, 10, 25, 50],
             pageLength: 10,
             order: [[2, 'desc']], // Sort by penggunaan
             language: {
-                "lengthMenu": "Tampilkan *MENU* data per halaman",
+                "lengthMenu": "Tampilkan _MENU_ data per halaman",
                 "zeroRecords": "Tidak ada data yang ditemukan",
-                "info": "Menampilkan *START* sampai *END* dari *TOTAL* data",
+                "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
                 "infoEmpty": "Tidak ada data tersedia",
-                "infoFiltered": "(difilter dari *MAX* total data)",
+                "infoFiltered": "(difilter dari _MAX_ total data)",
                 "search": "Cari:",
                 "paginate": {
                     "first": "Awal",

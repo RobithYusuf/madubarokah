@@ -57,7 +57,7 @@ class LaporanController extends Controller
         }
 
         // Ambil data transaksi dengan pagination
-        $transaksi = $query->orderBy('tanggal_transaksi', 'desc')->paginate(20);
+        $transaksi = $query->orderBy('tanggal_transaksi', 'desc')->paginate(10);
 
         // Summary data
         $summaryData = $this->getSummaryData($startDate, $endDate, $status, $paymentStatus, $shippingStatus);
@@ -195,7 +195,7 @@ class LaporanController extends Controller
             $query->where('produk.id_kategori', $kategoriId);
         }
 
-        $produkData = $query->orderBy('total_terjual', 'desc')->paginate(20);
+        $produkData = $query->orderBy('total_terjual', 'desc')->paginate(10);
 
         $kategoris = Kategori::all();
 
@@ -233,7 +233,7 @@ class LaporanController extends Controller
             )
             ->groupBy('users.id', 'users.nama', 'users.username', 'users.email', 'users.nohp')
             ->orderBy('total_belanja', 'desc')
-            ->paginate(20);
+            ->paginate(10);
 
         return view('admin.laporan.pelanggan', compact(
             'pelangganData',
