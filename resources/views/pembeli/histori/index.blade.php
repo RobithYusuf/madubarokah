@@ -16,6 +16,21 @@
             </div>
         </div>
 
+        <!-- Session Messages -->
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle mr-2"></i>{{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle mr-2"></i>{{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
         <div class="row">
             <div class="col-12">
                 <!-- Header -->
@@ -168,6 +183,14 @@
                                             <a href="{{ route('frontend.history.detail', $t->id) }}" class="btn btn-outline-primary btn-sm w-100 mb-2">
                                                 <i class="fas fa-eye me-1"></i>Detail
                                             </a>
+                                            @if($t->status === 'dikirim')
+                                                <form action="{{ route('frontend.history.confirmReceipt', $t->id) }}" method="POST" class="w-100 mb-2" id="confirmReceiptForm-{{ $t->id }}">
+                                                    @csrf
+                                                    <button type="button" class="btn btn-success btn-sm w-100" onclick="confirmReceipt({{ $t->id }})">
+                                                        <i class="fas fa-check-circle me-1"></i>Terima
+                                                    </button>
+                                                </form>
+                                            @endif
                                             @if($paymentStatus === 'pending')
                                                 <a href="{{ route('frontend.confirmation.show', $t->id) }}" class="btn btn-warning btn-sm w-100">
                                                     <i class="fas fa-credit-card me-1"></i>Bayar
@@ -524,6 +547,24 @@ $(document).ready(function() {
         }, 500);
     });
 });
+
+// Confirm receipt function
+function confirmReceipt(transaksiId) {
+    Swal.fire({
+        title: 'Konfirmasi Penerimaan',
+        text: 'Apakah Anda yakin telah menerima pesanan ini?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, Pesanan Telah Diterima',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('confirmReceiptForm-' + transaksiId).submit();
+        }
+    });
+}
 </script>
 @endpush
 

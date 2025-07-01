@@ -165,6 +165,7 @@ Route::middleware(['auth', 'role:pembeli'])->name('frontend.')->group(function (
     Route::prefix('history')->name('history.')->group(function () {
         Route::get('/', [\App\Http\Controllers\HistoryController::class, 'index'])->name('index');
         Route::get('/{transaksi}', [\App\Http\Controllers\HistoryController::class, 'detail'])->name('detail');
+        Route::post('/{transaksi}/confirm-receipt', [\App\Http\Controllers\HistoryController::class, 'confirmReceipt'])->name('confirmReceipt');
     });
 
     // Shipping calculation for frontend

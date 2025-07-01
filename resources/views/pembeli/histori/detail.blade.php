@@ -17,6 +17,21 @@
             </div>
         </div>
 
+        <!-- Session Messages -->
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle mr-2"></i>{{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle mr-2"></i>{{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-4">
             <div>
@@ -297,6 +312,15 @@
                                 </a>
                             @endif
                             
+                            @if($transaksi->status === 'dikirim')
+                                <form action="{{ route('frontend.history.confirmReceipt', $transaksi->id) }}" method="POST" id="confirmReceiptForm">
+                                    @csrf
+                                    <button type="button" class="btn btn-primary w-100 mb-3" onclick="confirmReceipt()">
+                                        <i class="fas fa-check-circle mr-2"></i>Terima Pesanan
+                                    </button>
+                                </form>
+                            @endif
+                            
                             <a href="{{ $whatsappUrl }}" target="_blank" class="btn btn-success w-100 mb-3">
                                 <i class="fab fa-whatsapp mr-2"></i>Hubungi Customer Service
                             </a>
@@ -516,6 +540,24 @@ $(document).ready(function() {
         });
     }
 });
+
+// Confirm receipt function
+function confirmReceipt() {
+    Swal.fire({
+        title: 'Konfirmasi Penerimaan',
+        text: 'Apakah Anda yakin telah menerima pesanan ini?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Ya, Pesanan Telah Diterima',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('confirmReceiptForm').submit();
+        }
+    });
+}
 </script>
 @endpush
 
