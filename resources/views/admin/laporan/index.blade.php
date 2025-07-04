@@ -47,17 +47,14 @@
                 </div>
                 <div class="col-md-2">
                     <div class="form-group">
-                        <label for="status">Status Transaksi</label>
+                        <label for="status">Status Pesanan</label>
                         <select class="form-control" id="status" name="status">
                             <option value="all" {{ $status === 'all' ? 'selected' : '' }}>Semua Status</option>
-                            <option value="pending" {{ $status === 'pending' ? 'selected' : '' }}>Pending</option>
-                            <option value="dibayar" {{ $status === 'dibayar' ? 'selected' : '' }}>Dibayar</option>
-                            <option value="berhasil" {{ $status === 'berhasil' ? 'selected' : '' }}>Berhasil</option>
-                            <option value="dikirim" {{ $status === 'dikirim' ? 'selected' : '' }}>Dikirim</option>
+                            <option value="pending" {{ $status === 'pending' ? 'selected' : '' }}>Menunggu Pembayaran</option>
+                            <option value="dibayar,berhasil" {{ $status === 'dibayar,berhasil' ? 'selected' : '' }}>Sedang Diproses</option>
+                            <option value="dikirim" {{ $status === 'dikirim' ? 'selected' : '' }}>Sedang Dikirim</option>
                             <option value="selesai" {{ $status === 'selesai' ? 'selected' : '' }}>Selesai</option>
-                            <option value="batal" {{ $status === 'batal' ? 'selected' : '' }}>Batal</option>
-                            <option value="gagal" {{ $status === 'gagal' ? 'selected' : '' }}>Gagal</option>
-                            <option value="expired" {{ $status === 'expired' ? 'selected' : '' }}>Expired</option>
+                            <option value="batal,gagal,expired" {{ $status === 'batal,gagal,expired' ? 'selected' : '' }}>Dibatalkan</option>
                         </select>
                     </div>
                 </div>
@@ -242,9 +239,9 @@
                         <th width="12%">Pelanggan</th>
                         <th width="10%">Tanggal</th>
                         <th width="10%">Total</th>
-                        <th width="10%">Status Transaksi</th>
-                        <th width="12%">Status Pembayaran</th>
-                        <th width="12%">Status Pengiriman</th>
+                        <th width="12%">Status Pesanan</th>
+                        <th width="12%">Pembayaran</th>
+                        <th width="12%">Pengiriman</th>
                         <th width="10%">Metode Bayar</th>
                         <th width="7%">Aksi</th>
                     </tr>
@@ -288,13 +285,29 @@
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-{{ 
-                                $item->status === 'selesai' ? 'success' : 
-                                ($item->status === 'dikirim' ? 'info' : 
-                                ($item->status === 'dibayar' || $item->status === 'berhasil' ? 'warning' : 
-                                ($item->status === 'pending' ? 'secondary' : 'danger'))) 
-                            }} text-white">
-                                {{ ucfirst($item->status) }}
+                            @php
+                            $statusLabel = '';
+                            $statusColor = '';
+                            
+                            if (in_array($item->status, ['batal', 'gagal', 'expired'])) {
+                                $statusLabel = 'Dibatalkan';
+                                $statusColor = 'danger';
+                            } elseif ($item->status === 'selesai') {
+                                $statusLabel = 'Selesai';
+                                $statusColor = 'success';
+                            } elseif ($item->status === 'dikirim') {
+                                $statusLabel = 'Sedang Dikirim';
+                                $statusColor = 'primary';
+                            } elseif (in_array($item->status, ['dibayar', 'berhasil'])) {
+                                $statusLabel = 'Sedang Diproses';
+                                $statusColor = 'info';
+                            } else {
+                                $statusLabel = 'Menunggu Pembayaran';
+                                $statusColor = 'warning';
+                            }
+                            @endphp
+                            <span class="badge bg-{{ $statusColor }} text-white">
+                                {{ $statusLabel }}
                             </span>
                         </td>
                         <td>
@@ -384,7 +397,7 @@
                 <h5 class="modal-title" id="pdfModalLabel">
                     <i class="fas fa-file-pdf mr-2"></i>Export Laporan PDF
                 </h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                <button type="button" class="close text-white" data-bs-dismiss="modal" aria-label="Close">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
@@ -407,17 +420,14 @@
                     <div class="row">
                         <div class="col-md-4">
                             <div class="form-group">
-                                <label for="pdf_status">Status Transaksi</label>
+                                <label for="pdf_status">Status Pesanan</label>
                                 <select class="form-control" id="pdf_status" name="status">
                                     <option value="all">Semua Status</option>
-                                    <option value="pending">Pending</option>
-                                    <option value="dibayar">Dibayar</option>
-                                    <option value="berhasil">Berhasil</option>
-                                    <option value="dikirim">Dikirim</option>
+                                    <option value="pending">Menunggu Pembayaran</option>
+                                    <option value="dibayar,berhasil">Sedang Diproses</option>
+                                    <option value="dikirim">Sedang Dikirim</option>
                                     <option value="selesai">Selesai</option>
-                                    <option value="batal">Batal</option>
-                                    <option value="gagal">Gagal</option>
-                                    <option value="expired">Expired</option>
+                                    <option value="batal,gagal,expired">Dibatalkan</option>
                                 </select>
                             </div>
                         </div>
@@ -456,7 +466,7 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times mr-2"></i>Batal
                 </button>
                 <button type="button" class="btn btn-success" onclick="generatePdfReport()">
@@ -635,14 +645,14 @@ function initializeCharts() {
             const statusData = window.statusDistribution;
 
             const colors = {
-                'pending': '#6c757d',
-                'dibayar': '#ffc107',
-                'berhasil': '#28a745', // Digabung dengan selesai
-                'dikirim': '#17a2b8',
-                'selesai': '#28a745',
-                'batal': '#dc3545',  // Digabung dengan gagal
-                'gagal': '#dc3545',
-                'expired': '#fd7e14'
+                'pending': '#ffc107',      // Menunggu Pembayaran - kuning
+                'dibayar': '#17a2b8',      // Sedang Diproses - biru muda
+                'berhasil': '#17a2b8',     // Sedang Diproses - biru muda
+                'dikirim': '#007bff',      // Sedang Dikirim - biru
+                'selesai': '#28a745',      // Selesai - hijau
+                'batal': '#dc3545',        // Dibatalkan - merah
+                'gagal': '#dc3545',        // Dibatalkan - merah
+                'expired': '#dc3545'       // Dibatalkan - merah
             };
 
             new Chart(statusCtx, {

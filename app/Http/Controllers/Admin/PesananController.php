@@ -8,6 +8,7 @@ use App\Models\DetailTransaksi;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class PesananController extends Controller
 {
@@ -20,7 +21,8 @@ class PesananController extends Controller
                 'pengiriman',
                 'pembayaran'
             ])
-                ->orderBy('created_at', 'desc')
+                ->orderBy('tanggal_transaksi', 'desc')
+                ->orderBy('id', 'desc')
                 ->get();
 
             return view('admin.pesanan.index', compact('pesanans'));
@@ -550,18 +552,47 @@ class PesananController extends Controller
                         throw new \Exception('Pesanan yang sudah dikirim tidak dapat dibatalkan');
                     }
                     
+                    // Update status
                     $pesanan->update(['status' => 'batal']);
                     $pesanan->pembayaran->update(['status' => 'canceled']);
                     $pesanan->pengiriman->update(['status' => 'dibatalkan']);
+                    
+                    // Simpan alasan pembatalan jika ada
+                    if ($request->has('cancellation_reason') || $request->has('cancellation_note')) {
+                        // Simpan di field catatan atau log
+                        $cancellationInfo = [];
+                        if ($request->cancellation_reason) {
+                            $cancellationInfo['reason'] = $request->cancellation_reason;
+                        }
+                        if ($request->cancellation_note) {
+                            $cancellationInfo['note'] = $request->cancellation_note;
+                        }
+                        $cancellationInfo['cancelled_by'] = Auth::user()->nama;
+                        $cancellationInfo['cancelled_at'] = now()->format('Y-m-d H:i:s');
+                        
+                        // Simpan di catatan transaksi
+                        $existingNote = $pesanan->catatan ?? '';
+                        $newNote = "PEMBATALAN: " . json_encode($cancellationInfo);
+                        $pesanan->update(['catatan' => $existingNote . "\n" . $newNote]);
+                    }
                     
                     // Kembalikan stok jika ada
                     foreach ($pesanan->detailTransaksi as $detail) {
                         if ($detail->produk) {
                             $detail->produk->increment('stok', $detail->jumlah);
+                            
+                            // Log pengembalian stok
+                            \Log::info('Stok dikembalikan karena pembatalan', [
+                                'pesanan_id' => $pesanan->id,
+                                'produk_id' => $detail->produk->id,
+                                'produk_nama' => $detail->produk->nama_produk,
+                                'jumlah_dikembalikan' => $detail->jumlah,
+                                'stok_akhir' => $detail->produk->stok
+                            ]);
                         }
                     }
                     
-                    $message = 'Pesanan berhasil dibatalkan';
+                    $message = 'Pesanan berhasil dibatalkan dan stok produk telah dikembalikan';
                     break;
             }
             

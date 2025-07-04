@@ -36,7 +36,7 @@
                 </ul>
             </div>
 
-            @if(app()->environment('local'))
+            @if(config('app.env') === 'local' || config('app.debug') === true)
             <a href="{{ route('admin.pesanan.create-test') }}" class="btn btn-secondary btn-sm">
                 <i class="fas fa-vial"></i> Test Data
             </a>
@@ -63,8 +63,8 @@
         @endif
 
         @if($pesanans && $pesanans->count() > 0)
-        <div class="table-responsive">
-            <table class="table table-bordered table-striped table-hover" id="tabelPesanan">
+        <div class="table-responsive" style="overflow-x: auto;">
+            <table class="table table-bordered table-striped table-hover" id="tabelPesanan" style="width: 100%!important;">
                 <thead>
                     <tr>
                         <th width="3%">No</th>
@@ -201,6 +201,14 @@
                                         </button>
                                     @endif
                                     
+                                    {{-- Tambahkan button cancel untuk pesanan yang sudah dibayar --}}
+                                    <button class="btn btn-warning btn-sm" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#modalCancelOrder{{ $pesanan->id }}"
+                                            title="Batalkan pesanan (stok habis/alasan lain)">
+                                        <i class="fa fa-times-circle"></i> Batalkan
+                                    </button>
+                                    
                                 @elseif($unifiedStatus === 'shipped')
                                     <button class="btn btn-success btn-sm action-button" 
                                             data-action="complete_order" 
@@ -237,7 +245,7 @@
                 <i class="fas fa-shopping-cart fa-3x mb-3"></i>
                 <h5>Belum Ada Pesanan</h5>
                 <p>Belum ada pesanan yang masuk atau sesuai filter yang dipilih.</p>
-                @if(app()->environment('local'))
+                @if(config('app.env') === 'local' || config('app.debug') === true)
                 <a href="{{ route('admin.pesanan.create-test') }}" class="btn btn-primary mt-2">
                     <i class="fas fa-vial"></i> Generate Test Data
                 </a>
@@ -427,6 +435,69 @@
 </div>
 @endif
 
+{{-- Modal Cancel Order untuk pesanan yang sudah dibayar --}}
+@if(in_array($pesanan->status, ['dibayar', 'berhasil']))
+<div class="modal fade" id="modalCancelOrder{{ $pesanan->id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">Batalkan Pesanan</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form class="form-cancel-order" data-id="{{ $pesanan->id }}">
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i> <strong>Perhatian!</strong><br>
+                        Pesanan ini sudah dibayar. Pembatalan akan:
+                        <ul class="mb-0 mt-2">
+                            <li>Mengembalikan stok produk</li>
+                            <li>Memerlukan proses refund ke pelanggan</li>
+                            <li>Mengubah status menjadi "Dibatalkan"</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Invoice</label>
+                        <input type="text" class="form-control" value="{{ $pesanan->merchant_ref }}" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Total Pembayaran</label>
+                        <input type="text" class="form-control" value="Rp {{ number_format($pesanan->total_harga, 0, ',', '.') }}" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Alasan Pembatalan <span class="text-danger">*</span></label>
+                        <select name="reason" class="form-control" required>
+                            <option value="">-- Pilih Alasan --</option>
+                            <option value="stok_habis">Stok Habis</option>
+                            <option value="produk_rusak">Produk Rusak/Cacat</option>
+                            <option value="kesalahan_harga">Kesalahan Harga</option>
+                            <option value="permintaan_pelanggan">Permintaan Pelanggan</option>
+                            <option value="tidak_bisa_kirim">Tidak Bisa Kirim ke Lokasi</option>
+                            <option value="lainnya">Lainnya</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Catatan Tambahan</label>
+                        <textarea name="note" class="form-control" rows="3" placeholder="Jelaskan lebih detail mengenai pembatalan ini..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fa fa-times-circle"></i> Batalkan Pesanan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endif
+
 @endforeach
 @endif
 
@@ -434,12 +505,61 @@
 
 @push('styles')
 <style>
+    /* Container styling */
+    #content {
+        width: 100%;
+        min-width: 100%;
+    }
+    
+    .card {
+        width: 100%;
+    }
+    
+    .card-body {
+        width: 100%;
+        overflow-x: auto;
+    }
+    
+    /* Table responsiveness fix */
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    #tabelPesanan {
+        width: 100% !important;
+        table-layout: auto;
+    }
+    
+    .dataTables_wrapper {
+        width: 100% !important;
+    }
+    
+    .dataTables_scrollBody {
+        overflow-x: auto !important;
+    }
+    
+    /* Fix for zoom out */
+    @media screen and (max-width: 1920px) {
+        .table-responsive {
+            min-width: 100%;
+        }
+    }
+    
+    /* Prevent table from being too wide on zoom out */
+    .dataTable {
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+    
     .gap-1 {
         gap: 0.25rem;
     }
     
     .table td {
         vertical-align: middle !important;
+        white-space: nowrap;
     }
     
     .action-button:hover {
@@ -463,6 +583,19 @@
         border: 1px solid #ced4da;
         padding: 0.25rem 0.5rem;
     }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .table td, .table th {
+            font-size: 0.8rem;
+            padding: 0.3rem;
+        }
+        
+        .btn-sm {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.4rem;
+        }
+    }
 </style>
 @endpush
 
@@ -485,9 +618,21 @@ $(document).ready(function() {
                 "previous": "Sebelumnya"
             }
         },
-        "order": [[1, 'desc']], // Sort by invoice desc
+        "order": [[0, 'asc']], // Sort by number ascending (which reflects the server-side desc order)
         "pageLength": 10,
-        "responsive": true
+        "responsive": false, // Disable responsive to prevent auto-hiding columns
+        "scrollX": true, // Enable horizontal scrolling
+        "autoWidth": false, // Prevent auto width calculation
+        "columnDefs": [
+            { "width": "3%", "targets": 0 },
+            { "width": "12%", "targets": 1 },
+            { "width": "15%", "targets": 2 },
+            { "width": "10%", "targets": 3 },
+            { "width": "15%", "targets": 4 },
+            { "width": "12%", "targets": 5 },
+            { "width": "13%", "targets": 6 },
+            { "width": "20%", "targets": 7 }
+        ]
     });
 
     // Filter status functionality
@@ -588,6 +733,99 @@ $(document).ready(function() {
             });
         });
     });
+    
+    // Handle form cancel order (untuk pesanan yang sudah dibayar)
+    $('.form-cancel-order').on('submit', function(e) {
+        e.preventDefault();
+        const id = $(this).data('id');
+        const reason = $(this).find('select[name="reason"]').val();
+        const note = $(this).find('textarea[name="note"]').val();
+        
+        if (!reason) {
+            Swal.fire('Error', 'Alasan pembatalan harus dipilih', 'error');
+            return;
+        }
+        
+        // Close modal first
+        $('#modalCancelOrder' + id).modal('hide');
+        
+        // Show confirmation
+        Swal.fire({
+            title: 'Konfirmasi Pembatalan',
+            html: `<div class="text-left">
+                <p><strong>Apakah Anda yakin ingin membatalkan pesanan ini?</strong></p>
+                <p>Alasan: <strong>${$('select[name="reason"] option:selected').text()}</strong></p>
+                ${note ? '<p>Catatan: ' + note + '</p>' : ''}
+                <div class="alert alert-danger mt-3">
+                    <i class="fas fa-exclamation-circle"></i> Tindakan ini akan:
+                    <ul class="mb-0 mt-2">
+                        <li>Mengembalikan stok produk</li>
+                        <li>Memerlukan proses refund</li>
+                        <li>Tidak dapat dibatalkan</li>
+                    </ul>
+                </div>
+            </div>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#3085d6',
+            confirmButtonText: 'Ya, Batalkan!',
+            cancelButtonText: 'Tidak'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Update with cancel action and additional data
+                updateOrderStatusWithReason(id, 'cancel_order', reason, note);
+            }
+        });
+    });
+    
+    // Function to update order status with reason
+    function updateOrderStatusWithReason(id, action, reason, note) {
+        $.ajax({
+            url: `/admin/pesanan/${id}/update-order-status`,
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                action: action,
+                cancellation_reason: reason,
+                cancellation_note: note
+            },
+            beforeSend: function() {
+                Swal.fire({
+                    title: 'Memproses pembatalan...',
+                    text: 'Mohon tunggu',
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    willOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+            },
+            success: function(response) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil',
+                    text: response.message,
+                    timer: 3000,
+                    showConfirmButton: false
+                }).then(() => {
+                    location.reload();
+                });
+            },
+            error: function(xhr) {
+                let errorMessage = 'Terjadi kesalahan';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+                
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal',
+                    text: errorMessage
+                });
+            }
+        });
+    }
 
     // Function to update order status
     function updateOrderStatus(id, action, resi = null) {
