@@ -622,9 +622,19 @@ class CartController extends Controller
 
                 if ($tripayTransaction && isset($tripayTransaction['success']) && $tripayTransaction['success'] && isset($tripayTransaction['data'])) {
                     // Update transaksi with Tripay reference
+                    $callbackUrl = url('/api/tripay/callback');
+                    
+                    // Log callback URL untuk debugging
+                    \Log::info('Setting Tripay callback URL', [
+                        'merchant_ref' => $transaksi->merchant_ref,
+                        'callback_url' => $callbackUrl,
+                        'app_url' => config('app.url'),
+                        'full_callback_url' => $callbackUrl
+                    ]);
+                    
                     $transaksi->update([
                         'tripay_reference' => $tripayTransaction['data']['reference'],
-                        'callback_url' => url('/api/tripay/callback'),
+                        'callback_url' => $callbackUrl,
                         'return_url' => route('frontend.confirmation.show', $transaksi->id)
                     ]);
 

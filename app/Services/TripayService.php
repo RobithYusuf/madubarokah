@@ -229,10 +229,24 @@ class TripayService
             // Add callback URL
             $callbackUrl = $data['callback_url'] ?? config('tripay.callback_url');
             if (empty($callbackUrl)) {
-                $appUrl = config('app.url', 'http://127.0.0.1:8000');
+                // Check for ngrok URL first
+                $ngrokUrl = config('ngrok.url');
+                if ($ngrokUrl) {
+                    $appUrl = rtrim($ngrokUrl, '/');
+                } else {
+                    $appUrl = config('app.url', 'http://127.0.0.1:8000');
+                }
                 $callbackUrl = rtrim($appUrl, '/') . '/api/tripay/callback';
             }
             $cleanData['callback_url'] = $callbackUrl;
+            
+            // Log callback URL untuk debugging
+            \Log::info('Tripay Transaction Callback URL', [
+                'merchant_ref' => $cleanData['merchant_ref'],
+                'callback_url' => $callbackUrl,
+                'app_url' => config('app.url'),
+                'tripay_callback_config' => config('tripay.callback_url')
+            ]);
             
             // Add return URL
             $returnUrl = $data['return_url'] ?? config('tripay.return_url');
@@ -246,6 +260,12 @@ class TripayService
             $signature = $this->generateSignature($cleanData);
             $cleanData['signature'] = $signature;
             
+            // Log request data sebelum kirim
+            \Log::info('Tripay API Request', [
+                'url' => $this->baseUrl . '/transaction/create',
+                'data' => $cleanData
+            ]);
+            
             // Send to Tripay API
             $response = Http::timeout(30)
                 ->withHeaders([
@@ -254,6 +274,12 @@ class TripayService
                     'Accept' => 'application/json'
                 ])
                 ->post($this->baseUrl . '/transaction/create', $cleanData);
+                
+            // Log response dari Tripay
+            \Log::info('Tripay API Response', [
+                'status' => $response->status(),
+                'body' => $response->json()
+            ]);
 
             if ($response->successful()) {
                 $responseData = $response->json();

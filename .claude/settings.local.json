@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(php -l:*)"
+      "Bash(php -l:*)",
+      "Bash(cp:*)",
+      "Bash(grep:*)",
+      "Bash(php artisan:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }

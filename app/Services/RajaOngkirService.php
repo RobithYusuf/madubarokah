@@ -29,6 +29,23 @@ class RajaOngkirService
     {
         $startTime = microtime(true);
         
+        // Generate cache key for this specific request
+        $cacheKey = "shipping_cost_{$origin}_{$destination}_{$weight}_{$courier}";
+        
+        // Try to get from cache first (1 day cache)
+        $cachedResult = Cache::get($cacheKey);
+        if ($cachedResult !== null) {
+            \Log::info('RajaOngkir shipping cost retrieved from cache', [
+                'origin' => $origin,
+                'destination' => $destination,
+                'weight' => $weight,
+                'courier' => $courier,
+                'cache_key' => $cacheKey
+            ]);
+            
+            return $cachedResult;
+        }
+        
         \Log::info('RajaOngkir calculate shipping cost started', [
             'origin' => $origin,
             'destination' => $destination,
@@ -156,11 +173,23 @@ class RajaOngkirService
                 'courier' => $courier
             ]);
 
-            return [
+            $result = [
                 'success' => true,
                 'data' => $rajaongkir['results'],
                 'execution_time' => $executionTime
             ];
+            
+            // Cache the successful result for 1 day
+            Cache::put($cacheKey, $result, now()->addDays(1));
+            
+            // Track cache key for easier management
+            $cacheKeys = Cache::get('shipping_cache_keys', []);
+            if (!in_array($cacheKey, $cacheKeys)) {
+                $cacheKeys[] = $cacheKey;
+                Cache::put('shipping_cache_keys', $cacheKeys, now()->addDays(7));
+            }
+            
+            return $result;
             
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             $executionTime = microtime(true) - $startTime;
@@ -769,6 +798,55 @@ class RajaOngkirService
     }
     
     /**
+     * Clear shipping cost cache
+     */
+    public function clearShippingCostCache($origin = null, $destination = null, $courier = null)
+    {
+        $cleared = 0;
+        
+        if ($origin && $destination && $courier) {
+            // Clear specific cache entries
+            $pattern = "shipping_cost_{$origin}_{$destination}_*_{$courier}";
+            $keys = Cache::get('shipping_cache_keys', []);
+            
+            foreach ($keys as $key) {
+                if (fnmatch($pattern, $key)) {
+                    if (Cache::forget($key)) {
+                        $cleared++;
+                    }
+                }
+            }
+        } else {
+            // Clear all shipping cost cache
+            $keys = Cache::get('shipping_cache_keys', []);
+            
+            foreach ($keys as $key) {
+                if (strpos($key, 'shipping_cost_') === 0) {
+                    if (Cache::forget($key)) {
+                        $cleared++;
+                    }
+                }
+            }
+            
+            // Clear the keys tracker
+            Cache::forget('shipping_cache_keys');
+        }
+        
+        \Log::info('Shipping cost cache cleared', [
+            'cleared_keys' => $cleared,
+            'origin' => $origin,
+            'destination' => $destination,
+            'courier' => $courier
+        ]);
+        
+        return [
+            'success' => true,
+            'message' => "Cache shipping cost {$cleared} keys berhasil dibersihkan",
+            'cleared_keys' => $cleared
+        ];
+    }
+    
+    /**
      * Get courier performance statistics
      */
     public function getCourierPerformanceStats()
@@ -822,6 +900,66 @@ class RajaOngkirService
         } else {
             return 'POOR';
         }
+    }
+    
+    /**
+     * Get shipping cache statistics
+     */
+    public function getShippingCacheStats()
+    {
+        $cacheKeys = Cache::get('shipping_cache_keys', []);
+        $activeCache = 0;
+        $expiredCache = 0;
+        $totalSize = 0;
+        $couriersStats = [];
+        
+        foreach ($cacheKeys as $key) {
+            if (Cache::has($key)) {
+                $activeCache++;
+                
+                // Extract courier from key
+                $parts = explode('_', $key);
+                $courier = end($parts);
+                
+                if (!isset($couriersStats[$courier])) {
+                    $couriersStats[$courier] = 0;
+                }
+                $couriersStats[$courier]++;
+                
+                // Estimate size (rough approximation)
+                $data = Cache::get($key);
+                if ($data) {
+                    $totalSize += strlen(serialize($data));
+                }
+            } else {
+                $expiredCache++;
+            }
+        }
+        
+        return [
+            'total_keys' => count($cacheKeys),
+            'active_cache' => $activeCache,
+            'expired_cache' => $expiredCache,
+            'cache_hit_rate' => 'Check Laravel cache stats',
+            'estimated_size' => $this->formatBytes($totalSize),
+            'couriers_cached' => $couriersStats,
+            'cache_duration' => '1 day',
+            'next_cleanup' => 'Keys expire automatically after 1 day'
+        ];
+    }
+    
+    /**
+     * Format bytes to human readable
+     */
+    private function formatBytes($bytes, $precision = 2)
+    {
+        $units = ['B', 'KB', 'MB', 'GB'];
+        
+        for ($i = 0; $bytes > 1024 && $i < count($units) - 1; $i++) {
+            $bytes /= 1024;
+        }
+        
+        return round($bytes, $precision) . ' ' . $units[$i];
     }
     
     /**

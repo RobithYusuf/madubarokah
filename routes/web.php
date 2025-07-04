@@ -67,6 +67,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->name('admin.')->grou
         Route::put('/{id}/status', [PesananController::class, 'updateStatus'])->name('updateStatus');
         Route::put('/{id}/update-payment', [App\Http\Controllers\Admin\PesananController::class, 'updatePayment'])->name('updatePayment');
         Route::put('/{id}/update-shipping', [App\Http\Controllers\Admin\PesananController::class, 'updateShipping'])->name('updateShipping');
+        Route::post('/{id}/update-order-status', [App\Http\Controllers\Admin\PesananController::class, 'updateOrderStatus'])->name('updateOrderStatus');
         Route::delete('/{id}', [PesananController::class, 'destroy'])->name('destroy');
     });
 

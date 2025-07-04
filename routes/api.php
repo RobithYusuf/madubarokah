@@ -18,6 +18,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-// Tripay Callback Routes - tidak memerlukan autentikasi
+// Tripay Callback - SIMPLE ROUTE ONLY
 Route::post('/tripay/callback', [\App\Http\Controllers\Api\TripayCallbackController::class, 'callback']);
-Route::get('/tripay/return', [\App\Http\Controllers\Api\TripayCallbackController::class, 'return']);

@@ -7,7 +7,6 @@ use App\Models\Transaksi;
 use App\Models\DetailTransaksi;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class PesananController extends Controller
 {
@@ -466,127 +465,6 @@ class PesananController extends Controller
 
             default:
                 return false;
-        }
-    }
-
-    /**
-     * Update order status dengan sinkronisasi otomatis ke 3 tabel
-     * Method ini menggantikan 3 dropdown dengan 1 aksi terpusat
-     */
-    public function updateOrderStatus(Request $request, $id)
-    {
-        $request->validate([
-            'action' => 'required|in:process_payment,process_order,ship_order,complete_order,cancel_order'
-        ]);
-
-        try {
-            $pesanan = Transaksi::with(['pembayaran', 'pengiriman'])->findOrFail($id);
-            
-            DB::beginTransaction();
-            
-            switch ($request->action) {
-                case 'process_payment':
-                    // Konfirmasi pembayaran berhasil
-                    if ($pesanan->status !== 'pending') {
-                        throw new \Exception('Pesanan tidak dalam status menunggu pembayaran');
-                    }
-                    
-                    $pesanan->update(['status' => 'dibayar']);
-                    $pesanan->pembayaran->update([
-                        'status' => 'berhasil',
-                        'waktu_bayar' => now()
-                    ]);
-                    $pesanan->pengiriman->update(['status' => 'diproses']);
-                    
-                    $message = 'Pembayaran berhasil dikonfirmasi';
-                    break;
-                    
-                case 'process_order':
-                    // Proses pesanan (packing)
-                    if (!in_array($pesanan->status, ['dibayar', 'berhasil'])) {
-                        throw new \Exception('Pesanan belum dibayar');
-                    }
-                    
-                    $pesanan->update(['status' => 'berhasil']);
-                    $pesanan->pengiriman->update(['status' => 'diproses']);
-                    
-                    $message = 'Pesanan sedang diproses';
-                    break;
-                    
-                case 'ship_order':
-                    // Kirim pesanan (dengan resi)
-                    if (!in_array($pesanan->status, ['dibayar', 'berhasil'])) {
-                        throw new \Exception('Pesanan belum siap dikirim');
-                    }
-                    
-                    if (!$request->resi) {
-                        throw new \Exception('Nomor resi harus diisi');
-                    }
-                    
-                    $pesanan->update(['status' => 'dikirim']);
-                    $pesanan->pengiriman->update([
-                        'status' => 'dikirim',
-                        'resi' => $request->resi
-                    ]);
-                    
-                    $message = 'Pesanan berhasil dikirim dengan resi: ' . $request->resi;
-                    break;
-                    
-                case 'complete_order':
-                    // Selesaikan pesanan
-                    if ($pesanan->status !== 'dikirim') {
-                        throw new \Exception('Pesanan belum dalam status dikirim');
-                    }
-                    
-                    $pesanan->update(['status' => 'selesai']);
-                    $pesanan->pengiriman->update(['status' => 'diterima']);
-                    
-                    $message = 'Pesanan telah selesai';
-                    break;
-                    
-                case 'cancel_order':
-                    // Batalkan pesanan
-                    if (in_array($pesanan->status, ['dikirim', 'selesai'])) {
-                        throw new \Exception('Pesanan yang sudah dikirim tidak dapat dibatalkan');
-                    }
-                    
-                    $pesanan->update(['status' => 'batal']);
-                    $pesanan->pembayaran->update(['status' => 'canceled']);
-                    $pesanan->pengiriman->update(['status' => 'dibatalkan']);
-                    
-                    // Kembalikan stok jika ada
-                    foreach ($pesanan->detailTransaksi as $detail) {
-                        if ($detail->produk) {
-                            $detail->produk->increment('stok', $detail->jumlah);
-                        }
-                    }
-                    
-                    $message = 'Pesanan berhasil dibatalkan';
-                    break;
-            }
-            
-            DB::commit();
-            
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => $message
-                ]);
-            }
-            
-            return redirect()->back()->with('success', $message);
-            
-        } catch (\Exception $e) {
-            DB::rollback();
-            
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $e->getMessage()
-                ], 400);
-            }
-            
-            return redirect()->back()->with('error', $e->getMessage());
         }
     }
 }

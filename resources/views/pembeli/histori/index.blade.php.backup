@@ -49,45 +49,10 @@
                 @if($transaksi->count() > 0)
                     <!-- Transaction List -->
                     @foreach($transaksi as $t)
-                    @php
-                    // Determine unified status - same logic as admin
-                    $transactionStatus = $t->status;
-                    $paymentStatus = $t->pembayaran ? $t->pembayaran->status : 'pending';
-                    $shippingStatus = $t->pengiriman ? $t->pengiriman->status : 'menunggu_pembayaran';
-                    
-                    $unifiedStatus = 'pending';
-                    $statusLabel = '🟡 Menunggu Pembayaran';
-                    $statusColor = 'warning';
-                    $statusIcon = 'clock';
-                    
-                    if (in_array($transactionStatus, ['batal', 'gagal', 'expired'])) {
-                        $unifiedStatus = 'canceled';
-                        $statusLabel = '❌ Dibatalkan';
-                        $statusColor = 'danger';
-                        $statusIcon = 'times-circle';
-                    } elseif ($transactionStatus === 'selesai') {
-                        $unifiedStatus = 'completed';
-                        $statusLabel = '✅ Selesai';
-                        $statusColor = 'success';
-                        $statusIcon = 'check-circle';
-                    } elseif ($transactionStatus === 'dikirim') {
-                        $unifiedStatus = 'shipped';
-                        $statusLabel = '🚚 Sedang Dikirim';
-                        $statusColor = 'primary';
-                        $statusIcon = 'truck';
-                    } elseif (in_array($transactionStatus, ['dibayar', 'berhasil'])) {
-                        $unifiedStatus = 'processing';
-                        $statusLabel = '📦 Sedang Diproses';
-                        $statusColor = 'info';
-                        $statusIcon = 'box';
-                    }
-                    
-                    $hasResi = $t->pengiriman && $t->pengiriman->resi;
-                    @endphp
                     <div class="card-cart shadow-sm mb-4 transaction-card">
                         <div class="card-body p-0">
                             <!-- Transaction Header -->
-                            <div class="transaction-header p-3 bg-{{ $statusColor }}">
+                            <div class="transaction-header p-3">
                                 <div class="row align-items-center">
                                     <div class="col-md-6">
                                         <div class="d-flex align-items-center">
@@ -97,9 +62,8 @@
                                     </div>
                                     <div class="col-md-6 text-md-end">
                                         <div class="d-flex align-items-center justify-content-md-end">
-                                            <span class="badge bg-white text-{{ $statusColor }} px-3 py-2">
-                                                {{ $statusLabel }}
-                                            </span>
+                                            <i class="fas fa-calendar-alt text-white mr-2"></i>
+                                            <span class="text-white">{{ $t->tanggal_transaksi->format('d M Y, H:i') }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -109,7 +73,7 @@
                             <div class="transaction-content p-3 py-3">
                                 <div class="row align-items-center">
                                     <!-- Product Info -->
-                                    <div class="col-lg-4 mb-3 mb-lg-0">
+                                    <div class="col-lg-5 mb-3 mb-lg-0">
                                         @php
                                             $totalItems = $t->detailTransaksi->sum('jumlah');
                                             $firstItem = $t->detailTransaksi->first();
@@ -131,7 +95,7 @@
                                                     {{ $firstItem && $firstItem->produk ? $firstItem->produk->nama_produk : 'Produk tidak tersedia' }}
                                                 </h6>
                                                 @if($t->detailTransaksi->count() > 1)
-                                                    <span class="product-extras">+{{ $t->detailTransaksi->count() - 1 }} produk lainnya</span>
+                                                    <span class="product-extras">+{{ $t->detailTransaksi->count() - 1 }} lainnya</span>
                                                 @endif
                                                 <div class="mt-1">
                                                     <span class="badge bg-light text-dark">
@@ -142,47 +106,74 @@
                                         </div>
                                     </div>
                                     
-                                    <!-- Order Info -->
+                                    <!-- Payment Info -->
                                     <div class="col-lg-4 mb-3 mb-lg-0">
-                                        <div class="order-info">
-                                            <div class="mb-2">
-                                                <small class="text-muted d-block">Tanggal Pesanan</small>
-                                                <span class="fw-bold">{{ $t->tanggal_transaksi->format('d F Y, H:i') }}</span>
-                                            </div>
-                                            <div class="mb-2">
-                                                <small class="text-muted d-block">Total Pembayaran</small>
+                                        <div class="price-status-container">
+                                            <div class="price mb-3">
                                                 <h5 class="text-gelap mb-0">Rp {{ number_format($t->total_harga, 0, ',', '.') }}</h5>
                                             </div>
-                                            @if($t->pembayaran)
-                                            <div class="mb-2">
-                                                <small class="text-muted d-block">Metode Pembayaran</small>
-                                                <span class="fw-bold">{{ $t->pembayaran->metode }}</span>
-                                                @if($t->pembayaran->waktu_bayar)
-                                                <span class="badge bg-success ms-2">Lunas</span>
+                                            
+                                            <div class="status-section">
+                                                @php
+                                                    $statusClass = [
+                                                        'pending' => 'warning',
+                                                        'berhasil' => 'success', 
+                                                        'dibayar' => 'success',
+                                                        'gagal' => 'danger',
+                                                        'expired' => 'secondary',
+                                                        'canceled' => 'secondary',
+                                                        'batal' => 'secondary'
+                                                    ];
+                                                    $paymentStatus = $t->pembayaran ? $t->pembayaran->status : 'pending';
+                                                @endphp
+                                                
+                                                <div class="status-row">
+                                                    <div class="status-label">Pembayaran:</div>
+                                                    <div class="status-badge">
+                                                        <span class="badge bg-{{ $statusClass[$paymentStatus] ?? 'secondary' }}">
+                                                            {{ ucfirst($paymentStatus) }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                
+                                                @if($t->pengiriman)
+                                                    @php
+                                                        $shippingStatusClass = [
+                                                            'menunggu_pembayaran' => 'warning',
+                                                            'diproses' => 'info',
+                                                            'dikirim' => 'primary',
+                                                            'diterima' => 'success',
+                                                            'dibatalkan' => 'danger'
+                                                        ];
+                                                        $shippingStatus = $t->pengiriman->status ?? 'menunggu_pembayaran';
+                                                    @endphp
+                                                    <div class="status-row mt-2">
+                                                        <div class="status-label">Pengiriman:</div>
+                                                        <div class="status-badge">
+                                                            <span class="badge bg-{{ $shippingStatusClass[$shippingStatus] ?? 'secondary' }}">
+                                                                <i class="fas fa-truck me-1"></i>{{ ucfirst(str_replace('_', ' ', $shippingStatus)) }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
                                                 @endif
                                             </div>
-                                            @endif
                                         </div>
                                     </div>
                                     
                                     <!-- Shipping & Actions -->
-                                    <div class="col-lg-4">
+                                    <div class="col-lg-3">
                                         @if($t->pengiriman)
                                             <div class="shipping-info mb-3">
-                                                <small class="text-muted d-block">Pengiriman</small>
-                                                <div class="fw-bold">
-                                                    {{ $t->pengiriman->kurir }} - {{ $t->pengiriman->layanan }}
+                                                <div class="courier-label">Kurir:</div>
+                                                <div class="courier-value">
+                                                    <i class="fas fa-shipping-fast me-1 text-muted"></i>
+                                                    <span>{{ $t->pengiriman->kurir }} - {{ $t->pengiriman->layanan }}</span>
                                                 </div>
                                                 
-                                                @if($hasResi)
-                                                    <div class="mt-2">
-                                                        <small class="text-muted d-block">Nomor Resi</small>
-                                                        <div class="d-flex align-items-center">
-                                                            <span class="text-primary fw-bold">{{ $t->pengiriman->resi }}</span>
-                                                            <button class="btn btn-sm btn-link copy-resi" data-resi="{{ $t->pengiriman->resi }}">
-                                                                <i class="fas fa-copy"></i>
-                                                            </button>
-                                                        </div>
+                                                @if($t->pengiriman->resi)
+                                                    <div class="resi-info mt-2">
+                                                        <div class="resi-label">Resi:</div>
+                                                        <div class="resi-value text-primary">{{ $t->pengiriman->resi }}</div>
                                                     </div>
                                                 @endif
                                             </div>
@@ -190,88 +181,22 @@
                                         
                                         <div class="action-buttons">
                                             <a href="{{ route('frontend.history.detail', $t->id) }}" class="btn btn-outline-primary btn-sm w-100 mb-2">
-                                                <i class="fas fa-eye me-1"></i>Lihat Detail
+                                                <i class="fas fa-eye me-1"></i>Detail
                                             </a>
-                                            
-                                            @if($unifiedStatus === 'pending')
-                                                <a href="{{ route('frontend.confirmation.show', $t->id) }}" class="btn btn-warning btn-sm w-100 mb-2">
-                                                    <i class="fas fa-credit-card me-1"></i>Bayar Sekarang
-                                                </a>
-                                            @elseif($unifiedStatus === 'shipped')
+                                            @if($t->status === 'dikirim')
                                                 <form action="{{ route('frontend.history.confirmReceipt', $t->id) }}" method="POST" class="w-100 mb-2" id="confirmReceiptForm-{{ $t->id }}">
                                                     @csrf
                                                     <button type="button" class="btn btn-success btn-sm w-100" onclick="confirmReceipt({{ $t->id }})">
-                                                        <i class="fas fa-check-circle me-1"></i>Pesanan Diterima
+                                                        <i class="fas fa-check-circle me-1"></i>Terima
                                                     </button>
                                                 </form>
                                             @endif
-                                            
-                                            <a href="https://wa.me/{{ $whatsappNumber ?? '6281234567890' }}?text=Halo, saya ingin bertanya tentang pesanan {{ $t->merchant_ref }}" 
-                                               target="_blank" 
-                                               class="btn btn-outline-success btn-sm w-100">
-                                                <i class="fab fa-whatsapp me-1"></i>Hubungi Penjual
-                                            </a>
+                                            @if($paymentStatus === 'pending')
+                                                <a href="{{ route('frontend.confirmation.show', $t->id) }}" class="btn btn-warning btn-sm w-100">
+                                                    <i class="fas fa-credit-card me-1"></i>Bayar
+                                                </a>
+                                            @endif
                                         </div>
-                                    </div>
-                                </div>
-
-                                <!-- Status Timeline -->
-                                <div class="status-timeline mt-4 pt-3 border-top">
-                                    <div class="timeline-wrapper">
-                                        <div class="timeline-item {{ $unifiedStatus != 'canceled' ? 'active' : '' }}">
-                                            <div class="timeline-icon">
-                                                <i class="fas fa-shopping-cart"></i>
-                                            </div>
-                                            <div class="timeline-content">
-                                                <small class="text-muted">Pesanan Dibuat</small>
-                                                <div class="small">{{ $t->created_at->format('d/m H:i') }}</div>
-                                            </div>
-                                        </div>
-
-                                        @if($unifiedStatus != 'canceled')
-                                            <div class="timeline-item {{ in_array($unifiedStatus, ['processing', 'shipped', 'completed']) ? 'active' : '' }}">
-                                                <div class="timeline-icon">
-                                                    <i class="fas fa-credit-card"></i>
-                                                </div>
-                                                <div class="timeline-content">
-                                                    <small class="text-muted">Pembayaran</small>
-                                                    @if($t->pembayaran && $t->pembayaran->waktu_bayar)
-                                                        <div class="small">{{ $t->pembayaran->waktu_bayar->format('d/m H:i') }}</div>
-                                                    @endif
-                                                </div>
-                                            </div>
-
-                                            <div class="timeline-item {{ in_array($unifiedStatus, ['shipped', 'completed']) ? 'active' : '' }}">
-                                                <div class="timeline-icon">
-                                                    <i class="fas fa-truck"></i>
-                                                </div>
-                                                <div class="timeline-content">
-                                                    <small class="text-muted">Dikirim</small>
-                                                    @if($hasResi)
-                                                        <div class="small">Resi: {{ $t->pengiriman->resi }}</div>
-                                                    @endif
-                                                </div>
-                                            </div>
-
-                                            <div class="timeline-item {{ $unifiedStatus === 'completed' ? 'active' : '' }}">
-                                                <div class="timeline-icon">
-                                                    <i class="fas fa-check-circle"></i>
-                                                </div>
-                                                <div class="timeline-content">
-                                                    <small class="text-muted">Selesai</small>
-                                                </div>
-                                            </div>
-                                        @else
-                                            <div class="timeline-item active canceled">
-                                                <div class="timeline-icon">
-                                                    <i class="fas fa-times-circle"></i>
-                                                </div>
-                                                <div class="timeline-content">
-                                                    <small class="text-muted">Dibatalkan</small>
-                                                    <div class="small">{{ $t->updated_at->format('d/m H:i') }}</div>
-                                                </div>
-                                            </div>
-                                        @endif
                                     </div>
                                 </div>
                             </div>
@@ -363,6 +288,7 @@
 
 .transaction-header {
     border-bottom: 1px solid rgba(255,255,255,0.1);
+    background-color: #cc8400;
 }
 
 .invoice-number {
@@ -415,69 +341,39 @@
     font-size: 0.8rem;
 }
 
-/* Status Timeline Styling */
-.status-timeline {
-    position: relative;
+/* Status styling */
+.price-status-container {
+    padding-left: 20px;
+    border-left: 1px dashed rgba(0,0,0,0.1);
+    height: 100%;
 }
 
-.timeline-wrapper {
+.status-section {
+    margin-top: 10px;
+}
+
+.status-row {
     display: flex;
-    justify-content: space-between;
-    position: relative;
-    padding: 0 20px;
-}
-
-.timeline-wrapper::before {
-    content: '';
-    position: absolute;
-    top: 20px;
-    left: 40px;
-    right: 40px;
-    height: 2px;
-    background-color: #e0e0e0;
-    z-index: 0;
-}
-
-.timeline-item {
-    display: flex;
-    flex-direction: column;
     align-items: center;
-    position: relative;
-    z-index: 1;
+}
+
+.status-label {
+    font-size: 0.85rem;
+    color: #555;
+    font-weight: 500;
+    width: 100px;
+    flex-shrink: 0;
+}
+
+.status-badge {
     flex: 1;
 }
 
-.timeline-item.active .timeline-icon {
-    background-color: #28a745;
-    color: white;
-}
-
-.timeline-item.active.canceled .timeline-icon {
-    background-color: #dc3545;
-}
-
-.timeline-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: #e0e0e0;
-    color: #999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 10px;
-    font-size: 16px;
-}
-
-.timeline-content {
-    text-align: center;
-}
-
-/* Order info styling */
-.order-info {
-    background-color: #f9f9f9;
-    padding: 15px;
-    border-radius: 8px;
+.badge {
+    font-weight: 500;
+    padding: 0.5em 0.75em;
+    border-radius: 6px;
+    font-size: 0.75rem;
 }
 
 /* Shipping info */
@@ -485,6 +381,24 @@
     background-color: #f9f9f9;
     padding: 15px;
     border-radius: 8px;
+    font-size: 0.85rem;
+    margin-bottom: 15px;
+}
+
+.courier-label, .resi-label {
+    color: #555;
+    font-weight: 500;
+    margin-bottom: 5px;
+}
+
+.courier-value, .resi-value {
+    font-weight: 500;
+}
+
+.resi-value {
+    letter-spacing: 0.5px;
+    font-family: monospace;
+    font-size: 0.9rem;
 }
 
 /* Button styling */
@@ -496,30 +410,25 @@
 .btn {
     border-radius: 6px;
     font-weight: 500;
+    padding: 0.6rem 1.2rem;
     transition: all 0.3s ease;
 }
 
 .btn-sm {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
 }
 
-.copy-resi {
-    padding: 0.25rem 0.5rem;
-    margin-left: 0.5rem;
-    color: #cc8400;
+.btn-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #212529;
 }
 
-.copy-resi:hover {
-    color: #b8790a;
-}
-
-/* Badge styling */
-.badge {
-    font-weight: 500;
-    padding: 0.5em 0.75em;
-    border-radius: 6px;
-    font-size: 0.75rem;
+.btn-warning:hover {
+    background-color: #e0a800;
+    border-color: #d39e00;
+    color: #212529;
 }
 
 /* Pagination Styling */
@@ -547,33 +456,21 @@
 
 /* Responsive Design */
 @media (max-width: 992px) {
-    .timeline-wrapper {
-        flex-direction: column;
-        padding: 0;
+    .price-status-container {
+        padding-left: 0;
+        border-left: none;
+        margin-top: 15px;
+        margin-bottom: 15px;
     }
     
-    .timeline-wrapper::before {
-        top: 40px;
-        bottom: 40px;
-        left: 20px;
-        right: auto;
-        width: 2px;
-        height: auto;
-    }
-    
-    .timeline-item {
+    .action-buttons {
         flex-direction: row;
-        justify-content: flex-start;
-        margin-bottom: 20px;
+        gap: 10px;
     }
     
-    .timeline-icon {
-        margin-bottom: 0;
-        margin-right: 15px;
-    }
-    
-    .timeline-content {
-        text-align: left;
+    .action-buttons .btn {
+        flex: 1;
+        margin-bottom: 0 !important;
     }
 }
 
@@ -590,16 +487,17 @@
         width: 60px;
         height: 60px;
     }
-    
-    .order-info {
-        margin-top: 15px;
-    }
 }
 
 @media (max-width: 576px) {
     .product-img-wrapper {
         width: 50px;
         height: 50px;
+    }
+    
+    .status-label {
+        width: 90px;
+        font-size: 0.8rem;
     }
     
     .badge {
@@ -609,7 +507,7 @@
     
     .shipping-info {
         padding: 10px;
-        font-size: 0.875rem;
+        font-size: 0.8rem;
     }
 }
 </style>
@@ -618,20 +516,6 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Copy resi functionality
-    $('.copy-resi').on('click', function() {
-        const resi = $(this).data('resi');
-        navigator.clipboard.writeText(resi).then(function() {
-            // Show temporary feedback
-            const btn = $(this);
-            const originalHtml = btn.html();
-            btn.html('<i class="fas fa-check"></i>');
-            setTimeout(() => {
-                btn.html(originalHtml);
-            }, 2000);
-        }.bind(this));
-    });
-    
     // Add loading state to detail buttons
     $('.btn-outline-primary').click(function() {
         const btn = $(this);
@@ -654,6 +538,13 @@ $(document).ready(function() {
         setTimeout(() => {
             btn.prop('disabled', false).html(originalText);
         }, 1000);
+    });
+    
+    // Smooth scroll animation for pagination
+    $('.pagination a').click(function(e) {
+        $('html, body').animate({
+            scrollTop: $('.transaction-card:first').offset().top - 100
+        }, 500);
     });
 });
 

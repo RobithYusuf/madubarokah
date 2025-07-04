@@ -96,7 +96,9 @@ class ShippingController extends Controller
                     'destination_city' => $destinationCity->city_name,
                     'weight' => $weight,
                     'courier' => $courier,
-                    'source' => 'rajaongkir_api'
+                    'source' => 'rajaongkir_api',
+                    'cached' => isset($result['execution_time']) && $result['execution_time'] < 0.1,
+                    'execution_time' => round($result['execution_time'] ?? 0, 3) . 's'
                 ]
             ]);
 
@@ -270,6 +272,7 @@ class ShippingController extends Controller
                 'weight' => $weight,
                 'courier' => $courier,
                 'source' => 'fallback_dummy_data',
+                'cached' => false,
                 'message' => 'Data estimasi - Kurir ini tidak didukung API RajaOngkir atau API bermasalah',
                 'note' => 'Untuk data akurat, gunakan kurir JNE/POS/TIKI atau upgrade ke RajaOngkir Pro',
                 'api_supported_couriers' => ['jne', 'pos', 'tiki'],
